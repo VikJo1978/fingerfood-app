@@ -42,6 +42,10 @@ def list_items(
         description="Komma-getrennte Allergen-Codes (Artikel mit diesen Allergenen ausblenden)",
     ),
     max_unit_price: float | None = Query(default=None, ge=0),
+    module: str | None = Query(
+        default=None,
+        description="food | beverage — Katalogmodul (optional)",
+    ),
 ) -> list[Item]:
     """
     Filtering plan:
@@ -91,6 +95,9 @@ def list_items(
 
     if max_unit_price is not None and max_unit_price > 0:
         out = [i for i in out if i.price <= max_unit_price]
+
+    if module in ("food", "beverage"):
+        out = [i for i in out if i.module == module]
 
     return out
 

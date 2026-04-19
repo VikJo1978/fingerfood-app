@@ -1,7 +1,7 @@
 import { ALLERGENS } from "../constants/classification";
 import type { DietType } from "../constants/classification";
 import type { FingerfoodItem } from "../types";
-import type { PriceTypeFilter } from "../services/api";
+import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { parseMaxUnitPriceInput } from "./maxUnitPrice";
 
 export function parseExcludeAllergenCodes(raw: string): Set<string> {
@@ -21,6 +21,7 @@ export interface CatalogFilterOpts {
   diet: DietType | "";
   excludeAllergens: string;
   maxUnitPriceRaw: string;
+  module: CatalogModuleFilter;
 }
 
 export function filterCatalog(all: FingerfoodItem[], opts: CatalogFilterOpts): FingerfoodItem[] {
@@ -53,6 +54,9 @@ export function filterCatalog(all: FingerfoodItem[], opts: CatalogFilterOpts): F
   const cap = parseMaxUnitPriceInput(opts.maxUnitPriceRaw);
   if (cap != null && cap > 0 && Number.isFinite(cap)) {
     out = out.filter((i) => i.price <= cap);
+  }
+  if (opts.module === "food" || opts.module === "beverage") {
+    out = out.filter((i) => i.module === opts.module);
   }
   return out;
 }

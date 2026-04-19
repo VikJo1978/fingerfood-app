@@ -4,6 +4,8 @@ import { normalizeItemList } from "../utils/normalizeItem";
 
 const baseUrl = () => import.meta.env.VITE_API_URL ?? "";
 
+export type CatalogModuleFilter = "" | "food" | "beverage";
+
 export interface ItemQuery {
   search?: string;
   section?: string;
@@ -11,6 +13,8 @@ export interface ItemQuery {
   diet?: DietType | "";
   exclude_allergens?: string;
   max_unit_price?: number;
+  /** Optional server-side filter; UI lädt den vollen Katalog für die Kalkulation. */
+  module?: CatalogModuleFilter;
 }
 
 export type PriceTypeFilter = "" | "piece" | "person";
@@ -27,6 +31,8 @@ function buildQuery(params: ItemQuery): string {
     q.set("exclude_allergens", params.exclude_allergens.trim());
   if (params.max_unit_price != null && params.max_unit_price > 0)
     q.set("max_unit_price", String(params.max_unit_price));
+  if (params.module === "food" || params.module === "beverage")
+    q.set("module", params.module);
   const s = q.toString();
   return s ? `?${s}` : "";
 }

@@ -6,8 +6,8 @@ import { TopControls } from "../components/TopControls";
 import { SearchFilters } from "../components/filters/SearchFilters";
 import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
-import type { PriceTypeFilter } from "../services/api";
-import { fetchItems, fetchSections } from "../services/api";
+import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
+import { fetchItems } from "../services/api";
 import type { FingerfoodItem, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
@@ -34,8 +34,8 @@ export function HomePage() {
   const [diet, setDiet] = useState<DietType | "">("");
   const [excludeAllergens, setExcludeAllergens] = useState("");
   const [maxUnitPrice, setMaxUnitPrice] = useState("");
+  const [catalogModule, setCatalogModule] = useState<CatalogModuleFilter>("");
 
-  const [sections, setSections] = useState<string[]>([]);
   const [catalog, setCatalog] = useState<FingerfoodItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,8 +44,7 @@ export function HomePage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [sec, list] = await Promise.all([fetchSections(), fetchItems({})]);
-      setSections(sec);
+      const list = await fetchItems({});
       setCatalog(list);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Laden fehlgeschlagen.");
@@ -59,6 +58,22 @@ export function HomePage() {
     void bootstrap();
   }, [bootstrap]);
 
+  useEffect(() => {
+    setSection("");
+  }, [catalogModule]);
+
+  const sectionOptions = useMemo(() => {
+    let base = catalog;
+    if (catalogModule === "food") {
+      base = catalog.filter((i) => i.module === "food");
+    } else if (catalogModule === "beverage") {
+      base = catalog.filter((i) => i.module === "beverage");
+    }
+    return Array.from(new Set(base.map((i) => i.section)))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "de"));
+  }, [catalog, catalogModule]);
+
   const visibleItems = useMemo(
     () =>
       filterCatalog(catalog, {
@@ -68,8 +83,9 @@ export function HomePage() {
         diet,
         excludeAllergens,
         maxUnitPriceRaw: maxUnitPrice,
+        module: catalogModule,
       }),
-    [catalog, search, section, priceType, diet, excludeAllergens, maxUnitPrice]
+    [catalog, search, section, priceType, diet, excludeAllergens, maxUnitPrice, catalogModule]
   );
 
   const itemsById = useMemo(() => {
@@ -233,11 +249,13 @@ export function HomePage() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="space-y-5">
             <SearchFilters
+              catalogModule={catalogModule}
+              onCatalogModuleChange={setCatalogModule}
               search={search}
               onSearchChange={setSearch}
               section={section}
               onSectionChange={setSection}
-              sections={sections}
+              sections={sectionOptions}
               priceType={priceType}
               onPriceTypeChange={setPriceType}
               diet={diet}

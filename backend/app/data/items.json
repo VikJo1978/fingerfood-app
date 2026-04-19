@@ -277,6 +277,65 @@
       "contains_alcohol": false,
       "contains_gelatin": false
     },
-    "allergens": ["sulfites"]
+    "allergens": ["sulfites"],
+    "module": "beverage"
+  },
+  {
+    "id": "getraenk-mineralwasser",
+    "name": "Mineralwasser (still oder sprudelnd)",
+    "section": "Getränke",
+    "category": "Ohne Alkohol",
+    "subcategory": "Wasser",
+    "price": 2.5,
+    "price_type": "piece",
+    "min_order": 12,
+    "unit_label": "Flasche 0,5 l",
+    "description": "Klassisches Catering-Format; Mischung nach Verfügbarkeit.",
+    "items_included": null,
+    "diet_type": "vegan",
+    "module": "beverage",
+    "ingredient_flags": {
+      "contains_meat": false,
+      "contains_pork": false,
+      "contains_poultry": false,
+      "contains_beef": false,
+      "contains_fish": false,
+      "contains_shellfish": false,
+      "contains_dairy": false,
+      "contains_egg": false,
+      "contains_honey": false,
+      "contains_alcohol": false,
+      "contains_gelatin": false
+    },
+    "allergens": []
+  },
+  {
+    "id": "getraenk-apfelsaft",
+    "name": "Apfelsaft naturtrüb",
+    "section": "Getränke",
+    "category": "Ohne Alkohol",
+    "subcategory": "Saft",
+    "price": 3.2,
+    "price_type": "piece",
+    "min_order": 6,
+    "unit_label": "Kanne 1 l",
+    "description": "Ausgabe für Selbstbedienung oder Theke; Gläser nach Absprache.",
+    "items_included": null,
+    "diet_type": "vegan",
+    "module": "beverage",
+    "ingredient_flags": {
+      "contains_meat": false,
+      "contains_pork": false,
+      "contains_poultry": false,
+      "contains_beef": false,
+      "contains_fish": false,
+      "contains_shellfish": false,
+      "contains_dairy": false,
+      "contains_egg": false,
+      "contains_honey": false,
+      "contains_alcohol": false,
+      "contains_gelatin": false
+    },
+    "allergens": []
   }
 ]

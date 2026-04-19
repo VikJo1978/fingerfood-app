@@ -1,7 +1,9 @@
-import type { PriceTypeFilter } from "../../services/api";
+import type { CatalogModuleFilter, PriceTypeFilter } from "../../services/api";
 import { DIET_LABELS_DE, DIET_TYPES, type DietType } from "../../constants/classification";
 
 interface SearchFiltersProps {
+  catalogModule: CatalogModuleFilter;
+  onCatalogModuleChange: (v: CatalogModuleFilter) => void;
   search: string;
   onSearchChange: (v: string) => void;
   section: string;
@@ -18,6 +20,8 @@ interface SearchFiltersProps {
 }
 
 export function SearchFilters({
+  catalogModule,
+  onCatalogModuleChange,
   search,
   onSearchChange,
   section,
@@ -41,14 +45,27 @@ export function SearchFilters({
         <input
           id="search"
           type="search"
-          placeholder="Suche nach Name, Kategorie oder Ernährungsart..."
+          placeholder="Suche im Katalog (Speisen & Getränke)…"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-500">Katalog</span>
+          <select
+            value={catalogModule}
+            onChange={(e) => onCatalogModuleChange(e.target.value as CatalogModuleFilter)}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+          >
+            <option value="">Alle</option>
+            <option value="food">Speisen</option>
+            <option value="beverage">Getränke</option>
+          </select>
+        </label>
+
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-500">Bereich</span>
           <select
