@@ -1,16 +1,13 @@
-import type { FingerfoodItem, OfferLine, QuantityMode } from "../../types";
+import type { FingerfoodItem, OfferDraft, QuantityMode } from "../../types";
 import { formatCurrency } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
 
 interface OfferSummaryProps {
-  lines: OfferLine[];
+  draft: OfferDraft;
   itemsById: Record<string, FingerfoodItem>;
-  persons: number;
   subtotal: number;
   pricePerPerson: number;
-  budgetEnabled: boolean;
-  totalBudget: number;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;
   onRemove: (lineId: string) => void;
@@ -19,19 +16,18 @@ interface OfferSummaryProps {
 }
 
 export function OfferSummary({
-  lines,
+  draft,
   itemsById,
-  persons,
   subtotal,
   pricePerPerson,
-  budgetEnabled,
-  totalBudget,
   onQuantityChange,
   onModeChange,
   onRemove,
   onExportJson,
   onExportCsv,
 }: OfferSummaryProps) {
+  const { lines, persons, budgetEnabled, totalBudget } = draft;
+
   return (
     <aside className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card lg:sticky lg:top-8">
       <div>

@@ -8,6 +8,7 @@ import { OfferSummary } from "../components/summary/OfferSummary";
 import type { PriceTypeFilter } from "../services/api";
 import { fetchItems, fetchSections } from "../services/api";
 import type { FingerfoodItem, OfferLine, QuantityMode } from "../types";
+import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
 import { computeLineTotal, formatCurrency } from "../utils/pricing";
 import { WarningBanner } from "../components/ui/WarningBanner";
@@ -24,9 +25,7 @@ function downloadText(filename: string, text: string, mime: string) {
 }
 
 export function HomePage() {
-  const [persons, setPersons] = useState(10);
-  const [budgetEnabled, setBudgetEnabled] = useState(false);
-  const [totalBudget, setTotalBudget] = useState(500);
+  const [offerDraft, setOfferDraft] = useState(createInitialOfferDraft);
 
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
@@ -39,8 +38,6 @@ export function HomePage() {
   const [catalog, setCatalog] = useState<FingerfoodItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [offerLines, setOfferLines] = useState<OfferLine[]>([]);
 
   const bootstrap = useCallback(async () => {
     setLoading(true);
@@ -82,47 +79,49 @@ export function HomePage() {
 
   const { subtotal, pricePerPerson } = useMemo(() => {
     let sub = 0;
-    for (const line of offerLines) {
+    for (const line of offerDraft.lines) {
       const it = itemsById[line.itemId];
       if (!it) continue;
-      sub += computeLineTotal(it, persons, line.quantityMode, line.quantity);
+      sub += computeLineTotal(it, offerDraft.persons, line.quantityMode, line.quantity);
     }
-    const ppp = persons > 0 ? sub / persons : 0;
+    const ppp = offerDraft.persons > 0 ? sub / offerDraft.persons : 0;
     return { subtotal: Math.round(sub * 100) / 100, pricePerPerson: Math.round(ppp * 100) / 100 };
-  }, [offerLines, itemsById, persons]);
+  }, [offerDraft.lines, offerDraft.persons, itemsById]);
 
   const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
 
   const onAddLine = (item: FingerfoodItem, mode: QuantityMode, quantity: number) => {
     const lineId = crypto.randomUUID();
-    setOfferLines((prev) => [
-      ...prev,
-      { lineId, itemId: item.id, quantityMode: mode, quantity },
-    ]);
+    const line: OfferLine = { lineId, itemId: item.id, quantityMode: mode, quantity };
+    setOfferDraft((d) => ({ ...d, lines: [...d.lines, line] }));
   };
 
   const onRemoveLine = (lineId: string) => {
-    setOfferLines((prev) => prev.filter((l) => l.lineId !== lineId));
+    setOfferDraft((d) => ({ ...d, lines: d.lines.filter((l) => l.lineId !== lineId) }));
   };
 
   const onLineQty = (lineId: string, q: number) => {
-    setOfferLines((prev) =>
-      prev.map((l) => (l.lineId === lineId ? { ...l, quantity: Math.max(0.5, q) } : l))
-    );
+    setOfferDraft((d) => ({
+      ...d,
+      lines: d.lines.map((l) =>
+        l.lineId === lineId ? { ...l, quantity: Math.max(0.5, q) } : l
+      ),
+    }));
   };
 
   const onLineMode = (lineId: string, mode: QuantityMode) => {
-    setOfferLines((prev) =>
-      prev.map((l) => {
+    setOfferDraft((d) => ({
+      ...d,
+      lines: d.lines.map((l) => {
         if (l.lineId !== lineId) return l;
         const def = mode === "total" ? 10 : 1;
         return { ...l, quantityMode: mode, quantity: def };
-      })
-    );
+      }),
+    }));
   };
 
   const exportPayload = () => {
-    const lines = offerLines.map((l) => {
+    const lines = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
       return {
         lineId: l.lineId,
@@ -130,14 +129,16 @@ export function HomePage() {
         name: it?.name,
         quantityMode: l.quantityMode,
         quantity: l.quantity,
-        lineTotal: it ? computeLineTotal(it, persons, l.quantityMode, l.quantity) : null,
+        lineTotal: it
+          ? computeLineTotal(it, offerDraft.persons, l.quantityMode, l.quantity)
+          : null,
       };
     });
     return {
       meta: {
-        persons,
-        budgetEnabled,
-        totalBudgetEUR: budgetEnabled ? totalBudget : null,
+        persons: offerDraft.persons,
+        budgetEnabled: offerDraft.budgetEnabled,
+        totalBudgetEUR: offerDraft.budgetEnabled ? offerDraft.totalBudget : null,
         subtotalEUR: subtotal,
         pricePerPersonEUR: pricePerPerson,
       },
@@ -156,10 +157,10 @@ export function HomePage() {
   const onExportCsv = () => {
     const header =
       "Position;Bezug;Menge;Preisart;Stück-/Personenpreis EUR;Name;Zeilensumme EUR";
-    const rows = offerLines.map((l) => {
+    const rows = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
       if (!it) return "";
-      const lt = computeLineTotal(it, persons, l.quantityMode, l.quantity);
+      const lt = computeLineTotal(it, offerDraft.persons, l.quantityMode, l.quantity);
       const modeDe = l.quantityMode === "total" ? "Gesamt" : "Pro Person";
       const pt = it.price_type === "piece" ? "Stück" : "Person";
       const name = `"${it.name.replace(/"/g, '""')}"`;
@@ -173,7 +174,7 @@ export function HomePage() {
     );
   };
 
-  const showPersonWarning = persons < 10;
+  const showPersonWarning = offerDraft.persons < 10;
 
   return (
     <AppShell>
@@ -184,12 +185,16 @@ export function HomePage() {
         />
 
         <TopControls
-          persons={persons}
-          onPersonsChange={(n) => setPersons(clampPersons(n))}
-          budgetEnabled={budgetEnabled}
-          onBudgetEnabledChange={setBudgetEnabled}
-          totalBudget={totalBudget}
-          onTotalBudgetChange={(n) => setTotalBudget(Math.max(0, n))}
+          persons={offerDraft.persons}
+          onPersonsChange={(n) =>
+            setOfferDraft((d) => ({ ...d, persons: clampPersons(n) }))
+          }
+          budgetEnabled={offerDraft.budgetEnabled}
+          onBudgetEnabledChange={(v) => setOfferDraft((d) => ({ ...d, budgetEnabled: v }))}
+          totalBudget={offerDraft.totalBudget}
+          onTotalBudgetChange={(n) =>
+            setOfferDraft((d) => ({ ...d, totalBudget: Math.max(0, n) }))
+          }
         />
 
         {showPersonWarning ? (
@@ -230,7 +235,12 @@ export function HomePage() {
                   </p>
                 ) : (
                   visibleItems.map((item) => (
-                    <ItemCard key={item.id} item={item} persons={persons} onAdd={onAddLine} />
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      persons={offerDraft.persons}
+                      onAdd={onAddLine}
+                    />
                   ))
                 )}
               </div>
@@ -238,13 +248,10 @@ export function HomePage() {
           </div>
 
           <OfferSummary
-            lines={offerLines}
+            draft={offerDraft}
             itemsById={itemsById}
-            persons={persons}
             subtotal={subtotal}
             pricePerPerson={pricePerPerson}
-            budgetEnabled={budgetEnabled}
-            totalBudget={totalBudget}
             onQuantityChange={onLineQty}
             onModeChange={onLineMode}
             onRemove={onRemoveLine}

@@ -1,4 +1,4 @@
-import type { FingerfoodItem, OfferWarning } from "../types";
+import type { FingerfoodItem, OfferDraft, OfferWarning } from "../types";
 import type { DietType } from "../constants/classification";
 import { normalizeItemList } from "../utils/normalizeItem";
 
@@ -53,6 +53,18 @@ export interface OfferCalculateLine {
 export interface OfferCalculateBody {
   persons: number;
   lines: OfferCalculateLine[];
+}
+
+/** Maps in-memory draft lines to the backend calculate payload (IDs and modes only). */
+export function offerDraftToCalculateBody(draft: OfferDraft): OfferCalculateBody {
+  return {
+    persons: draft.persons,
+    lines: draft.lines.map((l) => ({
+      item_id: l.itemId,
+      quantity_mode: l.quantityMode,
+      quantity: l.quantity,
+    })),
+  };
 }
 
 export interface OfferCalculateResponse {

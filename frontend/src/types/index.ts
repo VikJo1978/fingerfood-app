@@ -65,3 +65,25 @@ export interface OfferLine {
   quantityMode: QuantityMode;
   quantity: number;
 }
+
+/**
+ * In-memory offer being edited in the configurator (not yet a persisted snapshot).
+ * Totals stay derived in UI until a dedicated calculation/snapshot step owns them.
+ */
+export interface OfferDraft {
+  persons: number;
+  budgetEnabled: boolean;
+  totalBudget: number;
+  lines: OfferLine[];
+  /** Populated when server calculation is wired; optional for local-only flow. */
+  warnings?: OfferWarning[];
+}
+
+export function createInitialOfferDraft(): OfferDraft {
+  return {
+    persons: 10,
+    budgetEnabled: false,
+    totalBudget: 500,
+    lines: [],
+  };
+}
