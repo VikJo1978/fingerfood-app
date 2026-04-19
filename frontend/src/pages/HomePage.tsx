@@ -193,8 +193,8 @@ export function HomePage() {
     <AppShell>
       <div className="space-y-8">
         <HeaderBar
-          title="Fingerfood-Angebot zusammenstellen"
-          subtitle="Stellen Sie in wenigen Schritten ein stimmiges Angebot für Ihre Veranstaltung zusammen — mit klarer Kalkulation und ohne Fachjargon."
+          title="Catering-Angebot zusammenstellen"
+          subtitle="Stellen Sie Ihr Catering-Angebot in wenigen Schritten zusammen — mit klarer Kalkulation und ohne Fachjargon."
         />
 
         <OrderContextCard
