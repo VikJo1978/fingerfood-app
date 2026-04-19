@@ -10,7 +10,7 @@ import { fetchItems, fetchSections } from "../services/api";
 import type { FingerfoodItem, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
-import { computeLineTotal, formatCurrency } from "../utils/pricing";
+import { computeOfferLineTotal, formatCurrency } from "../utils/pricing";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -80,19 +80,29 @@ export function HomePage() {
   const { subtotal, pricePerPerson } = useMemo(() => {
     let sub = 0;
     for (const line of offerDraft.lines) {
-      const it = itemsById[line.itemId];
-      if (!it) continue;
-      sub += computeLineTotal(it, offerDraft.persons, line.quantityMode, line.quantity);
+      sub += computeOfferLineTotal(line, offerDraft.persons);
     }
     const ppp = offerDraft.persons > 0 ? sub / offerDraft.persons : 0;
     return { subtotal: Math.round(sub * 100) / 100, pricePerPerson: Math.round(ppp * 100) / 100 };
-  }, [offerDraft.lines, offerDraft.persons, itemsById]);
+  }, [offerDraft.lines, offerDraft.persons]);
 
   const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
 
   const onAddLine = (item: FingerfoodItem, mode: QuantityMode, quantity: number) => {
     const lineId = crypto.randomUUID();
-    const line: OfferLine = { lineId, itemId: item.id, quantityMode: mode, quantity };
+    const line: OfferLine = {
+      lineId,
+      itemId: item.id,
+      quantityMode: mode,
+      quantity,
+      snapshot: {
+        title: item.name,
+        source_type: item.source_type,
+        pricing_mode: item.pricing_mode,
+        price_type: item.price_type,
+        chosen_price: item.price,
+      },
+    };
     setOfferDraft((d) => ({ ...d, lines: [...d.lines, line] }));
   };
 
@@ -123,15 +133,15 @@ export function HomePage() {
   const exportPayload = () => {
     const lines = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
+      const lineTotal = computeOfferLineTotal(l, offerDraft.persons);
       return {
         lineId: l.lineId,
         itemId: l.itemId,
-        name: it?.name,
+        name: it?.name ?? l.snapshot.title,
+        snapshot: l.snapshot,
         quantityMode: l.quantityMode,
         quantity: l.quantity,
-        lineTotal: it
-          ? computeLineTotal(it, offerDraft.persons, l.quantityMode, l.quantity)
-          : null,
+        lineTotal,
       };
     });
     return {
@@ -159,12 +169,13 @@ export function HomePage() {
       "Position;Bezug;Menge;Preisart;Stück-/Personenpreis EUR;Name;Zeilensumme EUR";
     const rows = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
-      if (!it) return "";
-      const lt = computeLineTotal(it, offerDraft.persons, l.quantityMode, l.quantity);
+      const lt = computeOfferLineTotal(l, offerDraft.persons);
       const modeDe = l.quantityMode === "total" ? "Gesamt" : "Pro Person";
-      const pt = it.price_type === "piece" ? "Stück" : "Person";
-      const name = `"${it.name.replace(/"/g, '""')}"`;
-      return `${l.itemId};${modeDe};${l.quantity};${pt};${it.price};${name};${lt.toFixed(2)}`;
+      const pt = l.snapshot.price_type === "piece" ? "Stück" : "Person";
+      const unitPrice = l.snapshot.chosen_price;
+      const rawName = it?.name ?? l.snapshot.title;
+      const name = `"${rawName.replace(/"/g, '""')}"`;
+      return `${l.itemId};${modeDe};${l.quantity};${pt};${unitPrice};${name};${lt.toFixed(2)}`;
     });
     const csv = [header, ...rows.filter(Boolean)].join("\n");
     downloadText(

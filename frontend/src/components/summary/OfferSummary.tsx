@@ -43,21 +43,17 @@ export function OfferSummary({
         </p>
       ) : (
         <ul className="max-h-[min(28rem,50vh)] space-y-3 overflow-y-auto pr-1">
-          {lines.map((line) => {
-            const item = itemsById[line.itemId];
-            if (!item) return null;
-            return (
-              <OfferLineItem
-                key={line.lineId}
-                line={line}
-                item={item}
-                persons={persons}
-                onQuantityChange={onQuantityChange}
-                onModeChange={onModeChange}
-                onRemove={onRemove}
-              />
-            );
-          })}
+          {lines.map((line) => (
+            <OfferLineItem
+              key={line.lineId}
+              line={line}
+              catalogItem={itemsById[line.itemId]}
+              persons={persons}
+              onQuantityChange={onQuantityChange}
+              onModeChange={onModeChange}
+              onRemove={onRemove}
+            />
+          ))}
         </ul>
       )}
 

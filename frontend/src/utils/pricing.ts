@@ -1,4 +1,20 @@
-import type { FingerfoodItem, OfferWarning, QuantityMode } from "../types";
+import type { FingerfoodItem, OfferLine, OfferWarning, PriceType, QuantityMode } from "../types";
+
+/** Line total from unit price and legacy `price_type` (same rules as `computeLineTotal`). */
+export function computeLineTotalFromPrice(
+  unitPrice: number,
+  priceType: PriceType,
+  persons: number,
+  mode: QuantityMode,
+  quantity: number
+): number {
+  if (priceType === "piece") {
+    if (mode === "total") return unitPrice * quantity;
+    return unitPrice * quantity * persons;
+  }
+  if (mode === "total") return unitPrice * quantity;
+  return unitPrice * quantity * persons;
+}
 
 export function computeLineTotal(
   item: FingerfoodItem,
@@ -6,12 +22,21 @@ export function computeLineTotal(
   mode: QuantityMode,
   quantity: number
 ): number {
-  if (item.price_type === "piece") {
-    if (mode === "total") return item.price * quantity;
-    return item.price * quantity * persons;
-  }
-  if (mode === "total") return item.price * quantity;
-  return item.price * quantity * persons;
+  return computeLineTotalFromPrice(item.price, item.price_type, persons, mode, quantity);
+}
+
+/**
+ * Zeilensumme aus dem add-time Snapshot (gleiche Bezugsgröße wie angezeigter Stück-/Personenpreis).
+ * Kein Live-Katalog nötig.
+ */
+export function computeOfferLineTotal(line: OfferLine, persons: number): number {
+  return computeLineTotalFromPrice(
+    line.snapshot.chosen_price,
+    line.snapshot.price_type,
+    persons,
+    line.quantityMode,
+    line.quantity
+  );
 }
 
 export function lineWarnings(

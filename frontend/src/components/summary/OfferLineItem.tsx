@@ -1,5 +1,5 @@
 import type { FingerfoodItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
-import { computeLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
+import { computeOfferLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
 
 function warningLineClasses(severity: WarningSeverity): string {
   if (severity === "blocking") {
@@ -10,7 +10,8 @@ function warningLineClasses(severity: WarningSeverity): string {
 
 interface OfferLineItemProps {
   line: OfferLine;
-  item: FingerfoodItem;
+  /** Live catalog row when available; warnings use it. Display and line total use snapshot only. */
+  catalogItem?: FingerfoodItem;
   persons: number;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;
@@ -19,23 +20,25 @@ interface OfferLineItemProps {
 
 export function OfferLineItem({
   line,
-  item,
+  catalogItem,
   persons,
   onQuantityChange,
   onModeChange,
   onRemove,
 }: OfferLineItemProps) {
-  const total = computeLineTotal(item, persons, line.quantityMode, line.quantity);
-  const warnings = lineWarnings(item, persons, line.quantityMode, line.quantity);
+  const total = computeOfferLineTotal(line, persons);
+  const warnings = catalogItem
+    ? lineWarnings(catalogItem, persons, line.quantityMode, line.quantity)
+    : [];
 
   return (
     <li className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="font-medium text-slate-900">{item.name}</p>
+          <p className="font-medium text-slate-900">{line.snapshot.title}</p>
           <p className="text-xs text-slate-500">
-            {item.price_type === "piece" ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
-            {formatCurrency(item.price)}
+            {line.snapshot.price_type === "piece" ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
+            {formatCurrency(line.snapshot.chosen_price)}
           </p>
         </div>
         <button

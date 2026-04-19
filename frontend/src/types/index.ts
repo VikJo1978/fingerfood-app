@@ -59,11 +59,21 @@ export interface FingerfoodItem {
   customization_mode: CustomizationMode;
 }
 
+/** Minimal catalog fields captured when the line is added (add-time snapshot). */
+export interface OfferLineCatalogSnapshot {
+  title: string;
+  source_type: SourceType;
+  pricing_mode: PricingMode;
+  price_type: PriceType;
+  chosen_price: number;
+}
+
 export interface OfferLine {
   lineId: string;
   itemId: string;
   quantityMode: QuantityMode;
   quantity: number;
+  snapshot: OfferLineCatalogSnapshot;
 }
 
 /**
