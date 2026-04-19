@@ -17,7 +17,7 @@ class Item(BaseModel):
     unit_label: str
     description: str = ""
     items_included: str | None = None
-    module: Literal["food", "beverage", "staff"] = "food"
+    module: Literal["food", "beverage", "staff", "tableware"] = "food"
 
     diet_type: DietType
     ingredient_flags: IngredientFlags = Field(default_factory=IngredientFlags)

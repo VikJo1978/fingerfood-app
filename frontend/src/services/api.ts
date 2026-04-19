@@ -4,7 +4,7 @@ import { normalizeItemList } from "../utils/normalizeItem";
 
 const baseUrl = () => import.meta.env.VITE_API_URL ?? "";
 
-export type CatalogModuleFilter = "" | "food" | "beverage" | "staff";
+export type CatalogModuleFilter = "" | "food" | "beverage" | "staff" | "tableware";
 
 export interface ItemQuery {
   search?: string;
@@ -31,7 +31,12 @@ function buildQuery(params: ItemQuery): string {
     q.set("exclude_allergens", params.exclude_allergens.trim());
   if (params.max_unit_price != null && params.max_unit_price > 0)
     q.set("max_unit_price", String(params.max_unit_price));
-  if (params.module === "food" || params.module === "beverage" || params.module === "staff")
+  if (
+    params.module === "food" ||
+    params.module === "beverage" ||
+    params.module === "staff" ||
+    params.module === "tableware"
+  )
     q.set("module", params.module);
   const s = q.toString();
   return s ? `?${s}` : "";

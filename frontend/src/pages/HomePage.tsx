@@ -70,6 +70,8 @@ export function HomePage() {
       base = catalog.filter((i) => i.module === "beverage");
     } else if (catalogModule === "staff") {
       base = catalog.filter((i) => i.module === "staff");
+    } else if (catalogModule === "tableware") {
+      base = catalog.filter((i) => i.module === "tableware");
     }
     return Array.from(new Set(base.map((i) => i.section)))
       .filter(Boolean)

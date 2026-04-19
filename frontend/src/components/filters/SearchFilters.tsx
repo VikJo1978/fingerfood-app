@@ -45,7 +45,7 @@ export function SearchFilters({
         <input
           id="search"
           type="search"
-          placeholder="Suche im Katalog (Speisen, Getränke, Personal)…"
+          placeholder="Suche im Katalog (Speisen, Getränke, Personal, Geschirr)…"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
@@ -64,6 +64,7 @@ export function SearchFilters({
             <option value="food">Speisen</option>
             <option value="beverage">Getränke</option>
             <option value="staff">Personal</option>
+            <option value="tableware">Geschirr / Tischbedarf</option>
           </select>
         </label>
 
