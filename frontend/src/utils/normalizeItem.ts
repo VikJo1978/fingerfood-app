@@ -1,5 +1,14 @@
 import { ALLERGENS, DIET_TYPES, type AllergenCode, type DietType } from "../constants/classification";
-import type { FingerfoodItem, IngredientFlags, PriceType } from "../types";
+import type {
+  CustomizationMode,
+  FingerfoodItem,
+  IngredientFlags,
+  ItemKind,
+  ItemModule,
+  PriceType,
+  PricingMode,
+  SourceType,
+} from "../types";
 
 const DEFAULT_FLAGS: IngredientFlags = {
   contains_meat: false,
@@ -43,6 +52,26 @@ function isPriceType(v: unknown): v is PriceType {
   return v === "piece" || v === "person";
 }
 
+function isPricingMode(v: unknown): v is PricingMode {
+  return v === "per_piece" || v === "per_person";
+}
+
+function isItemModule(v: unknown): v is ItemModule {
+  return v === "food";
+}
+
+function isSourceType(v: unknown): v is SourceType {
+  return v === "internal" || v === "external";
+}
+
+function isItemKind(v: unknown): v is ItemKind {
+  return v === "simple";
+}
+
+function isCustomizationMode(v: unknown): v is CustomizationMode {
+  return v === "fixed";
+}
+
 /**
  * Makes API payloads safe for the UI (missing fields, older backend, partial JSON).
  */
@@ -72,6 +101,18 @@ export function normalizeFingerfoodItem(raw: unknown): FingerfoodItem | null {
   const price_type: PriceType = isPriceType(r.price_type) ? r.price_type : "piece";
   const diet_type: DietType = isDietType(r.diet_type) ? r.diet_type : "omnivore";
 
+  const module: ItemModule = isItemModule(r.module) ? r.module : "food";
+  const source_type: SourceType = isSourceType(r.source_type) ? r.source_type : "internal";
+  const item_kind: ItemKind = isItemKind(r.item_kind) ? r.item_kind : "simple";
+  const pricing_mode: PricingMode = isPricingMode(r.pricing_mode)
+    ? r.pricing_mode
+    : price_type === "piece"
+      ? "per_piece"
+      : "per_person";
+  const customization_mode: CustomizationMode = isCustomizationMode(r.customization_mode)
+    ? r.customization_mode
+    : "fixed";
+
   return {
     id,
     name,
@@ -87,6 +128,11 @@ export function normalizeFingerfoodItem(raw: unknown): FingerfoodItem | null {
     diet_type,
     ingredient_flags: mergeIngredientFlags(r.ingredient_flags),
     allergens: sanitizeAllergens(r.allergens),
+    module,
+    source_type,
+    item_kind,
+    pricing_mode,
+    customization_mode,
   };
 }
 

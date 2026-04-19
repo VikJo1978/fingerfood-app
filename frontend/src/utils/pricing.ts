@@ -1,4 +1,4 @@
-import type { FingerfoodItem, QuantityMode } from "../types";
+import type { FingerfoodItem, OfferWarning, QuantityMode } from "../types";
 
 export function computeLineTotal(
   item: FingerfoodItem,
@@ -19,20 +19,29 @@ export function lineWarnings(
   persons: number,
   mode: QuantityMode,
   quantity: number
-): string[] {
-  const w: string[] = [];
+): OfferWarning[] {
+  const w: OfferWarning[] = [];
   if (mode === "total" && item.price_type === "piece" && quantity < item.min_order) {
-    w.push(
-      `Hinweis: Diese Position wird normalerweise ab ${item.min_order} ${item.unit_label} bestellt.`
-    );
+    w.push({
+      code: "MIN_ORDER_PIECE",
+      severity: "warning",
+      message: `Hinweis: Diese Position wird normalerweise ab ${item.min_order} ${item.unit_label} bestellt.`,
+    });
   }
   if (mode === "per_person" && persons < 10) {
-    w.push(
-      "Hinweis: Diese Konfiguration liegt unter dem üblichen Mindest-Personenzahl (10)."
-    );
+    w.push({
+      code: "PER_PERSON_BELOW_USUAL_MIN_PERSONS",
+      severity: "warning",
+      message:
+        "Hinweis: Diese Konfiguration liegt unter dem üblichen Mindest-Personenzahl (10).",
+    });
   }
   if (mode === "total" && item.price_type === "person" && quantity < item.min_order) {
-    w.push(`Hinweis: Übliches Minimum: ${item.min_order} Personen für diese Position.`);
+    w.push({
+      code: "MIN_ORDER_PERSON",
+      severity: "warning",
+      message: `Hinweis: Übliches Minimum: ${item.min_order} Personen für diese Position.`,
+    });
   }
   return w;
 }

@@ -1,4 +1,4 @@
-import type { FingerfoodItem } from "../types";
+import type { FingerfoodItem, OfferWarning } from "../types";
 import type { DietType } from "../constants/classification";
 import { normalizeItemList } from "../utils/normalizeItem";
 
@@ -64,9 +64,9 @@ export interface OfferCalculateResponse {
     quantity_mode: "total" | "per_person";
     quantity: number;
     line_total: number;
-    warnings: string[];
+    warnings: OfferWarning[];
   }[];
-  warnings: string[];
+  warnings: OfferWarning[];
 }
 
 export async function calculateOffer(body: OfferCalculateBody): Promise<OfferCalculateResponse> {

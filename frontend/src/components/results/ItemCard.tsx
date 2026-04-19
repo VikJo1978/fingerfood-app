@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { FingerfoodItem, QuantityMode } from "../../types";
+import type { FingerfoodItem, QuantityMode, WarningSeverity } from "../../types";
 import { computeLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
 import { TagBadge } from "../ui/TagBadge";
 import { ALLERGEN_LABELS_DE } from "../../constants/classification";
@@ -13,6 +13,13 @@ interface ItemCardProps {
 
 function defaultQuantity(mode: QuantityMode): number {
   return mode === "total" ? 10 : 1;
+}
+
+function warningListClasses(severity: WarningSeverity): string {
+  if (severity === "blocking") {
+    return "rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-900";
+  }
+  return "rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900";
 }
 
 export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
@@ -81,13 +88,10 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
       )}
 
       {warnings.length ? (
-        <ul className="space-y-1 text-xs text-amber-900">
-          {warnings.map((w) => (
-            <li
-              key={w}
-              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
-            >
-              {w}
+        <ul className="space-y-1 text-xs">
+          {warnings.map((w, i) => (
+            <li key={`${w.code}-${i}`} className={warningListClasses(w.severity)}>
+              {w.message}
             </li>
           ))}
         </ul>

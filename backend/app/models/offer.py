@@ -2,6 +2,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+WarningSeverity = Literal["info", "warning", "blocking"]
+
+
+class OfferWarning(BaseModel):
+    code: str
+    severity: WarningSeverity
+    message: str
+
 
 class OfferLineIn(BaseModel):
     item_id: str
@@ -19,7 +27,7 @@ class LinePricing(BaseModel):
     quantity_mode: Literal["total", "per_person"]
     quantity: float
     line_total: float
-    warnings: list[str] = Field(default_factory=list)
+    warnings: list[OfferWarning] = Field(default_factory=list)
 
 
 class OfferResponse(BaseModel):
@@ -27,4 +35,4 @@ class OfferResponse(BaseModel):
     subtotal: float
     price_per_person: float
     lines: list[LinePricing]
-    warnings: list[str] = Field(default_factory=list)
+    warnings: list[OfferWarning] = Field(default_factory=list)

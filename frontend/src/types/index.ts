@@ -2,7 +2,26 @@ import type { AllergenCode, DietType } from "../constants/classification";
 
 export type PriceType = "piece" | "person";
 
+export type ItemModule = "food";
+
+export type SourceType = "internal" | "external";
+
+export type ItemKind = "simple";
+
+export type PricingMode = "per_piece" | "per_person";
+
+export type CustomizationMode = "fixed";
+
 export type QuantityMode = "total" | "per_person";
+
+export type WarningSeverity = "info" | "warning" | "blocking";
+
+/** Structured pricing / validation notice (aligned with backend OfferWarning). */
+export interface OfferWarning {
+  code: string;
+  severity: WarningSeverity;
+  message: string;
+}
 
 export interface IngredientFlags {
   contains_meat: boolean;
@@ -33,6 +52,11 @@ export interface FingerfoodItem {
   diet_type: DietType;
   ingredient_flags: IngredientFlags;
   allergens: AllergenCode[];
+  module: ItemModule;
+  source_type: SourceType;
+  item_kind: ItemKind;
+  pricing_mode: PricingMode;
+  customization_mode: CustomizationMode;
 }
 
 export interface OfferLine {

@@ -1,5 +1,12 @@
-import type { FingerfoodItem, OfferLine, QuantityMode } from "../../types";
+import type { FingerfoodItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
 import { computeLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
+
+function warningLineClasses(severity: WarningSeverity): string {
+  if (severity === "blocking") {
+    return "rounded-lg border border-red-200 bg-red-50/90 px-2 py-1.5 text-red-900";
+  }
+  return "rounded-lg border border-amber-100 bg-amber-50/80 px-2 py-1.5 text-amber-900";
+}
 
 interface OfferLineItemProps {
   line: OfferLine;
@@ -41,10 +48,10 @@ export function OfferLineItem({
       </div>
 
       {warnings.length ? (
-        <ul className="mt-3 space-y-1 text-xs text-amber-900">
-          {warnings.map((w) => (
-            <li key={w} className="rounded-lg border border-amber-100 bg-amber-50/80 px-2 py-1.5">
-              {w}
+        <ul className="mt-3 space-y-1 text-xs">
+          {warnings.map((w, i) => (
+            <li key={`${w.code}-${i}`} className={warningLineClasses(w.severity)}>
+              {w.message}
             </li>
           ))}
         </ul>
