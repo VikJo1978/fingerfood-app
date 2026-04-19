@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { HeaderBar } from "../components/layout/HeaderBar";
+import { OrderContextCard } from "../components/OrderContextCard";
 import { TopControls } from "../components/TopControls";
 import { SearchFilters } from "../components/filters/SearchFilters";
 import { ItemCard } from "../components/results/ItemCard";
@@ -146,6 +147,7 @@ export function HomePage() {
     });
     return {
       meta: {
+        orderContext: offerDraft.orderContext,
         persons: offerDraft.persons,
         budgetEnabled: offerDraft.budgetEnabled,
         totalBudgetEUR: offerDraft.budgetEnabled ? offerDraft.totalBudget : null,
@@ -193,6 +195,16 @@ export function HomePage() {
         <HeaderBar
           title="Fingerfood-Angebot zusammenstellen"
           subtitle="Stellen Sie in wenigen Schritten ein stimmiges Angebot für Ihre Veranstaltung zusammen — mit klarer Kalkulation und ohne Fachjargon."
+        />
+
+        <OrderContextCard
+          orderContext={offerDraft.orderContext}
+          onOrderContextChange={(patch) =>
+            setOfferDraft((d) => ({
+              ...d,
+              orderContext: { ...d.orderContext, ...patch },
+            }))
+          }
         />
 
         <TopControls

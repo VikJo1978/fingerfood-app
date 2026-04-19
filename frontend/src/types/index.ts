@@ -76,11 +76,22 @@ export interface OfferLine {
   snapshot: OfferLineCatalogSnapshot;
 }
 
+/** Compact order / event context (V1, in-memory only). */
+export interface OrderContextV1 {
+  companyName: string;
+  contactPerson: string;
+  eventDate: string;
+  eventTime: string;
+  location: string;
+  remarks?: string;
+}
+
 /**
  * In-memory offer being edited in the configurator (not yet a persisted snapshot).
  * Totals stay derived in UI until a dedicated calculation/snapshot step owns them.
  */
 export interface OfferDraft {
+  orderContext: OrderContextV1;
   persons: number;
   budgetEnabled: boolean;
   totalBudget: number;
@@ -89,8 +100,19 @@ export interface OfferDraft {
   warnings?: OfferWarning[];
 }
 
+export function createInitialOrderContextV1(): OrderContextV1 {
+  return {
+    companyName: "",
+    contactPerson: "",
+    eventDate: "",
+    eventTime: "",
+    location: "",
+  };
+}
+
 export function createInitialOfferDraft(): OfferDraft {
   return {
+    orderContext: createInitialOrderContextV1(),
     persons: 10,
     budgetEnabled: false,
     totalBudget: 500,
