@@ -57,7 +57,7 @@ function isPricingMode(v: unknown): v is PricingMode {
 }
 
 function isItemModule(v: unknown): v is ItemModule {
-  return v === "food" || v === "beverage";
+  return v === "food" || v === "beverage" || v === "staff";
 }
 
 function isSourceType(v: unknown): v is SourceType {

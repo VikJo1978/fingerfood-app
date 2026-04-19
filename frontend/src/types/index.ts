@@ -2,7 +2,7 @@ import type { AllergenCode, DietType } from "../constants/classification";
 
 export type PriceType = "piece" | "person";
 
-export type ItemModule = "food" | "beverage";
+export type ItemModule = "food" | "beverage" | "staff";
 
 export type SourceType = "internal" | "external";
 

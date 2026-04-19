@@ -55,7 +55,7 @@ export function filterCatalog(all: FingerfoodItem[], opts: CatalogFilterOpts): F
   if (cap != null && cap > 0 && Number.isFinite(cap)) {
     out = out.filter((i) => i.price <= cap);
   }
-  if (opts.module === "food" || opts.module === "beverage") {
+  if (opts.module === "food" || opts.module === "beverage" || opts.module === "staff") {
     out = out.filter((i) => i.module === opts.module);
   }
   return out;

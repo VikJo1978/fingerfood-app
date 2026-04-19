@@ -68,6 +68,8 @@ export function HomePage() {
       base = catalog.filter((i) => i.module === "food");
     } else if (catalogModule === "beverage") {
       base = catalog.filter((i) => i.module === "beverage");
+    } else if (catalogModule === "staff") {
+      base = catalog.filter((i) => i.module === "staff");
     }
     return Array.from(new Set(base.map((i) => i.section)))
       .filter(Boolean)
