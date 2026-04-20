@@ -44,7 +44,7 @@ def list_items(
     max_unit_price: float | None = Query(default=None, ge=0),
     module: str | None = Query(
         default=None,
-        description="food | beverage | staff | tableware — Katalogmodul (optional)",
+        description="food | beverage | staff | tableware | equipment — Katalogmodul (optional)",
     ),
 ) -> list[Item]:
     """
@@ -96,7 +96,7 @@ def list_items(
     if max_unit_price is not None and max_unit_price > 0:
         out = [i for i in out if i.price <= max_unit_price]
 
-    if module in ("food", "beverage", "staff", "tableware"):
+    if module in ("food", "beverage", "staff", "tableware", "equipment"):
         out = [i for i in out if i.module == module]
 
     return out

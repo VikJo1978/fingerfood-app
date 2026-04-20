@@ -59,7 +59,8 @@ export function filterCatalog(all: FingerfoodItem[], opts: CatalogFilterOpts): F
     opts.module === "food" ||
     opts.module === "beverage" ||
     opts.module === "staff" ||
-    opts.module === "tableware"
+    opts.module === "tableware" ||
+    opts.module === "equipment"
   ) {
     out = out.filter((i) => i.module === opts.module);
   }

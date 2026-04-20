@@ -72,6 +72,8 @@ export function HomePage() {
       base = catalog.filter((i) => i.module === "staff");
     } else if (catalogModule === "tableware") {
       base = catalog.filter((i) => i.module === "tableware");
+    } else if (catalogModule === "equipment") {
+      base = catalog.filter((i) => i.module === "equipment");
     }
     return Array.from(new Set(base.map((i) => i.section)))
       .filter(Boolean)

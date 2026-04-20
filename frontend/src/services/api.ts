@@ -4,7 +4,13 @@ import { normalizeItemList } from "../utils/normalizeItem";
 
 const baseUrl = () => import.meta.env.VITE_API_URL ?? "";
 
-export type CatalogModuleFilter = "" | "food" | "beverage" | "staff" | "tableware";
+export type CatalogModuleFilter =
+  | ""
+  | "food"
+  | "beverage"
+  | "staff"
+  | "tableware"
+  | "equipment";
 
 export interface ItemQuery {
   search?: string;
@@ -35,7 +41,8 @@ function buildQuery(params: ItemQuery): string {
     params.module === "food" ||
     params.module === "beverage" ||
     params.module === "staff" ||
-    params.module === "tableware"
+    params.module === "tableware" ||
+    params.module === "equipment"
   )
     q.set("module", params.module);
   const s = q.toString();
