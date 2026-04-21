@@ -54,9 +54,11 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <TagBadge label={dietLabelDe(item.diet_type)} />
-      </div>
+      {item.diet_type != null ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <TagBadge label={dietLabelDe(item.diet_type)} />
+        </div>
+      ) : null}
 
       {ingredientsOn.length ? (
         <div className="space-y-1.5">

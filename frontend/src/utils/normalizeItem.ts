@@ -105,7 +105,6 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
       : null;
 
   const price_type: PriceType = isPriceType(r.price_type) ? r.price_type : "piece";
-  const diet_type: DietType = isDietType(r.diet_type) ? r.diet_type : "omnivore";
 
   const module: ItemModule = isItemModule(r.module) ? r.module : "food";
   const source_type: SourceType = isSourceType(r.source_type) ? r.source_type : "internal";
@@ -118,6 +117,26 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
   const customization_mode: CustomizationMode = isCustomizationMode(r.customization_mode)
     ? r.customization_mode
     : "fixed";
+
+  const foodish = module === "food" || module === "beverage";
+
+  const diet_type: DietType | undefined = isDietType(r.diet_type)
+    ? r.diet_type
+    : foodish
+      ? "omnivore"
+      : undefined;
+
+  const ingredient_flags: IngredientFlags | undefined = foodish
+    ? mergeIngredientFlags(r.ingredient_flags)
+    : "ingredient_flags" in r && r.ingredient_flags != null
+      ? mergeIngredientFlags(r.ingredient_flags)
+      : undefined;
+
+  const allergens: AllergenCode[] | undefined = foodish
+    ? sanitizeAllergens(r.allergens)
+    : "allergens" in r
+      ? sanitizeAllergens(r.allergens)
+      : undefined;
 
   return {
     id,
@@ -132,8 +151,8 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
     description,
     items_included,
     diet_type,
-    ingredient_flags: mergeIngredientFlags(r.ingredient_flags),
-    allergens: sanitizeAllergens(r.allergens),
+    ingredient_flags,
+    allergens,
     module,
     source_type,
     item_kind,

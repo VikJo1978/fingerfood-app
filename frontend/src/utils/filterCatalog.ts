@@ -43,7 +43,7 @@ export function filterCatalog(all: CatalogItem[], opts: CatalogFilterOpts): Cata
     out = out.filter((i) => i.price_type === opts.priceType);
   }
   if (opts.diet === "vegetarian" || opts.diet === "vegan" || opts.diet === "pescetarian" || opts.diet === "omnivore") {
-    out = out.filter((i) => i.diet_type === opts.diet);
+    out = out.filter((i) => i.diet_type != null && i.diet_type === opts.diet);
   }
 
   const avoid = parseExcludeAllergenCodes(opts.excludeAllergens);

@@ -50,9 +50,12 @@ export interface CatalogItem {
   unit_label: string;
   description: string;
   items_included?: string | null;
-  diet_type: DietType;
-  ingredient_flags: IngredientFlags;
-  allergens: AllergenCode[];
+  /** Present for food-like rows; omitted when not applicable (e.g. staff, tableware). */
+  diet_type?: DietType;
+  /** Food/beverage ingredient composition; optional for non-food modules. */
+  ingredient_flags?: IngredientFlags;
+  /** Declared allergens when relevant; optional for non-food modules. */
+  allergens?: AllergenCode[];
   module: ItemModule;
   source_type: SourceType;
   item_kind: ItemKind;
