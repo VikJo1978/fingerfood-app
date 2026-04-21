@@ -15,6 +15,7 @@ export type CatalogModuleFilter =
 export interface ItemQuery {
   search?: string;
   section?: string;
+  /** Filter by catalog `price_type` (unit basis: piece vs person), not `pricing_mode`. */
   price_type?: PriceTypeFilter;
   diet?: DietType | "";
   exclude_allergens?: string;

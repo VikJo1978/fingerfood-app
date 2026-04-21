@@ -1,5 +1,5 @@
 import type { CatalogItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
-import { computeOfferLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
+import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings } from "../../utils/pricing";
 
 function warningLineClasses(severity: WarningSeverity): string {
   if (severity === "blocking") {
@@ -37,7 +37,7 @@ export function OfferLineItem({
         <div className="min-w-0 space-y-1">
           <p className="font-medium text-slate-900">{line.snapshot.title}</p>
           <p className="text-xs text-slate-500">
-            {line.snapshot.price_type === "piece" ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
+            {isPieceUnitBasis(line.snapshot.price_type) ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
             {formatCurrency(line.snapshot.chosen_price)}
           </p>
         </div>

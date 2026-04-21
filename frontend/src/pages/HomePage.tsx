@@ -11,7 +11,7 @@ import { fetchItems } from "../services/api";
 import type { CatalogItem, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
-import { computeOfferLineTotal, formatCurrency } from "../utils/pricing";
+import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis } from "../utils/pricing";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -118,13 +118,14 @@ export function HomePage() {
       itemId: item.id,
       quantityMode: mode,
       quantity,
+      // Both preserved for export/API; line totals use `price_type` + `chosen_price` (unit basis).
       snapshot: {
         title: item.name,
         source_type: item.source_type,
         pricing_mode: item.pricing_mode,
         price_type: item.price_type,
         chosen_price: item.price,
-      },
+      } satisfies OfferLine["snapshot"],
     };
     setOfferDraft((d) => ({ ...d, lines: [...d.lines, line] }));
   };
@@ -195,7 +196,7 @@ export function HomePage() {
       const it = itemsById[l.itemId];
       const lt = computeOfferLineTotal(l, offerDraft.persons);
       const modeDe = l.quantityMode === "total" ? "Gesamt" : "Pro Person";
-      const pt = l.snapshot.price_type === "piece" ? "Stück" : "Person";
+      const pt = isPieceUnitBasis(l.snapshot.price_type) ? "Stück" : "Person";
       const unitPrice = l.snapshot.chosen_price;
       const rawName = it?.name ?? l.snapshot.title;
       const name = `"${rawName.replace(/"/g, '""')}"`;

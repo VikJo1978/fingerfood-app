@@ -104,6 +104,7 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
       ? (r.items_included as string | null)
       : null;
 
+  // `price_type` = how `price` is quoted (measurement / unit basis). `pricing_mode` = commercial mode from API.
   const price_type: PriceType = isPriceType(r.price_type) ? r.price_type : "piece";
 
   const module: ItemModule = isItemModule(r.module) ? r.module : "food";

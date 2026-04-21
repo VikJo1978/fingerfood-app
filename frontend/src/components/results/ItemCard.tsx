@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CatalogItem, QuantityMode, WarningSeverity } from "../../types";
-import { computeLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
+import { computeLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings } from "../../utils/pricing";
 import { TagBadge } from "../ui/TagBadge";
 import { ALLERGEN_LABELS_DE } from "../../constants/classification";
 import { activeIngredientLabels, dietLabelDe } from "../../utils/classificationDisplay";
@@ -32,10 +32,10 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
 
   const preview = computeLineTotal(item, persons, mode, quantity);
   const warnings = lineWarnings(item, persons, mode, quantity);
-  const priceLabel =
-    item.price_type === "piece"
-      ? `${formatCurrency(item.price)} / ${item.unit_label}`
-      : `${formatCurrency(item.price)} / Person`;
+  // Label follows unit basis (`price_type`); `pricing_mode` is carried separately on the item.
+  const priceLabel = isPieceUnitBasis(item.price_type)
+    ? `${formatCurrency(item.price)} / ${item.unit_label}`
+    : `${formatCurrency(item.price)} / Person`;
 
   const ingredientsOn = activeIngredientLabels(item.ingredient_flags);
 

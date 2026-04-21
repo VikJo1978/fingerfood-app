@@ -1,5 +1,9 @@
 import type { AllergenCode, DietType } from "../constants/classification";
 
+/**
+ * How the catalog `price` is quoted in data (measurement / unit basis): per physical unit vs per person.
+ * Drives line-total math and price labels together with quantity mode.
+ */
 export type PriceType = "piece" | "person";
 
 export type ItemModule = "food" | "beverage" | "staff" | "tableware" | "equipment";
@@ -8,6 +12,10 @@ export type SourceType = "internal" | "external";
 
 export type ItemKind = "simple";
 
+/**
+ * Commercial charging mode from the catalog/API (`per_piece` | `per_person`).
+ * Aligned with backend semantics; today often mirrors `price_type`, but kept separate for future rules.
+ */
 export type PricingMode = "per_piece" | "per_person";
 
 export type CustomizationMode = "fixed";
@@ -44,7 +52,9 @@ export interface CatalogItem {
   section: string;
   category: string;
   subcategory?: string | null;
+  /** Numeric unit price; meaning follows `price_type` (unit basis). */
   price: number;
+  /** Unit basis for `price` (piece vs person). Used by the configurator for totals and copy. */
   price_type: PriceType;
   min_order: number;
   unit_label: string;
@@ -59,6 +69,7 @@ export interface CatalogItem {
   module: ItemModule;
   source_type: SourceType;
   item_kind: ItemKind;
+  /** Commercial mode from catalog; snapshot for offers. Line math in UI still keys off `price_type` today. */
   pricing_mode: PricingMode;
   customization_mode: CustomizationMode;
 }
@@ -70,7 +81,9 @@ export type FingerfoodItem = CatalogItem;
 export interface OfferLineCatalogSnapshot {
   title: string;
   source_type: SourceType;
+  /** Commercial mode at add-to-offer time (from catalog). */
   pricing_mode: PricingMode;
+  /** Unit basis at add-to-offer time; `computeOfferLineTotal` uses this with `chosen_price`. */
   price_type: PriceType;
   chosen_price: number;
 }
