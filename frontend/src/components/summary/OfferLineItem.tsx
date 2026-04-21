@@ -1,4 +1,4 @@
-import type { FingerfoodItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
+import type { CatalogItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
 import { computeOfferLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
 
 function warningLineClasses(severity: WarningSeverity): string {
@@ -11,7 +11,7 @@ function warningLineClasses(severity: WarningSeverity): string {
 interface OfferLineItemProps {
   line: OfferLine;
   /** Live catalog row when available; warnings use it. Display and line total use snapshot only. */
-  catalogItem?: FingerfoodItem;
+  catalogItem?: CatalogItem;
   persons: number;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;

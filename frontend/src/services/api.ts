@@ -1,4 +1,4 @@
-import type { FingerfoodItem, OfferDraft, OfferWarning } from "../types";
+import type { CatalogItem, OfferDraft, OfferWarning } from "../types";
 import type { DietType } from "../constants/classification";
 import { normalizeItemList } from "../utils/normalizeItem";
 
@@ -49,7 +49,7 @@ function buildQuery(params: ItemQuery): string {
   return s ? `?${s}` : "";
 }
 
-export async function fetchItems(params: ItemQuery = {}): Promise<FingerfoodItem[]> {
+export async function fetchItems(params: ItemQuery = {}): Promise<CatalogItem[]> {
   const res = await fetch(`${baseUrl()}/api/items${buildQuery(params)}`);
   if (!res.ok) throw new Error(`Artikel konnten nicht geladen werden (${res.status})`);
   const data: unknown = await res.json();

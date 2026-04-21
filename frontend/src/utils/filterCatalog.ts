@@ -1,6 +1,6 @@
 import { ALLERGENS } from "../constants/classification";
 import type { DietType } from "../constants/classification";
-import type { FingerfoodItem } from "../types";
+import type { CatalogItem } from "../types";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { parseMaxUnitPriceInput } from "./maxUnitPrice";
 
@@ -24,7 +24,7 @@ export interface CatalogFilterOpts {
   module: CatalogModuleFilter;
 }
 
-export function filterCatalog(all: FingerfoodItem[], opts: CatalogFilterOpts): FingerfoodItem[] {
+export function filterCatalog(all: CatalogItem[], opts: CatalogFilterOpts): CatalogItem[] {
   let out = all;
   const q = opts.search.trim().toLowerCase();
   if (q) {

@@ -1,4 +1,4 @@
-import type { FingerfoodItem, OfferLine, OfferWarning, PriceType, QuantityMode } from "../types";
+import type { CatalogItem, OfferLine, OfferWarning, PriceType, QuantityMode } from "../types";
 
 /** Line total from unit price and legacy `price_type` (same rules as `computeLineTotal`). */
 export function computeLineTotalFromPrice(
@@ -17,7 +17,7 @@ export function computeLineTotalFromPrice(
 }
 
 export function computeLineTotal(
-  item: FingerfoodItem,
+  item: CatalogItem,
   persons: number,
   mode: QuantityMode,
   quantity: number
@@ -40,7 +40,7 @@ export function computeOfferLineTotal(line: OfferLine, persons: number): number 
 }
 
 export function lineWarnings(
-  item: FingerfoodItem,
+  item: CatalogItem,
   persons: number,
   mode: QuantityMode,
   quantity: number

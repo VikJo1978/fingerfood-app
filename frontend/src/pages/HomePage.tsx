@@ -8,7 +8,7 @@ import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { fetchItems } from "../services/api";
-import type { FingerfoodItem, OfferLine, QuantityMode } from "../types";
+import type { CatalogItem, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
 import { computeOfferLineTotal, formatCurrency } from "../utils/pricing";
@@ -36,7 +36,7 @@ export function HomePage() {
   const [maxUnitPrice, setMaxUnitPrice] = useState("");
   const [catalogModule, setCatalogModule] = useState<CatalogModuleFilter>("");
 
-  const [catalog, setCatalog] = useState<FingerfoodItem[]>([]);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +95,7 @@ export function HomePage() {
   );
 
   const itemsById = useMemo(() => {
-    const m: Record<string, FingerfoodItem> = {};
+    const m: Record<string, CatalogItem> = {};
     for (const it of catalog) m[it.id] = it;
     return m;
   }, [catalog]);
@@ -111,7 +111,7 @@ export function HomePage() {
 
   const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
 
-  const onAddLine = (item: FingerfoodItem, mode: QuantityMode, quantity: number) => {
+  const onAddLine = (item: CatalogItem, mode: QuantityMode, quantity: number) => {
     const lineId = crypto.randomUUID();
     const line: OfferLine = {
       lineId,

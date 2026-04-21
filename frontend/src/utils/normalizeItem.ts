@@ -1,7 +1,7 @@
 import { ALLERGENS, DIET_TYPES, type AllergenCode, type DietType } from "../constants/classification";
 import type {
+  CatalogItem,
   CustomizationMode,
-  FingerfoodItem,
   IngredientFlags,
   ItemKind,
   ItemModule,
@@ -81,7 +81,7 @@ function isCustomizationMode(v: unknown): v is CustomizationMode {
 /**
  * Makes API payloads safe for the UI (missing fields, older backend, partial JSON).
  */
-export function normalizeFingerfoodItem(raw: unknown): FingerfoodItem | null {
+export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
   if (typeof raw !== "object" || raw === null) return null;
   const r = raw as Record<string, unknown>;
   const id = typeof r.id === "string" ? r.id : null;
@@ -142,11 +142,14 @@ export function normalizeFingerfoodItem(raw: unknown): FingerfoodItem | null {
   };
 }
 
-export function normalizeItemList(raw: unknown): FingerfoodItem[] {
+/** @deprecated Use normalizeCatalogItem — legacy name. */
+export const normalizeFingerfoodItem = normalizeCatalogItem;
+
+export function normalizeItemList(raw: unknown): CatalogItem[] {
   if (!Array.isArray(raw)) return [];
-  const out: FingerfoodItem[] = [];
+  const out: CatalogItem[] = [];
   for (const row of raw) {
-    const item = normalizeFingerfoodItem(row);
+    const item = normalizeCatalogItem(row);
     if (item) out.push(item);
   }
   return out;

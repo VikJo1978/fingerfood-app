@@ -37,7 +37,8 @@ export interface IngredientFlags {
   contains_gelatin: boolean;
 }
 
-export interface FingerfoodItem {
+/** Unified catalog row (food, beverages, staff, tableware, equipment). */
+export interface CatalogItem {
   id: string;
   name: string;
   section: string;
@@ -58,6 +59,9 @@ export interface FingerfoodItem {
   pricing_mode: PricingMode;
   customization_mode: CustomizationMode;
 }
+
+/** @deprecated Prefer CatalogItem — legacy name from early fingerfood scope. */
+export type FingerfoodItem = CatalogItem;
 
 /** Minimal catalog fields captured when the line is added (add-time snapshot). */
 export interface OfferLineCatalogSnapshot {

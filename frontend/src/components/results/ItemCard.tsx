@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import type { FingerfoodItem, QuantityMode, WarningSeverity } from "../../types";
+import type { CatalogItem, QuantityMode, WarningSeverity } from "../../types";
 import { computeLineTotal, formatCurrency, lineWarnings } from "../../utils/pricing";
 import { TagBadge } from "../ui/TagBadge";
 import { ALLERGEN_LABELS_DE } from "../../constants/classification";
 import { activeIngredientLabels, dietLabelDe } from "../../utils/classificationDisplay";
 
 interface ItemCardProps {
-  item: FingerfoodItem;
+  item: CatalogItem;
   persons: number;
-  onAdd: (item: FingerfoodItem, mode: QuantityMode, quantity: number) => void;
+  onAdd: (item: CatalogItem, mode: QuantityMode, quantity: number) => void;
 }
 
 function defaultQuantity(mode: QuantityMode): number {

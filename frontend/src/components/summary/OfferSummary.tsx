@@ -1,11 +1,11 @@
-import type { FingerfoodItem, OfferDraft, QuantityMode } from "../../types";
+import type { CatalogItem, OfferDraft, QuantityMode } from "../../types";
 import { formatCurrency } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
 
 interface OfferSummaryProps {
   draft: OfferDraft;
-  itemsById: Record<string, FingerfoodItem>;
+  itemsById: Record<string, CatalogItem>;
   subtotal: number;
   pricePerPerson: number;
   onQuantityChange: (lineId: string, q: number) => void;
