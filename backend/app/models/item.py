@@ -18,6 +18,7 @@ class Item(BaseModel):
     description: str = ""
     items_included: str | None = None
     module: Literal["food", "beverage", "staff", "tableware", "equipment"] = "food"
+    item_kind: Literal["simple", "composite"] = "simple"
 
     diet_type: DietType
     ingredient_flags: IngredientFlags = Field(default_factory=IngredientFlags)

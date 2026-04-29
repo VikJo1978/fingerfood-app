@@ -125,6 +125,7 @@ export function HomePage() {
         pricing_mode: item.pricing_mode,
         price_type: item.price_type,
         chosen_price: item.price,
+        item_kind: item.item_kind,
       } satisfies OfferLine["snapshot"],
     };
     setOfferDraft((d) => ({ ...d, lines: [...d.lines, line] }));

@@ -10,7 +10,7 @@ export type ItemModule = "food" | "beverage" | "staff" | "tableware" | "equipmen
 
 export type SourceType = "internal" | "external";
 
-export type ItemKind = "simple";
+export type ItemKind = "simple" | "composite";
 
 /**
  * Commercial charging mode from the catalog/API (`per_piece` | `per_person`).
@@ -86,6 +86,8 @@ export interface OfferLineCatalogSnapshot {
   /** Unit basis at add-to-offer time; `computeOfferLineTotal` uses this with `chosen_price`. */
   price_type: PriceType;
   chosen_price: number;
+  /** Simple line vs composite / package row (optional for older snapshots). */
+  item_kind?: ItemKind;
 }
 
 export interface OfferLine {

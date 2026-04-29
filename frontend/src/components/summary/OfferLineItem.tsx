@@ -35,7 +35,14 @@ export function OfferLineItem({
     <li className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="font-medium text-slate-900">{line.snapshot.title}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium text-slate-900">{line.snapshot.title}</p>
+            {catalogItem?.item_kind === "composite" || line.snapshot.item_kind === "composite" ? (
+              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                Paket
+              </span>
+            ) : null}
+          </div>
           <p className="text-xs text-slate-500">
             {isPieceUnitBasis(line.snapshot.price_type) ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
             {formatCurrency(line.snapshot.chosen_price)}

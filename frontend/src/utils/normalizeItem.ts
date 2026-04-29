@@ -71,7 +71,7 @@ function isSourceType(v: unknown): v is SourceType {
 }
 
 function isItemKind(v: unknown): v is ItemKind {
-  return v === "simple";
+  return v === "simple" || v === "composite";
 }
 
 function isCustomizationMode(v: unknown): v is CustomizationMode {
