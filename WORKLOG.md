@@ -53,6 +53,27 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - **`ConfiguratorPlanningContextV1`** (types only): Narrow slice for **planning inputs** that might eventually seed configurator defaults — persons, budget flags, desired modules, dietary text, event type, service style. Still **not** Core truth until promoted via controlled flows.
 - **CRM**: Narrative and pipeline tracking; **must not** silently overwrite Core **`OrderVersion`** semantics.
 
+### Neue Anfrage V1 — Zeit & Ablauf / Aufwand vor Ort (decision)
+
+- **Neue Anfrage V1 must not** ask Büro staff to calculate **exact Aufbauzeit**. Avoid precise minute commitments at intake.
+- Instead, capture a **“Zeit & Ablauf / Aufwand vor Ort”** block: office records **setup complexity flags** (multi-select / checklist style), not a single engineered duration:
+  - delivery only  
+  - buffet setup  
+  - beverage setup  
+  - tableware setup  
+  - equipment / table setup  
+  - staff briefing  
+  - allergen / signage cards  
+  - teardown / pickup later  
+  - unclear  
+- The system **may** derive a rough **“geschätzter Vorlauf vor Essensbeginn”** as one of these **ranges only**:
+  - 15–30 min  
+  - 30–60 min  
+  - 60–90 min  
+  - needs internal review  
+- That estimate is **guidance for Büro/Kundenkommunikation only** — **not operational truth**, **not** a substitute for disposition scheduling.
+- **Final timing** belongs to **Küche / Disposition / Core**. Promotion into executable plans stays **Core-owned**.
+
 ---
 
 ## Boundary diagram (conceptual)
@@ -82,6 +103,7 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - Define/implement **Core ↔ Configurator** handoff so edits produce **`OrderVersion`** records with **print-confirmation** and **`READY_TO_SEND`** gates (backend contracts first).
 - Align **catalog publication** so prototype **`items.json`** / **`CatalogItem`** either stays fixture-only or mirrors Core-published catalog intentionally.
 - Wire **`ConfiguratorPlanningContextV1`** from real intake when the unified channel exists — still **downstream of CRM**, **upstream of** Core commits only via controlled promotion.
+- **Neue Anfrage V1**: implement **“Zeit & Ablauf / Aufwand vor Ort”** (flags + optional rough range as above); ensure UX/copy makes clear estimates are **non-binding** until Core/disposition confirms.
 
 ---
 
@@ -92,7 +114,8 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - Do **not** use **Wochenübersicht** or **kitchen kiosk** as authoritative editing surfaces (kiosk stays read-only MVP).
 - Do **not** split intake into incompatible parallel truths — preserve **single controlled flow** from **wix_form / email / phone / manual**.
 - Avoid implicit **`READY_TO_SEND`** releases without explicit gate policy.
+- Do **not** treat inquiry-time **“geschätzter Vorlauf”** ranges as scheduling commitments or Core operational truth.
 
 ---
 
-*Last updated: WORKLOG rewrite — Core / OrderVersion operational model.*
+*Last updated: Neue Anfrage V1 — Zeit & Ablauf / Aufwand vor Ort decision.*
