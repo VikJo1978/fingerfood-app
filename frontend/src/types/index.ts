@@ -155,7 +155,7 @@ export interface InquiryV1 {
 
 /**
  * Offer-configuration slice derived from planning (V1).
- * Boundary: only fields relevant to configuring an offer — not full inquiry data.
+ * Boundary: planning-relevant inputs only — not Auftragskontext / Stammdaten.
  */
 export interface ConfiguratorPlanningContextV1 {
   persons: number;
@@ -165,6 +165,22 @@ export interface ConfiguratorPlanningContextV1 {
   dietaryRequirements: string;
   eventType: string;
   serviceStyle: string;
+}
+
+/** Lightweight order-context prefill from inquiry intake (V1). UI-only bridge, not planning. */
+export interface ConfiguratorOrderContextPrefillV1 {
+  companyName: string;
+  contactPerson: string;
+  eventDate: string;
+  eventTime: string;
+  location: string;
+  remarks: string;
+}
+
+/** Inquiry intake → Konfigurator: planning slice + order context prefill (V1). */
+export interface InquiryToConfiguratorTransferV1 {
+  planning: ConfiguratorPlanningContextV1;
+  orderContextPrefill: ConfiguratorOrderContextPrefillV1;
 }
 
 export function createInitialOrderContextV1(): OrderContextV1 {

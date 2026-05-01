@@ -9,7 +9,7 @@ import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { fetchItems } from "../services/api";
-import type { CatalogItem, ConfiguratorPlanningContextV1, OfferLine, QuantityMode } from "../types";
+import type { CatalogItem, InquiryToConfiguratorTransferV1, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
 import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis } from "../utils/pricing";
@@ -115,16 +115,29 @@ export function HomePage() {
 
   const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
 
-  const handlePrepareOffer = useCallback((ctx: ConfiguratorPlanningContextV1) => {
+  const handlePrepareOffer = useCallback((transfer: InquiryToConfiguratorTransferV1) => {
+    const { planning, orderContextPrefill: pre } = transfer;
+    const remarksTrim = pre.remarks.trim();
     setOfferDraft((d) => ({
       ...d,
-      persons: clampPersons(ctx.persons),
-      budgetEnabled: ctx.budgetEnabled,
+      persons: clampPersons(planning.persons),
+      budgetEnabled: planning.budgetEnabled,
       totalBudget:
-        ctx.budgetEnabled && ctx.budget != null ? Math.max(0, ctx.budget) : d.totalBudget,
+        planning.budgetEnabled && planning.budget != null
+          ? Math.max(0, planning.budget)
+          : d.totalBudget,
+      orderContext: {
+        ...d.orderContext,
+        companyName: pre.companyName,
+        contactPerson: pre.contactPerson,
+        eventDate: pre.eventDate,
+        eventTime: pre.eventTime,
+        location: pre.location,
+        remarks: remarksTrim ? remarksTrim : undefined,
+      },
     }));
-    if (ctx.desiredModules.length === 1) {
-      setCatalogModule(ctx.desiredModules[0]);
+    if (planning.desiredModules.length === 1) {
+      setCatalogModule(planning.desiredModules[0]);
     }
     setPageMode("configurator");
   }, []);

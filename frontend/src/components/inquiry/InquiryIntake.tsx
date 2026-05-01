@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import type { ConfiguratorPlanningContextV1, ItemModule } from "../../types";
+import type { InquiryToConfiguratorTransferV1, ItemModule } from "../../types";
 
 export interface InquiryIntakeProps {
-  onPrepareOffer: (ctx: ConfiguratorPlanningContextV1) => void;
+  onPrepareOffer: (transfer: InquiryToConfiguratorTransferV1) => void;
 }
 
 type CriticalStatus = "offen" | "geklärt" | "nicht_relevant";
@@ -83,6 +83,30 @@ function emptyFlags(): Record<AufwandKey, boolean> {
   };
 }
 
+function composeConfiguratorRemarks(p: {
+  eventType: string;
+  serviceStyle: string;
+  dietaryRequirements: string;
+  billingAddressDifferent: boolean;
+  billingAddress: string;
+  billingEmailDifferent: string;
+}): string {
+  const blocks: string[] = [];
+  const et = p.eventType.trim();
+  const ss = p.serviceStyle.trim();
+  if (et) blocks.push(`Veranstaltungsart: ${et}`);
+  if (ss) blocks.push(`Service-Stil: ${ss}`);
+  const diet = p.dietaryRequirements.trim();
+  if (diet) blocks.push(diet);
+  if (p.billingAddressDifferent) {
+    const addr = p.billingAddress.trim();
+    const em = p.billingEmailDifferent.trim();
+    if (addr) blocks.push(`Abweichende Rechnungsadresse:\n${addr}`);
+    if (em) blocks.push(`Rechnungs-E-Mail (abweichend): ${em}`);
+  }
+  return blocks.join("\n\n");
+}
+
 export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
   const [company, setCompany] = useState("");
   const [contactPerson, setContactPerson] = useState("");
@@ -92,6 +116,9 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [location, setLocation] = useState("");
+  const [billingAddressDifferent, setBillingAddressDifferent] = useState(false);
+  const [billingAddress, setBillingAddress] = useState("");
+  const [billingEmailDifferent, setBillingEmailDifferent] = useState("");
   const [guestCount, setGuestCount] = useState(10);
 
   const [eventType, setEventType] = useState("");
@@ -131,16 +158,33 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
   }
 
   function handlePrepare() {
-    const ctx: ConfiguratorPlanningContextV1 = {
-      persons: Math.max(1, Math.round(guestCount) || 1),
-      budget: budgetEnabled ? Math.max(0, budgetAmount) : null,
-      budgetEnabled,
-      desiredModules,
-      dietaryRequirements: dietaryRequirements.trim(),
-      eventType: eventType.trim(),
-      serviceStyle: serviceStyle.trim(),
+    const transfer: InquiryToConfiguratorTransferV1 = {
+      planning: {
+        persons: Math.max(1, Math.round(guestCount) || 1),
+        budget: budgetEnabled ? Math.max(0, budgetAmount) : null,
+        budgetEnabled,
+        desiredModules,
+        dietaryRequirements: dietaryRequirements.trim(),
+        eventType: eventType.trim(),
+        serviceStyle: serviceStyle.trim(),
+      },
+      orderContextPrefill: {
+        companyName: company.trim(),
+        contactPerson: contactPerson.trim(),
+        eventDate,
+        eventTime: eventTime.trim(),
+        location: location.trim(),
+        remarks: composeConfiguratorRemarks({
+          eventType,
+          serviceStyle,
+          dietaryRequirements,
+          billingAddressDifferent,
+          billingAddress,
+          billingEmailDifferent,
+        }),
+      },
     };
-    onPrepareOffer(ctx);
+    onPrepareOffer(transfer);
   }
 
   const blockClass = "space-y-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm";
@@ -214,13 +258,45 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
-            <span className={labelClass}>Ort</span>
+            <span className={labelClass}>Lieferadresse / Veranstaltungsort</span>
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
           </label>
+          <label className="inline-flex items-center gap-2 sm:col-span-2 text-sm">
+            <input
+              type="checkbox"
+              checked={billingAddressDifferent}
+              onChange={(e) => setBillingAddressDifferent(e.target.checked)}
+              className="rounded border-slate-300"
+            />
+            Rechnungsadresse abweichend?
+          </label>
+          {billingAddressDifferent ? (
+            <>
+              <label className="flex flex-col gap-1 sm:col-span-2">
+                <span className={labelClass}>Abweichende Rechnungsadresse</span>
+                <textarea
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value)}
+                  rows={3}
+                  placeholder="Name, Straße, PLZ Ort …"
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1 sm:col-span-2">
+                <span className={labelClass}>Rechnungs-E-Mail, falls abweichend</span>
+                <input
+                  type="email"
+                  value={billingEmailDifferent}
+                  onChange={(e) => setBillingEmailDifferent(e.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </label>
+            </>
+          ) : null}
           <label className="flex flex-col gap-1">
             <span className={labelClass}>Personen (erwartet)</span>
             <input
@@ -364,9 +440,10 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
       <section className={blockClass}>
         <h2 className="text-base font-semibold text-slate-900">Nächster Schritt</h2>
         <p className="text-sm text-slate-600">
-          Mit „Angebot vorbereiten“ wechseln Sie in den bestehenden Konfigurator. Es werden nur
-          Personenzahl, Budget (falls aktiv) und ggf. ein einzelnes Katalog-Modul übernommen —
-          nicht das gesamte Anfrage-Protokoll.
+          Mit „Angebot vorbereiten“ wechseln Sie in den Konfigurator. Übernommen werden Firma,
+          Ansprechpartner, Datum, Uhrzeit, Liefer-/Veranstaltungsort, zusammengefasste Bemerkungen
+          (Ernährung, abweichende Rechnungsadresse), Personenzahl, Budget (falls aktiv) und ggf. ein
+          einzelnes Katalog-Modul — nicht das gesamte Anfrage-Protokoll.
         </p>
         <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-3 text-sm text-slate-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/90">Noch offen</p>
