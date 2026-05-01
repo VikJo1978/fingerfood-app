@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { HeaderBar } from "../components/layout/HeaderBar";
+import { InquiryIntake } from "../components/inquiry/InquiryIntake";
 import { OrderContextCard } from "../components/OrderContextCard";
 import { TopControls } from "../components/TopControls";
 import { SearchFilters } from "../components/filters/SearchFilters";
@@ -8,7 +9,7 @@ import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { fetchItems } from "../services/api";
-import type { CatalogItem, OfferLine, QuantityMode } from "../types";
+import type { CatalogItem, ConfiguratorPlanningContextV1, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
 import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis } from "../utils/pricing";
@@ -25,7 +26,10 @@ function downloadText(filename: string, text: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
+type PageMode = "inquiry" | "configurator";
+
 export function HomePage() {
+  const [pageMode, setPageMode] = useState<PageMode>("inquiry");
   const [offerDraft, setOfferDraft] = useState(createInitialOfferDraft);
 
   const [search, setSearch] = useState("");
@@ -110,6 +114,20 @@ export function HomePage() {
   }, [offerDraft.lines, offerDraft.persons]);
 
   const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
+
+  const handlePrepareOffer = useCallback((ctx: ConfiguratorPlanningContextV1) => {
+    setOfferDraft((d) => ({
+      ...d,
+      persons: clampPersons(ctx.persons),
+      budgetEnabled: ctx.budgetEnabled,
+      totalBudget:
+        ctx.budgetEnabled && ctx.budget != null ? Math.max(0, ctx.budget) : d.totalBudget,
+    }));
+    if (ctx.desiredModules.length === 1) {
+      setCatalogModule(ctx.desiredModules[0]);
+    }
+    setPageMode("configurator");
+  }, []);
 
   const onAddLine = (item: CatalogItem, mode: QuantityMode, quantity: number) => {
     const lineId = crypto.randomUUID();
@@ -213,6 +231,20 @@ export function HomePage() {
 
   const showPersonWarning = offerDraft.persons < 10;
 
+  if (pageMode === "inquiry") {
+    return (
+      <AppShell>
+        <div className="space-y-8">
+          <HeaderBar
+            title="Neue Anfrage erfassen"
+            subtitle="Weiches Anfrage-Protokoll für die Akquise — ohne Speicherung. Anschließend starten Sie den Konfigurator mit den wichtigsten Standardwerten."
+          />
+          <InquiryIntake onPrepareOffer={handlePrepareOffer} />
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="space-y-8">
@@ -220,6 +252,18 @@ export function HomePage() {
           title="Catering-Angebot zusammenstellen"
           subtitle="Stellen Sie Ihr Catering-Angebot in wenigen Schritten zusammen — mit klarer Kalkulation und ohne Fachjargon."
         />
+
+        <p className="text-sm text-slate-500">
+          <button
+            type="button"
+            onClick={() => setPageMode("inquiry")}
+            className="font-medium text-accent underline-offset-2 hover:underline"
+          >
+            Zurück zur Anfrage
+          </button>
+          <span className="mx-2 text-slate-300">·</span>
+          Konfigurator
+        </p>
 
         <OrderContextCard
           orderContext={offerDraft.orderContext}
