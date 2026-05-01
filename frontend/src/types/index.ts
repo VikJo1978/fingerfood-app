@@ -122,6 +122,51 @@ export interface OfferDraft {
   warnings?: OfferWarning[];
 }
 
+/** Channel through which an inquiry entered (V1, types only). */
+export type InquirySource = "web" | "phone" | "email" | "walk_in" | "referral" | "other";
+
+/** Inquiry lifecycle stage (V1). */
+export type InquiryStatus =
+  | "draft"
+  | "submitted"
+  | "in_review"
+  | "awaiting_customer"
+  | "closed_won"
+  | "closed_lost"
+  | "archived";
+
+/** Clarification / follow-up state on intake (V1). */
+export type ClarificationState = "none" | "pending_internal" | "pending_customer" | "resolved";
+
+/**
+ * Full inquiry intake / protocol payload (V1, structural placeholder).
+ * Boundary: holds complete intake; do not strip to configurator-only fields here.
+ */
+export interface InquiryV1 {
+  id: string;
+  createdAtIso: string;
+  updatedAtIso: string;
+  source: InquirySource;
+  status: InquiryStatus;
+  clarificationState: ClarificationState;
+  /** Full protocol blobs (messages, answers, attachments metadata, etc.). */
+  protocol: Record<string, unknown>;
+}
+
+/**
+ * Offer-configuration slice derived from planning (V1).
+ * Boundary: only fields relevant to configuring an offer — not full inquiry data.
+ */
+export interface ConfiguratorPlanningContextV1 {
+  persons: number;
+  budget: number | null;
+  budgetEnabled: boolean;
+  desiredModules: ItemModule[];
+  dietaryRequirements: string;
+  eventType: string;
+  serviceStyle: string;
+}
+
 export function createInitialOrderContextV1(): OrderContextV1 {
   return {
     companyName: "",
