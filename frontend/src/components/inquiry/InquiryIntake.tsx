@@ -87,9 +87,6 @@ function composeConfiguratorRemarks(p: {
   eventType: string;
   serviceStyle: string;
   dietaryRequirements: string;
-  billingAddressDifferent: boolean;
-  billingAddress: string;
-  billingEmailDifferent: string;
 }): string {
   const blocks: string[] = [];
   const et = p.eventType.trim();
@@ -98,12 +95,6 @@ function composeConfiguratorRemarks(p: {
   if (ss) blocks.push(`Service-Stil: ${ss}`);
   const diet = p.dietaryRequirements.trim();
   if (diet) blocks.push(diet);
-  if (p.billingAddressDifferent) {
-    const addr = p.billingAddress.trim();
-    const em = p.billingEmailDifferent.trim();
-    if (addr) blocks.push(`Abweichende Rechnungsadresse:\n${addr}`);
-    if (em) blocks.push(`Rechnungs-E-Mail (abweichend): ${em}`);
-  }
   return blocks.join("\n\n");
 }
 
@@ -178,9 +169,6 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
           eventType,
           serviceStyle,
           dietaryRequirements,
-          billingAddressDifferent,
-          billingAddress,
-          billingEmailDifferent,
         }),
       },
     };
@@ -441,9 +429,9 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
         <h2 className="text-base font-semibold text-slate-900">Nächster Schritt</h2>
         <p className="text-sm text-slate-600">
           Mit „Angebot vorbereiten“ wechseln Sie in den Konfigurator. Übernommen werden Firma,
-          Ansprechpartner, Datum, Uhrzeit, Liefer-/Veranstaltungsort, zusammengefasste Bemerkungen
-          (Ernährung, abweichende Rechnungsadresse), Personenzahl, Budget (falls aktiv) und ggf. ein
-          einzelnes Katalog-Modul — nicht das gesamte Anfrage-Protokoll.
+          Ansprechpartner, Datum, Uhrzeit, Liefer-/Veranstaltungsort, Bemerkungen zu Veranstaltung und
+          Ernährung (ohne Rechnungsdaten — diese bleiben hier im Formular), Personenzahl, Budget (falls
+          aktiv) und ggf. ein einzelnes Katalog-Modul — nicht das gesamte Anfrage-Protokoll.
         </p>
         <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-3 text-sm text-slate-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/90">Noch offen</p>
