@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../../services/api";
 import { DIET_LABELS_DE, DIET_TYPES, type DietType } from "../../constants/classification";
 
@@ -46,6 +47,20 @@ export function SearchFilters({
   maxUnitPrice,
   onMaxUnitPriceChange,
 }: SearchFiltersProps) {
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  const advancedFiltersActive = useMemo(() => {
+    return (
+      section.trim() !== "" ||
+      priceType !== "" ||
+      diet !== "" ||
+      maxUnitPrice.trim() !== "" ||
+      excludeAllergens.trim() !== ""
+    );
+  }, [section, priceType, diet, maxUnitPrice, excludeAllergens]);
+
+  const advancedPanelId = "search-filters-advanced";
+
   return (
     <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
       <div>
@@ -85,79 +100,105 @@ export function SearchFilters({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-500">Bereich</span>
-          <select
-            value={section}
-            onChange={(e) => onSectionChange(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
-          >
-            <option value="">Alle Bereiche</option>
-            {sections.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-500">Preisart</span>
-          <select
-            value={priceType}
-            onChange={(e) => onPriceTypeChange(e.target.value as PriceTypeFilter)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
-          >
-            <option value="">Alle</option>
-            <option value="piece">Nach Stück</option>
-            <option value="person">Nach Person</option>
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-500">Ernährung</span>
-          <select
-            value={diet}
-            onChange={(e) => onDietChange(e.target.value as DietType | "")}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
-          >
-            <option value="">Alle</option>
-            {DIET_TYPES.map((d) => (
-              <option key={d} value={d}>
-                {DIET_LABELS_DE[d]}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-500">Höchstpreis pro Einheit</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            autoComplete="off"
-            placeholder="kein Limit"
-            value={maxUnitPrice}
-            onChange={(e) => onMaxUnitPriceChange(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
-          />
-        </label>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-3">
+        <button
+          type="button"
+          id={`${advancedPanelId}-toggle`}
+          aria-expanded={advancedOpen}
+          aria-controls={advancedPanelId}
+          onClick={() => setAdvancedOpen((v) => !v)}
+          className="text-sm font-medium text-accent underline-offset-2 hover:underline"
+        >
+          {advancedOpen ? "Weitere Filter ausblenden" : "Weitere Filter anzeigen"}
+        </button>
+        {advancedFiltersActive ? (
+          <span className="text-xs font-medium text-slate-600">Erweiterte Filter aktiv</span>
+        ) : null}
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-slate-500">Allergene ausblenden</span>
-        <input
-          type="text"
-          placeholder="z. B. gluten, milk, nuts"
-          value={excludeAllergens}
-          onChange={(e) => onExcludeAllergensChange(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
-        />
-        <span className="text-xs text-slate-400">
-          Blendet Artikel aus, die diese Stoffe ausweisen. Mehrere Einträge mit Komma trennen (z. B. gluten, milk, nuts).
-        </span>
-      </label>
+      {advancedOpen ? (
+        <div
+          id={advancedPanelId}
+          role="region"
+          aria-labelledby={`${advancedPanelId}-toggle`}
+          className="space-y-4 border-t border-slate-100 pt-4"
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Bereich</span>
+              <select
+                value={section}
+                onChange={(e) => onSectionChange(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+              >
+                <option value="">Alle Bereiche</option>
+                {sections.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Preisart</span>
+              <select
+                value={priceType}
+                onChange={(e) => onPriceTypeChange(e.target.value as PriceTypeFilter)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+              >
+                <option value="">Alle</option>
+                <option value="piece">Nach Stück</option>
+                <option value="person">Nach Person</option>
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Ernährung</span>
+              <select
+                value={diet}
+                onChange={(e) => onDietChange(e.target.value as DietType | "")}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+              >
+                <option value="">Alle</option>
+                {DIET_TYPES.map((d) => (
+                  <option key={d} value={d}>
+                    {DIET_LABELS_DE[d]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Höchstpreis pro Einheit</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="kein Limit"
+                value={maxUnitPrice}
+                onChange={(e) => onMaxUnitPriceChange(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
+              />
+            </label>
+          </div>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-slate-500">Allergene ausblenden</span>
+            <input
+              type="text"
+              placeholder="z. B. gluten, milk, nuts"
+              value={excludeAllergens}
+              onChange={(e) => onExcludeAllergensChange(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
+            />
+            <span className="text-xs text-slate-400">
+              Blendet Artikel aus, die diese Stoffe ausweisen. Mehrere Einträge mit Komma trennen (z. B.
+              gluten, milk, nuts).
+            </span>
+          </label>
+        </div>
+      ) : null}
     </div>
   );
 }
