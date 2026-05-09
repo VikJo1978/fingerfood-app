@@ -36,21 +36,39 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
+## Frontend UX decisions (Neue Anfrage & Konfigurator — prototype)
+
+- **Neue Anfrage V1** is a **frontend-only Gesprächsprotokoll** (local browser; no backend, persistence, or routing).
+- **Inquiry → Configurator** handoff is split into **planning context** (`ConfiguratorPlanningContextV1`) and **order context prefill** (`ConfiguratorOrderContextPrefillV1`, wrapped in `InquiryToConfiguratorTransferV1`).
+- **Billing / abweichende Rechnungsadresse** stays in **inquiry-local state** for now and **must not** be written into **Bemerkungen** (`orderContext.remarks`).
+- **Anfrage-Kontext**: read-only block **above** the **Bemerkungen** field so transferred inquiry notes stay scannable (still the same `remarks` value).
+- Catalog selection is labeled **Angebotsbausteine** (office “building blocks”), **not** a customer **menu**.
+- **Baustein-Typ** uses **chips** for modules and **Pakete** (composite items), replacing the old compact module control.
+- **Advanced filters** sit behind **„Weitere Filter anzeigen“**; collapsing **only hides UI**, active filter values remain.
+- **`ItemCard`**: diet, ingredients, allergens, and full warnings live under **„Details anzeigen“**; primary row stays scannable.
+- **Packages / Buffets** = **`item_kind: composite`** lines; **later**: **Änderungswunsch** / **customization** flows and richer bundle pricing — **not** implemented yet (today: flat line price, no automatic bundle pricing engine).
+
+---
+
 ## Configurator implementation (prototype progress)
 
 - Catalog fetch, filters (search, section, price type, diet, allergens exclusion, max unit price, module).
-- **`ItemCard`**: pricing preview, quantity modes, add to **`OfferDraft`**; composite items show a **Paket** badge.
+- **Angebotsbausteine**: catalog column headed **„Angebotsbausteine auswählen“** with helper copy; **Baustein-Typ** chips (Alle, Speisen, Getränke, **Pakete** = client-side **`item_kind === composite`**, other modules unchanged); secondary filters live under **„Weitere Filter anzeigen“** (collapsed by default; **„Erweiterte Filter aktiv“** when any advanced filter is set; values persist when collapsed).
+- **`ItemCard`**: compact card; primary row always shows name, price, description, min order, quantity controls, preview, **Zum Angebot hinzufügen**, **Paket** badge when composite; diet, ingredients, allergens, and full warning list in **„Details anzeigen“**; **„Hinweise vorhanden“** when **`lineWarnings`** non-empty.
+- **`OrderContextCard`**: when **`remarks`** exist, a read-only **„Anfrage-Kontext“** block above the editable **Bemerkungen** textarea (same field; no new **`OrderContext`** keys).
 - **`OfferSummary`** / **`OfferLineItem`**: line editing, removals, totals from snapshots; composite badge when applicable.
 - **`OfferLine`** snapshots carry pricing fields plus optional **`item_kind`** for exports/display resilience.
 - **`HeaderBar`** with Silberlöffel logo and title/subtitle layout (iterated for balance).
-- Types: **`ItemKind`** `simple | composite`; **`ConfiguratorPlanningContextV1`** and **`InquiryV1`** — **frontend-only** placeholders (no UI, persistence, or routing).
+- Types: **`ItemKind`** `simple | composite`; **`InquiryV1`** (full protocol placeholder); **`ConfiguratorPlanningContextV1`** (planning-only: persons, budget, desired modules, dietary, event type, service style); **`ConfiguratorOrderContextPrefillV1`** + **`InquiryToConfiguratorTransferV1`** (**`planning`** + **`orderContextPrefill`**) for inquiry → configurator handoff **without** pushing full protocol into **`OfferDraft`**.
 
 ---
 
 ## Inquiry / CRM boundary
 
-- **`InquiryV1`** (types only): Full intake / protocol shape — id, timestamps, source, status, clarification state, opaque **`protocol`**. **Not** operational truth; **not** Core **`OrderVersion`**.
-- **`ConfiguratorPlanningContextV1`** (types only): Narrow slice for **planning inputs** that might eventually seed configurator defaults — persons, budget flags, desired modules, dietary text, event type, service style. Still **not** Core truth until promoted via controlled flows.
+- **`InquiryV1`** (types): Full intake / protocol shape — id, timestamps, source, status, clarification state, opaque **`protocol`**. **Not** operational truth; **not** Core **`OrderVersion`**.
+- **Neue Anfrage V1 (UI)**: **`InquiryIntake`** on **`HomePage`** — **frontend-only** soft protocol (no backend, persistence, routing, Core handoff). Blocks: Kontakt, Veranstaltung (incl. **Lieferadresse / Veranstaltungsort**), Wunsch/Bedarf, Zeit & Aufwand + rough **Vorlauf** (non-binding copy), kritische Punkte, **„Noch offen“** summary; **abweichende Rechnungsadresse** fields stay **only in inquiry local state** — **not** merged into **`orderContext.remarks`** (remarks = Veranstaltungsart / Service-Stil / Ernährung only).
+- **Inquiry → Configurator**: **`InquiryToConfiguratorTransferV1`** with **`planning`** (**`ConfiguratorPlanningContextV1`**) + **`orderContextPrefill`** (**`ConfiguratorOrderContextPrefillV1`**). Planning drives persons, budget, optional single **`catalogModule`**; prefill fills company, contact, date, time, location, remarks. Aufwand / critical statuses / full protocol **do not** land in **`OfferDraft`**.
+- **`ConfiguratorPlanningContextV1`**: Planning slice only (persons, budget, desired modules, dietary, event type, service style). Still **not** Core truth until promoted via controlled flows.
 - **CRM**: Narrative and pipeline tracking; **must not** silently overwrite Core **`OrderVersion`** semantics.
 
 ### Neue Anfrage V1 — Zeit & Ablauf / Aufwand vor Ort (decision)
@@ -73,6 +91,7 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   - needs internal review  
 - That estimate is **guidance for Büro/Kundenkommunikation only** — **not operational truth**, **not** a substitute for disposition scheduling.
 - **Final timing** belongs to **Küche / Disposition / Core**. Promotion into executable plans stays **Core-owned**.
+- **Prototype**: checklist + rough range implemented in **`InquiryIntake`** (local-only; not persisted).
 
 ---
 
@@ -93,8 +112,9 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 1. **`CatalogItem`** domain cleanup (optional diet / flags / allergens by module pattern).
 2. **`price_type` vs `pricing_mode`** documentation + **`isPieceUnitBasis`** (`pricing.ts`).
 3. Silberlöffel branding / **`HeaderBar`** polish.
-4. **`item_kind`**: composite packages in JSON + **`Paket`** UI hints.
-5. **`InquiryV1` / `ConfiguratorPlanningContextV1`** type scaffolding.
+4. **`item_kind`**: composite packages in JSON + **`Paket`** UI; client-side **`packages`** catalog filter.
+5. **Neue Anfrage → Configurator**: **`InquiryIntake`**, **`InquiryToConfiguratorTransferV1`**, planning vs order-context prefill; billing **not** in remarks.
+6. **Configurator UX**: **Angebotsbausteine** copy/chips; **`SearchFilters`** collapsed **Weitere Filter**; **`ItemCard`** collapsible details; **`OrderContextCard`** **Anfrage-Kontext** read-only block for remarks.
 
 ---
 
@@ -102,8 +122,8 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 - Define/implement **Core ↔ Configurator** handoff so edits produce **`OrderVersion`** records with **print-confirmation** and **`READY_TO_SEND`** gates (backend contracts first).
 - Align **catalog publication** so prototype **`items.json`** / **`CatalogItem`** either stays fixture-only or mirrors Core-published catalog intentionally.
-- Wire **`ConfiguratorPlanningContextV1`** from real intake when the unified channel exists — still **downstream of CRM**, **upstream of** Core commits only via controlled promotion.
-- **Neue Anfrage V1**: implement **“Zeit & Ablauf / Aufwand vor Ort”** (flags + optional rough range as above); ensure UX/copy makes clear estimates are **non-binding** until Core/disposition confirms.
+- **Intake channel**: persist/promote inquiry protocol and billing fields via CRM/Core when the unified pipeline exists — frontend prototype remains **local-only** until then.
+- Extend **Neue Anfrage** (persistence, validation, channel routing) **without** breaking the planning/prefill boundary into **`OfferDraft`**.
 
 ---
 
@@ -118,4 +138,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Neue Anfrage V1 — Zeit & Ablauf / Aufwand vor Ort decision.*
+*Last updated: Frontend UX decisions section (Gesprächsprotokoll, transfer split, Angebotsbausteine, composites future scope).*
