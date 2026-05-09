@@ -25,6 +25,7 @@ function warningListClasses(severity: WarningSeverity): string {
 export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
   const [mode, setMode] = useState<QuantityMode>("total");
   const [quantity, setQuantity] = useState(defaultQuantity("total"));
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     setQuantity(defaultQuantity(mode));
@@ -38,9 +39,10 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
     : `${formatCurrency(item.price)} / Person`;
 
   const ingredientsOn = activeIngredientLabels(item.ingredient_flags);
+  const detailsId = `item-${item.id}-details`;
 
   return (
-    <article className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
+    <article className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card">
       <div className="space-y-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -57,52 +59,77 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         </p>
       </div>
 
-      {item.diet_type != null ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <TagBadge label={dietLabelDe(item.diet_type)} />
-        </div>
-      ) : null}
-
-      {ingredientsOn.length ? (
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-slate-500">Enthält</p>
-          <div className="flex flex-wrap gap-1.5">
-            {ingredientsOn.map(({ key, label }) => (
-              <TagBadge key={key} label={label} />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {(item.allergens ?? []).length ? (
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-slate-500">Allergene (deklariert)</p>
-          <div className="flex flex-wrap gap-1.5">
-            {(item.allergens ?? []).map((code) => (
-              <span
-                key={code}
-                className="inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50/80 px-2.5 py-0.5 text-xs font-medium text-amber-950"
-              >
-                {ALLERGEN_LABELS_DE[code] ?? code}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <p className="text-xs text-slate-400">Keine Allergene nach Stammdaten deklariert.</p>
-      )}
-
       {warnings.length ? (
-        <ul className="space-y-1 text-xs">
-          {warnings.map((w, i) => (
-            <li key={`${w.code}-${i}`} className={warningListClasses(w.severity)}>
-              {w.message}
-            </li>
-          ))}
-        </ul>
+        <p className="text-xs font-medium text-amber-900/90">Hinweise vorhanden</p>
       ) : null}
 
-      <div className="grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
+      <div>
+        <button
+          type="button"
+          id={`${detailsId}-toggle`}
+          aria-expanded={detailsOpen}
+          aria-controls={detailsId}
+          onClick={() => setDetailsOpen((v) => !v)}
+          className="text-sm font-medium text-accent underline-offset-2 hover:underline"
+        >
+          {detailsOpen ? "Details ausblenden" : "Details anzeigen"}
+        </button>
+        {detailsOpen ? (
+          <div
+            id={detailsId}
+            role="region"
+            aria-labelledby={`${detailsId}-toggle`}
+            className="mt-3 space-y-3 border-t border-slate-100 pt-3"
+          >
+            {item.diet_type != null ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <TagBadge label={dietLabelDe(item.diet_type)} />
+              </div>
+            ) : null}
+
+            {ingredientsOn.length ? (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-slate-500">Enthält</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ingredientsOn.map(({ key, label }) => (
+                    <TagBadge key={key} label={label} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {(item.allergens ?? []).length ? (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-slate-500">Allergene (deklariert)</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(item.allergens ?? []).map((code) => (
+                    <span
+                      key={code}
+                      className="inline-flex items-center rounded-full border border-amber-200/80 bg-amber-50/80 px-2.5 py-0.5 text-xs font-medium text-amber-950"
+                    >
+                      {ALLERGEN_LABELS_DE[code] ?? code}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400">Keine Allergene nach Stammdaten deklariert.</p>
+            )}
+
+            {warnings.length ? (
+              <ul className="space-y-1 text-xs">
+                {warnings.map((w, i) => (
+                  <li key={`${w.code}-${i}`} className={warningListClasses(w.severity)}>
+                    {w.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="grid gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-500">Menge bezieht sich auf</span>
           <select
