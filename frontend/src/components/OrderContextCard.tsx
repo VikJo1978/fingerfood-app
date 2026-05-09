@@ -14,6 +14,11 @@ export function OrderContextCard({
 }: OrderContextCardProps) {
   const oc = orderContext;
 
+  const remarksTrimmed = (oc.remarks ?? "").trim();
+  const inquiryContextBlocks = remarksTrimmed
+    ? remarksTrimmed.split(/\n\n+/).map((b) => b.trim()).filter(Boolean)
+    : [];
+
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
       <h2 className="text-sm font-semibold text-slate-900">Basisdaten · Auftragskontext</h2>
@@ -81,19 +86,39 @@ export function OrderContextCard({
         </label>
       </div>
 
+      {inquiryContextBlocks.length > 0 ? (
+        <div className="mt-3 flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Anfrage-Kontext
+          </span>
+          <div className="rounded-xl border border-slate-200/90 bg-slate-50/90 px-3 py-2.5 shadow-sm">
+            <div className="space-y-2">
+              {inquiryContextBlocks.map((block, i) => (
+                <p
+                  key={i}
+                  className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800"
+                >
+                  {block}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <label className="mt-3 flex flex-col gap-1.5">
         <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
           Bemerkungen <span className="font-normal normal-case text-slate-400">(optional)</span>
         </span>
         <textarea
-          rows={2}
+          rows={3}
           value={oc.remarks ?? ""}
           onChange={(e) =>
             onOrderContextChange({
               remarks: e.target.value === "" ? undefined : e.target.value,
             })
           }
-          className={`${inputClass} min-h-[4rem] resize-y`}
+          className={`${inputClass} min-h-[5.5rem] resize-y`}
         />
       </label>
     </section>
