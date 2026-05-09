@@ -1,6 +1,16 @@
 import type { CatalogModuleFilter, PriceTypeFilter } from "../../services/api";
 import { DIET_LABELS_DE, DIET_TYPES, type DietType } from "../../constants/classification";
 
+const MODULE_CHIPS: { value: CatalogModuleFilter; label: string }[] = [
+  { value: "", label: "Alle" },
+  { value: "food", label: "Speisen" },
+  { value: "beverage", label: "Getränke" },
+  { value: "packages", label: "Pakete" },
+  { value: "staff", label: "Personal" },
+  { value: "tableware", label: "Geschirr" },
+  { value: "equipment", label: "Equipment" },
+];
+
 interface SearchFiltersProps {
   catalogModule: CatalogModuleFilter;
   onCatalogModuleChange: (v: CatalogModuleFilter) => void;
@@ -52,23 +62,30 @@ export function SearchFilters({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-500">Katalog</span>
-          <select
-            value={catalogModule}
-            onChange={(e) => onCatalogModuleChange(e.target.value as CatalogModuleFilter)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
-          >
-            <option value="">Alle</option>
-            <option value="food">Speisen</option>
-            <option value="beverage">Getränke</option>
-            <option value="staff">Personal</option>
-            <option value="tableware">Geschirr / Tischbedarf</option>
-            <option value="equipment">Möbel / Equipment</option>
-          </select>
-        </label>
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-slate-500">Baustein-Typ</span>
+        <div className="flex flex-wrap gap-2">
+          {MODULE_CHIPS.map(({ value, label }) => {
+            const active = catalogModule === value;
+            return (
+              <button
+                key={value === "" ? "all" : value}
+                type="button"
+                onClick={() => onCatalogModuleChange(value)}
+                className={
+                  active
+                    ? "rounded-full border border-accent bg-accent px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                    : "rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                }
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-slate-500">Bereich</span>
           <select

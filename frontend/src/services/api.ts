@@ -10,7 +10,9 @@ export type CatalogModuleFilter =
   | "beverage"
   | "staff"
   | "tableware"
-  | "equipment";
+  | "equipment"
+  /** Nur zusammengesetzte Katalogzeilen (Pakete); rein clientseitig im geladenen Katalog. */
+  | "packages";
 
 export interface ItemQuery {
   search?: string;

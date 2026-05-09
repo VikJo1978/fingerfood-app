@@ -55,7 +55,9 @@ export function filterCatalog(all: CatalogItem[], opts: CatalogFilterOpts): Cata
   if (cap != null && cap > 0 && Number.isFinite(cap)) {
     out = out.filter((i) => i.price <= cap);
   }
-  if (
+  if (opts.module === "packages") {
+    out = out.filter((i) => i.item_kind === "composite");
+  } else if (
     opts.module === "food" ||
     opts.module === "beverage" ||
     opts.module === "staff" ||

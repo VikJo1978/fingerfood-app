@@ -78,6 +78,8 @@ export function HomePage() {
       base = catalog.filter((i) => i.module === "tableware");
     } else if (catalogModule === "equipment") {
       base = catalog.filter((i) => i.module === "equipment");
+    } else if (catalogModule === "packages") {
+      base = catalog.filter((i) => i.item_kind === "composite");
     }
     return Array.from(new Set(base.map((i) => i.section)))
       .filter(Boolean)
@@ -313,6 +315,13 @@ export function HomePage() {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="space-y-5">
+            <div className="space-y-2">
+              <h2 className="text-base font-semibold text-slate-900">Angebotsbausteine auswählen</h2>
+              <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
+                Wählen Sie Speisen, Getränke, Personal oder weitere Bausteine für das Angebot. Details
+                und Mengen können pro Position angepasst werden.
+              </p>
+            </div>
             <SearchFilters
               catalogModule={catalogModule}
               onCatalogModuleChange={setCatalogModule}
