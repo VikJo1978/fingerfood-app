@@ -188,6 +188,17 @@ export function HomePage() {
     }));
   };
 
+  const onLineCustomizationNote = (lineId: string, note: string) => {
+    setOfferDraft((d) => ({
+      ...d,
+      lines: d.lines.map((l) =>
+        l.lineId === lineId
+          ? { ...l, customizationNote: note === "" ? undefined : note }
+          : l
+      ),
+    }));
+  };
+
   const exportPayload = () => {
     const lines = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
@@ -200,6 +211,7 @@ export function HomePage() {
         quantityMode: l.quantityMode,
         quantity: l.quantity,
         lineTotal,
+        ...(l.customizationNote?.trim() ? { customizationNote: l.customizationNote.trim() } : {}),
       };
     });
     return {
@@ -225,7 +237,7 @@ export function HomePage() {
 
   const onExportCsv = () => {
     const header =
-      "Position;Bezug;Menge;Preisart;Stück-/Personenpreis EUR;Name;Zeilensumme EUR";
+      "Position;Bezug;Menge;Preisart;Stück-/Personenpreis EUR;Name;Zeilensumme EUR;Änderungswunsch";
     const rows = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
       const lt = computeOfferLineTotal(l, offerDraft.persons);
@@ -234,7 +246,9 @@ export function HomePage() {
       const unitPrice = l.snapshot.chosen_price;
       const rawName = it?.name ?? l.snapshot.title;
       const name = `"${rawName.replace(/"/g, '""')}"`;
-      return `${l.itemId};${modeDe};${l.quantity};${pt};${unitPrice};${name};${lt.toFixed(2)}`;
+      const noteRaw = l.customizationNote?.trim() ?? "";
+      const noteCol = `"${noteRaw.replace(/"/g, '""')}"`;
+      return `${l.itemId};${modeDe};${l.quantity};${pt};${unitPrice};${name};${lt.toFixed(2)};${noteCol}`;
     });
     const csv = [header, ...rows.filter(Boolean)].join("\n");
     downloadText(
@@ -369,6 +383,7 @@ export function HomePage() {
             pricePerPerson={pricePerPerson}
             onQuantityChange={onLineQty}
             onModeChange={onLineMode}
+            onCustomizationNoteChange={onLineCustomizationNote}
             onRemove={onRemoveLine}
             onExportJson={onExportJson}
             onExportCsv={onExportCsv}

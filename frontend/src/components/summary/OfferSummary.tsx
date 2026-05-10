@@ -10,6 +10,7 @@ interface OfferSummaryProps {
   pricePerPerson: number;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;
+  onCustomizationNoteChange: (lineId: string, note: string) => void;
   onRemove: (lineId: string) => void;
   onExportJson: () => void;
   onExportCsv: () => void;
@@ -22,6 +23,7 @@ export function OfferSummary({
   pricePerPerson,
   onQuantityChange,
   onModeChange,
+  onCustomizationNoteChange,
   onRemove,
   onExportJson,
   onExportCsv,
@@ -51,6 +53,7 @@ export function OfferSummary({
               persons={persons}
               onQuantityChange={onQuantityChange}
               onModeChange={onModeChange}
+              onCustomizationNoteChange={onCustomizationNoteChange}
               onRemove={onRemove}
             />
           ))}

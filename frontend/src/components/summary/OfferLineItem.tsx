@@ -15,6 +15,7 @@ interface OfferLineItemProps {
   persons: number;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;
+  onCustomizationNoteChange: (lineId: string, note: string) => void;
   onRemove: (lineId: string) => void;
 }
 
@@ -24,12 +25,15 @@ export function OfferLineItem({
   persons,
   onQuantityChange,
   onModeChange,
+  onCustomizationNoteChange,
   onRemove,
 }: OfferLineItemProps) {
   const total = computeOfferLineTotal(line, persons);
   const warnings = catalogItem
     ? lineWarnings(catalogItem, persons, line.quantityMode, line.quantity)
     : [];
+  const isComposite =
+    catalogItem?.item_kind === "composite" || line.snapshot.item_kind === "composite";
 
   return (
     <li className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
@@ -37,7 +41,7 @@ export function OfferLineItem({
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium text-slate-900">{line.snapshot.title}</p>
-            {catalogItem?.item_kind === "composite" || line.snapshot.item_kind === "composite" ? (
+            {isComposite ? (
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">
                 Paket
               </span>
@@ -95,6 +99,22 @@ export function OfferLineItem({
           <span className="text-sm font-semibold text-slate-900">{formatCurrency(total)}</span>
         </div>
       </div>
+
+      {isComposite ? (
+        <label className="mt-3 flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-slate-700">Änderungswunsch am Paket</span>
+          <textarea
+            rows={2}
+            value={line.customizationNote ?? ""}
+            onChange={(e) => onCustomizationNoteChange(line.lineId, e.target.value)}
+            placeholder="z. B. Dessert tauschen, Salat entfernen …"
+            className="min-h-[4rem] resize-y rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+          />
+          <span className="text-xs leading-relaxed text-slate-500">
+            Änderungen am Paket müssen intern geprüft werden. Preis bleibt vorläufig.
+          </span>
+        </label>
+      ) : null}
     </li>
   );
 }

@@ -96,6 +96,8 @@ export interface OfferLine {
   quantityMode: QuantityMode;
   quantity: number;
   snapshot: OfferLineCatalogSnapshot;
+  /** Composite / Paket: freier Änderungswunsch (planning only; kein Preisdelta). */
+  customizationNote?: string;
 }
 
 /** Compact order / event context (V1, in-memory only). */
