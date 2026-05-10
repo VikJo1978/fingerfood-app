@@ -45,8 +45,8 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - Catalog selection is labeled **Angebotsbausteine** (office “building blocks”), **not** a customer **menu**.
 - **Baustein-Typ** uses **chips** for modules and **Pakete** (composite items), replacing the old compact module control.
 - **Advanced filters** sit behind **„Weitere Filter anzeigen“**; collapsing **only hides UI**, active filter values remain.
-- **`ItemCard`**: diet, ingredients, allergens, and full warnings live under **„Details anzeigen“**; primary row stays scannable.
-- **Packages / Buffets** = **`item_kind: composite`** lines; **v1 prototype**: flat catalog price only — see **Architecture: Composite Customization V1** for planned **Änderungswunsch** / structured pricing path.
+- **`ItemCard`**: diet, ingredients, allergens, **`items_included`** (as **„Enthalten / Zusammensetzung“**, read-only, multiline), and full warnings under **„Details anzeigen“**; primary row stays scannable; for **Pakete/Buffets**, visible composition is the main value proposition — **offer-line customization** stays **`Änderungswunsch`** only (see architecture section).
+- **Packages / Buffets** = **`item_kind: composite`** lines; **v1 prototype**: flat catalog price only; **seed data**: **Lunch Buffet No 1–3** in **`items.json`** (PDF-aligned composition in **`items_included`**; **no** automatic Büffetpauschale / delivery / MwSt. calculation in V1). See **Architecture: Composite Customization V1** for **Änderungswunsch** / structured pricing path.
 
 ---
 
@@ -90,8 +90,9 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 ## Configurator implementation (prototype progress)
 
 - Catalog fetch, filters (search, section, price type, diet, allergens exclusion, max unit price, module).
+- **`items.json` (prototype)**: **Lunch Buffet No 1–3** (`lunch-buffet-2026-no-1` … **`no-3`**) as **PDF-derived** composite rows — **`item_kind` composite**, **`module` food**, **`price_type` person**, **`min_order` 10**; flat **Paketpreis** only; **no** automatic **Büffetpauschale** / **Anlieferung** / **MwSt.** calculation in V1 (text in **`items_included`** only). Legacy placeholder packages marked **`[Demo]`** / section **Demo Pakete**.
 - **Angebotsbausteine**: catalog column headed **„Angebotsbausteine auswählen“** with helper copy; **Baustein-Typ** chips (Alle, Speisen, Getränke, **Pakete** = client-side **`item_kind === composite`**, other modules unchanged); secondary filters live under **„Weitere Filter anzeigen“** (collapsed by default; **„Erweiterte Filter aktiv“** when any advanced filter is set; values persist when collapsed).
-- **`ItemCard`**: compact card; primary row always shows name, price, description, min order, quantity controls, preview, **Zum Angebot hinzufügen**, **Paket** badge when composite; diet, ingredients, allergens, and full warning list in **„Details anzeigen“**; **„Hinweise vorhanden“** when **`lineWarnings`** non-empty.
+- **`ItemCard`**: compact card; primary row always shows name, price, description, min order, quantity controls, preview, **Zum Angebot hinzufügen**, **Paket** badge when composite; expanded **Details** include **`items_included`** as read-only **„Enthalten / Zusammensetzung“** (`whitespace-pre-wrap`), then diet, ingredients, allergens, full **`lineWarnings`**; **„Hinweise vorhanden“** when warnings non-empty outside collapse.
 - **`OrderContextCard`**: when **`remarks`** exist, a read-only **„Anfrage-Kontext“** block above the editable **Bemerkungen** textarea (same field; no new **`OrderContext`** keys).
 - **`OfferSummary`** / **`OfferLineItem`**: line editing, removals, totals from snapshots; composite badge when applicable.
 - **`OfferLine`** snapshots carry pricing fields plus optional **`item_kind`** for exports/display resilience.
@@ -151,7 +152,8 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 3. Silberlöffel branding / **`HeaderBar`** polish.
 4. **`item_kind`**: composite packages in JSON + **`Paket`** UI; client-side **`packages`** catalog filter.
 5. **Neue Anfrage → Configurator**: **`InquiryIntake`**, **`InquiryToConfiguratorTransferV1`**, planning vs order-context prefill; billing **not** in remarks.
-6. **Configurator UX**: **Angebotsbausteine** copy/chips; **`SearchFilters`** collapsed **Weitere Filter**; **`ItemCard`** collapsible details; **`OrderContextCard`** **Anfrage-Kontext** read-only block for remarks.
+6. **Configurator UX**: **Angebotsbausteine** copy/chips; **`SearchFilters`** collapsed **Weitere Filter**; **`ItemCard`** collapsible details incl. **„Enthalten / Zusammensetzung“** from **`items_included`**; **`OrderContextCard`** **Anfrage-Kontext** read-only block for remarks.
+7. **Catalog seed**: **Lunch Buffet No 1–3** composite **`items.json`** rows (flat **person** price, **`min_order` 10**); no V1 auto surcharge engine; demo packages **`[Demo]`**.
 
 ---
 
@@ -175,4 +177,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Composite Customization V1 architecture decision (planning note, Core acceptance path).*
+*Last updated: Lunch Buffet seed + ItemCard **items_included** display (WORKLOG).*
