@@ -40,6 +40,7 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
 
   const ingredientsOn = activeIngredientLabels(item.ingredient_flags);
   const detailsId = `item-${item.id}-details`;
+  const itemsIncludedText = item.items_included?.trim() ?? "";
 
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card">
@@ -81,6 +82,15 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
             aria-labelledby={`${detailsId}-toggle`}
             className="mt-3 space-y-3 border-t border-slate-100 pt-3"
           >
+            {itemsIncludedText ? (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-slate-500">Enthalten / Zusammensetzung</p>
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-800">
+                  {itemsIncludedText}
+                </p>
+              </div>
+            ) : null}
+
             {item.diet_type != null ? (
               <div className="flex flex-wrap items-center gap-2">
                 <TagBadge label={dietLabelDe(item.diet_type)} />
