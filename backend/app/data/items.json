@@ -717,8 +717,8 @@
   },
   {
     "id": "paket-getraenke-standard",
-    "name": "Getränkepaket Standard",
-    "section": "Pakete",
+    "name": "[Demo] Getränkepaket Standard",
+    "section": "Demo Pakete",
     "category": "Getränke",
     "subcategory": "Paket",
     "price": 14.9,
@@ -747,8 +747,8 @@
   },
   {
     "id": "paket-buffet-business",
-    "name": "Buffetpaket Business",
-    "section": "Pakete",
+    "name": "[Demo] Buffetpaket Business",
+    "section": "Demo Pakete",
     "category": "Buffet",
     "subcategory": "Paket",
     "price": 38.5,
@@ -870,8 +870,8 @@
   },
   {
     "id": "paket-service-empfang",
-    "name": "Servicepaket Empfang",
-    "section": "Pakete",
+    "name": "[Demo] Servicepaket Empfang",
+    "section": "Demo Pakete",
     "category": "Service",
     "subcategory": "Paket",
     "price": 6.75,
