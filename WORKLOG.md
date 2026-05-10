@@ -46,7 +46,44 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - **Baustein-Typ** uses **chips** for modules and **Pakete** (composite items), replacing the old compact module control.
 - **Advanced filters** sit behind **„Weitere Filter anzeigen“**; collapsing **only hides UI**, active filter values remain.
 - **`ItemCard`**: diet, ingredients, allergens, and full warnings live under **„Details anzeigen“**; primary row stays scannable.
-- **Packages / Buffets** = **`item_kind: composite`** lines; **later**: **Änderungswunsch** / **customization** flows and richer bundle pricing — **not** implemented yet (today: flat line price, no automatic bundle pricing engine).
+- **Packages / Buffets** = **`item_kind: composite`** lines; **v1 prototype**: flat catalog price only — see **Architecture: Composite Customization V1** for planned **Änderungswunsch** / structured pricing path.
+
+---
+
+## Architecture: Composite Customization V1
+
+**Decision:** Packages / Buffets are **composite** items (`item_kind: composite`) in the catalog and **must eventually** be adjustable by Büro staff when building offers.
+
+**Examples (intent):**
+
+- Dessert tauschen  
+- Salat entfernen  
+- Starter hinzufügen  
+- Fleischgericht durch vegetarische Alternative ersetzen  
+
+**V1 rule (explicit non-goals for this generation):**
+
+- No child editor  
+- No slots  
+- No automatic price delta  
+- No bundle price engine  
+- No supplier logic  
+- No Core **`OrderVersion`** implementation in this step  
+
+**V1 behavior (semantics until structured customization ships):**
+
+- The composite **offer line keeps the base catalog price** (snapshot / list price as today).  
+- Office may add a visible **Änderungswunsch** / **customization note** on the line.  
+- **Price must be treated as provisional** and **internally checked** whenever customization is noted.  
+- The customization note is **planning / coordination information only** — **not** operational truth.  
+- **Final acceptance and pricing** belong to **Core / Disposition** under **`OrderVersion`** rules (incl. print confirmation).  
+
+**Preferred later implementation path:**
+
+1. **`customizationNote`** (or equivalent) on composite **offer lines**  
+2. **Structured component slots**  
+3. **Priced** replacement / add-on rules  
+4. **Core-owned**, **versioned** acceptance  
 
 ---
 
@@ -138,4 +175,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Frontend UX decisions section (Gesprächsprotokoll, transfer split, Angebotsbausteine, composites future scope).*
+*Last updated: Composite Customization V1 architecture decision (planning note, Core acceptance path).*
