@@ -4,6 +4,20 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
+## Document role (this file)
+
+- **`WORKLOG.md`** is currently the **combined recovery anchor** for this prototype.
+- It contains **both**:
+  - **Core truth / architecture state**
+  - **Accepted execution progress**
+- **Do not** use it for speculative redesign or brainstorming.
+- Record **accepted decisions**, **completed steps**, and **current next step(s)** only.
+- When **Core** / **persistence** / **`OrderVersion`** / **CRM storage** implementation begins, split documentation into:
+  - **`docs/handoff/architecture_state.md`**
+  - **`docs/handoff/worklog.md`**
+
+---
+
 ## Core truth / single source of operational truth
 
 **Core is the single source of operational truth** for orders and execution-oriented state.
@@ -177,4 +191,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Lunch Buffet seed + ItemCard **items_included** display (WORKLOG).*
+*Last updated: Document role section (recovery anchor, future docs/handoff split).*
