@@ -107,7 +107,9 @@ export function OfferLineItem({
             rows={2}
             value={line.customizationNote ?? ""}
             onChange={(e) => onCustomizationNoteChange(line.lineId, e.target.value)}
-            placeholder="z. B. Dessert tauschen, Salat entfernen …"
+            placeholder={
+              "Dessert tauschen:\nSalat entfernen:\nStarter hinzufügen:\nSonstiges:"
+            }
             className="min-h-[4rem] resize-y rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
           />
           <span className="text-xs leading-relaxed text-slate-500">
