@@ -129,8 +129,39 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 **Later:**
 
-- **V1.2** may use **semi-structured** fields.  
-- **V2** may introduce **component slots**, priced replacements/add-ons, and **Core-owned** acceptance.  
+- **V1.2** — **accepted concept** (subsection below): semi-structured customization input.  
+- **V2** — real **component slots**, priced replacements/add-ons, and **Core-owned** acceptance.  
+
+### Accepted concept: Composite Customization V1.2
+
+**Concept:** **V1.2** should move from **one** free-text **Änderungswunsch** toward a **semi-structured** customization **form** for **composite** offer lines (still **prototype / local** editing — same role as today’s note).
+
+**V1.2 fields / prompts (planned):**
+
+- Dessert tauschen  
+- Salat / Vorspeise entfernen  
+- Starter hinzufügen  
+- Hauptgericht ersetzen  
+- Vegetarische / vegane Alternative  
+- Sonstiges  
+
+**Required semantics (V1.2 design constraints):**
+
+- Still **planning-only** — **not** operational truth.  
+- **Price remains provisional.**  
+- **Show / preserve** copy: **„Preis bleibt vorläufig. Änderungen müssen intern geprüft werden.“**  
+- **No** backend  
+- **No** persistence  
+- **No** slots  
+- **No** child editor  
+- **No** automatic price delta  
+- **No** Core / **`OrderVersion`** implementation  
+
+**Position in roadmap (accepted):**
+
+- **V1.1** — free-text **`customizationNote`** with **helper / template placeholder**.  
+- **V1.2** — **semi-structured** customization input (this concept).  
+- **V2** — real **component slots** + **priced** replacements/add-ons + **Core-owned** acceptance.  
 
 ---
 
@@ -224,4 +255,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Composite customization V1.1 accepted progress (`OfferLineItem` placeholder); V1 accepted snapshot; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
+*Last updated: Composite customization V1.2 accepted concept; V1.1 accepted progress; V1 accepted snapshot; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
