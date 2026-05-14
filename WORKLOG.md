@@ -109,6 +109,28 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 3. **Priced** replacement / add-on rules  
 4. **Core-owned**, **versioned** acceptance  
 
+### Accepted decision (snapshot)
+
+**Current accepted direction:**
+
+- V1 keeps **free-text** **`customizationNote`** on composite offer lines.  
+- **Price remains provisional.**  
+- Office sees **„Preis intern prüfen“**.  
+- **No** automatic price delta.  
+- **No** slots.  
+- **No** child editor.  
+- **No** Core implementation **in this step**.  
+
+**Next safe step:**
+
+- **V1.1** should **not** introduce full component slots yet.  
+- Instead, improve **Änderungswunsch** UX with **template prompts / helper text**, e.g.: **Dessert tauschen:** / **Salat entfernen:** / **Starter hinzufügen:** / **Sonstiges:**  
+
+**Later:**
+
+- **V1.2** may use **semi-structured** fields.  
+- **V2** may introduce **component slots**, priced replacements/add-ons, and **Core-owned** acceptance.  
+
 ---
 
 ## Configurator implementation (prototype progress)
@@ -201,4 +223,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Accepted progress — Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
+*Last updated: Composite customization V1 accepted snapshot; accepted progress — Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
