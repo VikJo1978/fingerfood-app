@@ -57,6 +57,7 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - Placeholder packages are **`[Demo]`** in the name and live under section **Demo Pakete**.
 - **Backend API** sanity check: **`api_lunch_count` = 8** (accepted verification).
 - **Local backend**: run with a **Python 3.13** **venv**; **avoid Python 3.14** for backend dependencies — **`pydantic-core`** fails to build there.
+- **Composite Customization V1.1** (**accepted progress**): Implemented — **`OfferLineItem`** keeps **`customizationNote`** as **free text**; **placeholder** guides Büro with **Dessert tauschen:** / **Salat entfernen:** / **Starter hinzufügen:** / **Sonstiges:**. **Price stays provisional** and **must be checked internally**. **No** slots, **no** child editor, **no** automatic price delta, **no** backend/Core changes.
 
 ---
 
@@ -223,4 +224,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Composite customization V1 accepted snapshot; accepted progress — Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
+*Last updated: Composite customization V1.1 accepted progress (`OfferLineItem` placeholder); V1 accepted snapshot; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
