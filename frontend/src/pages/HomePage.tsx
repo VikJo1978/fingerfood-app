@@ -203,6 +203,7 @@ export function HomePage() {
     const lines = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
       const lineTotal = computeOfferLineTotal(l, offerDraft.persons);
+      const itemsIncluded = it?.items_included?.trim();
       return {
         lineId: l.lineId,
         itemId: l.itemId,
@@ -212,6 +213,7 @@ export function HomePage() {
         quantity: l.quantity,
         lineTotal,
         ...(l.customizationNote?.trim() ? { customizationNote: l.customizationNote.trim() } : {}),
+        ...(itemsIncluded ? { itemsIncluded } : {}),
       };
     });
     return {
