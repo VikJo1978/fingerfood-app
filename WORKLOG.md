@@ -110,6 +110,58 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
+## Accepted architecture direction: Draft Storage V1
+
+**Decision:** The **next persistence step** should be **backend Draft Storage V1**, **not** frontend **`localStorage`**.
+
+**Reason:** Work done now should remain **reusable later**. **`localStorage`** is acceptable for **throwaway demos**, but **not** the main project direction.
+
+### Draft Storage V1 semantics
+
+- **Draft** is a saved **planning artifact** / **Angebotsentwurf**.  
+- **Draft** is **NOT** an **Order**.  
+- **Draft** is **NOT** an **`OrderVersion`**.  
+- **Draft** is **NOT** Core truth.  
+- **Draft** does **not** create operational acceptance.  
+- **Draft** does **not** bypass **print confirmation** or **`READY_TO_SEND`** gates.  
+
+### Preferred V1 storage
+
+- **Backend JSON file storage**  
+- Path idea: **`backend/app/data/drafts/*.json`**  
+- **Later migratable** to DB  
+
+### Preferred API direction
+
+- **`POST /api/drafts`**  
+- **`GET /api/drafts`**  
+- **`GET /api/drafts/{draft_id}`**  
+- **`PUT /api/drafts/{draft_id}`**  
+- **`DELETE /api/drafts/{draft_id}`**  
+
+### Preferred reusable record shape
+
+- **`id`**  
+- **`createdAt`**  
+- **`updatedAt`**  
+- **`status`**: **`draft`**  
+- **`source`**: **`configurator`**  
+- **`payload`**:  
+  - **`orderContext`**  
+  - **`persons`**  
+  - **`budgetEnabled`**  
+  - **`totalBudget`**  
+  - **`lines`**  
+  - **`customizationNote`** on composite lines when present  
+  - **Item snapshots** needed for preview / PDF continuity  
+
+### Future path
+
+- A **saved Draft** may later be **promoted** into a **Core candidate `OrderVersion`** through a **controlled promotion** flow.  
+- **Promotion** is **future work** and must remain **Core-owned**.  
+
+---
+
 ## Architecture: Composite Customization V1
 
 **Decision:** Packages / Buffets are **composite** items (`item_kind: composite`) in the catalog and **must eventually** be adjustable by Büro staff when building offers.
@@ -290,4 +342,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Angebotsvorschau V1 implemented (modal); accepted concept; JSON export `itemsIncluded`; Composite customization V1.2 accepted concept; V1.1 accepted progress; V1 accepted snapshot; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
+*Last updated: Draft Storage V1 accepted architecture direction; Angebotsvorschau V1 implemented (modal); JSON export `itemsIncluded`; Composite customization V1.2 accepted concept; V1.1 accepted progress; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
