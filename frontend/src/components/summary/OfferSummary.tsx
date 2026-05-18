@@ -1,7 +1,9 @@
+import { useState } from "react";
 import type { CatalogItem, OfferDraft, QuantityMode } from "../../types";
 import { formatCurrency } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
+import { OfferPreview } from "./OfferPreview";
 
 interface OfferSummaryProps {
   draft: OfferDraft;
@@ -29,6 +31,7 @@ export function OfferSummary({
   onExportCsv,
 }: OfferSummaryProps) {
   const { lines, persons, budgetEnabled, totalBudget } = draft;
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   return (
     <aside className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card lg:sticky lg:top-8">
@@ -72,6 +75,14 @@ export function OfferSummary({
         <BudgetStatus enabled={budgetEnabled} totalBudget={totalBudget} subtotal={subtotal} />
       </div>
 
+      <button
+        type="button"
+        onClick={() => setPreviewOpen(true)}
+        className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-accent/30 bg-accent/10 px-3 text-sm font-semibold text-accent transition hover:bg-accent/15"
+      >
+        Angebotsvorschau anzeigen
+      </button>
+
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row">
         <button
           type="button"
@@ -91,6 +102,15 @@ export function OfferSummary({
       <p className="text-center text-xs text-slate-400">
         Export für spätere Anbindung an Buchhaltung oder E-Mail.
       </p>
+
+      <OfferPreview
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        draft={draft}
+        itemsById={itemsById}
+        subtotal={subtotal}
+        pricePerPerson={pricePerPerson}
+      />
     </aside>
   );
 }
