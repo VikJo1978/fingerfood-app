@@ -59,6 +59,7 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - **Local backend**: run with a **Python 3.13** **venv**; **avoid Python 3.14** for backend dependencies — **`pydantic-core`** fails to build there.
 - **Composite Customization V1.1** (**accepted progress**): Implemented — **`OfferLineItem`** keeps **`customizationNote`** as **free text**; **placeholder** guides Büro with **Dessert tauschen:** / **Salat entfernen:** / **Starter hinzufügen:** / **Sonstiges:**. **Price stays provisional** and **must be checked internally**. **No** slots, **no** child editor, **no** automatic price delta, **no** backend/Core changes.
 - **JSON export** (**accepted progress**): Includes **`itemsIncluded`** on each exported line when the catalog row has non-empty **`items_included`** — especially needed for **Lunch Buffets / Pakete** because **PDF / Angebotsvorschau** will need **package composition**. **`customizationNote`** remains exported. **CSV** export stays simple; **full package composition is JSON-only** for now. **No** PDF generation implemented yet.
+- **Angebotsvorschau V1** (**accepted progress**): **Frontend-only** modal — opened from **`OfferSummary`** via **„Angebotsvorschau anzeigen“**; **not** PDF yet. Uses existing **`OfferDraft`**, **`itemsById`**, and **pricing** helpers only. Shows **Basisdaten**, **Positionen**, **Summen**, **Hinweise**; for **Pakete/Buffets**: **`items_included`** as **Zusammensetzung** when available; **`customizationNote`** / **Änderungswunsch** when present. **Semantics**: preview for **Büro** review only — **not** operational truth; **no** backend, persistence, Core handoff, or price-logic changes.
 
 ---
 
@@ -289,4 +290,4 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ---
 
-*Last updated: Angebotsvorschau V1 accepted concept; JSON export `itemsIncluded`; Composite customization V1.2 accepted concept; V1.1 accepted progress; V1 accepted snapshot; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
+*Last updated: Angebotsvorschau V1 implemented (modal); accepted concept; JSON export `itemsIncluded`; Composite customization V1.2 accepted concept; V1.1 accepted progress; V1 accepted snapshot; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
