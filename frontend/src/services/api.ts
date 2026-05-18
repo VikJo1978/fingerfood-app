@@ -111,3 +111,53 @@ export async function calculateOffer(body: OfferCalculateBody): Promise<OfferCal
   if (!res.ok) throw new Error(`Kalkulation fehlgeschlagen (${res.status})`);
   return res.json() as Promise<OfferCalculateResponse>;
 }
+
+/** Saved planning artifact from backend Draft Storage V1 — not an Order or Core truth. */
+export interface SavedOfferDraft {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  status: "draft";
+  source: "configurator";
+  payload: OfferDraft;
+}
+
+export async function listDrafts(): Promise<SavedOfferDraft[]> {
+  const res = await fetch(`${baseUrl()}/api/drafts`);
+  if (!res.ok) throw new Error("Entwürfe konnten nicht geladen werden");
+  return res.json() as Promise<SavedOfferDraft[]>;
+}
+
+export async function createDraft(payload: OfferDraft): Promise<SavedOfferDraft> {
+  const res = await fetch(`${baseUrl()}/api/drafts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload }),
+  });
+  if (!res.ok) throw new Error("Entwurf konnte nicht gespeichert werden");
+  return res.json() as Promise<SavedOfferDraft>;
+}
+
+export async function getDraft(id: string): Promise<SavedOfferDraft> {
+  const res = await fetch(`${baseUrl()}/api/drafts/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error("Entwurf konnte nicht geladen werden");
+  return res.json() as Promise<SavedOfferDraft>;
+}
+
+export async function updateDraft(id: string, payload: OfferDraft): Promise<SavedOfferDraft> {
+  const res = await fetch(`${baseUrl()}/api/drafts/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload }),
+  });
+  if (!res.ok) throw new Error("Entwurf konnte nicht aktualisiert werden");
+  return res.json() as Promise<SavedOfferDraft>;
+}
+
+export async function deleteDraft(id: string): Promise<{ ok: true }> {
+  const res = await fetch(`${baseUrl()}/api/drafts/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Entwurf konnte nicht gelöscht werden");
+  return res.json() as Promise<{ ok: true }>;
+}
