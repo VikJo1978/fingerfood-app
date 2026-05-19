@@ -5,6 +5,8 @@ import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
 
+export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
+
 interface OfferSummaryProps {
   draft: OfferDraft;
   itemsById: Record<string, CatalogItem>;
@@ -16,6 +18,9 @@ interface OfferSummaryProps {
   onRemove: (lineId: string) => void;
   onExportJson: () => void;
   onExportCsv: () => void;
+  draftSaveStatus: DraftSaveStatus;
+  draftSaveMessage: string | null;
+  onSaveDraft: () => void | Promise<void>;
 }
 
 export function OfferSummary({
@@ -29,6 +34,9 @@ export function OfferSummary({
   onRemove,
   onExportJson,
   onExportCsv,
+  draftSaveStatus,
+  draftSaveMessage,
+  onSaveDraft,
 }: OfferSummaryProps) {
   const { lines, persons, budgetEnabled, totalBudget } = draft;
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -82,6 +90,27 @@ export function OfferSummary({
       >
         Angebotsvorschau anzeigen
       </button>
+
+      <div className="space-y-1.5">
+        <button
+          type="button"
+          disabled={draftSaveStatus === "saving"}
+          onClick={() => void onSaveDraft()}
+          className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {draftSaveStatus === "saving" ? "Speichert…" : "Entwurf speichern"}
+        </button>
+        {draftSaveMessage ? (
+          <p
+            className={`text-center text-xs ${
+              draftSaveStatus === "error" ? "text-red-700" : "text-slate-600"
+            }`}
+            role="status"
+          >
+            {draftSaveMessage}
+          </p>
+        ) : null}
+      </div>
 
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row">
         <button

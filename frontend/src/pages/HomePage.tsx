@@ -8,7 +8,7 @@ import { SearchFilters } from "../components/filters/SearchFilters";
 import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
-import { fetchItems } from "../services/api";
+import { createDraft, fetchItems, updateDraft } from "../services/api";
 import type { CatalogItem, InquiryToConfiguratorTransferV1, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
@@ -28,9 +28,14 @@ function downloadText(filename: string, text: string, mime: string) {
 
 type PageMode = "inquiry" | "configurator";
 
+type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
+
 export function HomePage() {
   const [pageMode, setPageMode] = useState<PageMode>("inquiry");
   const [offerDraft, setOfferDraft] = useState(createInitialOfferDraft);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
+  const [draftSaveMessage, setDraftSaveMessage] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
@@ -237,6 +242,26 @@ export function HomePage() {
     );
   };
 
+  const onSaveDraft = useCallback(async () => {
+    setDraftSaveStatus("saving");
+    setDraftSaveMessage(null);
+    try {
+      if (currentDraftId === null) {
+        const saved = await createDraft(offerDraft);
+        setCurrentDraftId(saved.id);
+      } else {
+        await updateDraft(currentDraftId, offerDraft);
+      }
+      setDraftSaveStatus("saved");
+      setDraftSaveMessage("Entwurf gespeichert.");
+    } catch (e) {
+      setDraftSaveStatus("error");
+      setDraftSaveMessage(
+        e instanceof Error ? e.message : "Entwurf konnte nicht gespeichert werden"
+      );
+    }
+  }, [currentDraftId, offerDraft]);
+
   const onExportCsv = () => {
     const header =
       "Position;Bezug;Menge;Preisart;Stück-/Personenpreis EUR;Name;Zeilensumme EUR;Änderungswunsch";
@@ -389,6 +414,9 @@ export function HomePage() {
             onRemove={onRemoveLine}
             onExportJson={onExportJson}
             onExportCsv={onExportCsv}
+            draftSaveStatus={draftSaveStatus}
+            draftSaveMessage={draftSaveMessage}
+            onSaveDraft={onSaveDraft}
           />
         </div>
 
