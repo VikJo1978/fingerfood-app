@@ -5,3 +5,6 @@ frontend/dist/
 
 # Local saved offer drafts
 backend/app/data/drafts/*.json
+
+# Local saved offer drafts
+backend/app/data/drafts/*.json
