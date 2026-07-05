@@ -1,0 +1,59 @@
+{
+  "comment": "Golden pricing parity fixtures. Checked by BOTH backend pytest and frontend vitest. If one side's formula changes without the other, tests fail. expected_total is rounded to 2 decimals; expected_warning_codes are the line-level warning codes in order.",
+  "cases": [
+    {
+      "name": "piece_total_above_min",
+      "price": 2.5, "price_type": "piece", "min_order": 20, "unit_label": "Stück",
+      "persons": 25, "quantity_mode": "total", "quantity": 40,
+      "expected_total": 100.0, "expected_warning_codes": []
+    },
+    {
+      "name": "piece_total_below_min_order",
+      "price": 2.5, "price_type": "piece", "min_order": 20, "unit_label": "Stück",
+      "persons": 25, "quantity_mode": "total", "quantity": 10,
+      "expected_total": 25.0, "expected_warning_codes": ["MIN_ORDER_PIECE"]
+    },
+    {
+      "name": "piece_per_person",
+      "price": 2.5, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 20, "quantity_mode": "per_person", "quantity": 3,
+      "expected_total": 150.0, "expected_warning_codes": []
+    },
+    {
+      "name": "piece_per_person_low_persons",
+      "price": 2.5, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 8, "quantity_mode": "per_person", "quantity": 3,
+      "expected_total": 60.0, "expected_warning_codes": ["PER_PERSON_BELOW_USUAL_MIN_PERSONS"]
+    },
+    {
+      "name": "person_total_above_min",
+      "price": 19.9, "price_type": "person", "min_order": 10, "unit_label": "Personen",
+      "persons": 25, "quantity_mode": "total", "quantity": 25,
+      "expected_total": 497.5, "expected_warning_codes": []
+    },
+    {
+      "name": "person_total_below_min_order",
+      "price": 19.9, "price_type": "person", "min_order": 10, "unit_label": "Personen",
+      "persons": 25, "quantity_mode": "total", "quantity": 5,
+      "expected_total": 99.5, "expected_warning_codes": ["MIN_ORDER_PERSON"]
+    },
+    {
+      "name": "person_per_person_factor_one",
+      "price": 19.9, "price_type": "person", "min_order": 10, "unit_label": "Personen",
+      "persons": 30, "quantity_mode": "per_person", "quantity": 1,
+      "expected_total": 597.0, "expected_warning_codes": []
+    },
+    {
+      "name": "person_per_person_low_persons",
+      "price": 19.9, "price_type": "person", "min_order": 10, "unit_label": "Personen",
+      "persons": 9, "quantity_mode": "per_person", "quantity": 1,
+      "expected_total": 179.1, "expected_warning_codes": ["PER_PERSON_BELOW_USUAL_MIN_PERSONS"]
+    },
+    {
+      "name": "fractional_quantity",
+      "price": 3.2, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 7, "quantity_mode": "per_person", "quantity": 1.5,
+      "expected_total": 33.6, "expected_warning_codes": ["PER_PERSON_BELOW_USUAL_MIN_PERSONS"]
+    }
+  ]
+}

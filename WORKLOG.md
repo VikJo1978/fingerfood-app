@@ -344,3 +344,13 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 ---
 
 *Last updated: Draft Storage V1 Slice 1 implemented (backend); Draft Storage V1 architecture direction; Angebotsvorschau V1 implemented (modal); JSON export `itemsIncluded`; Lunch Buffet 1–8 seed, API count, Python 3.13 venv note.*
+
+---
+
+## Accepted progress: Test baseline + pricing parity guard (2026-07-05)
+
+- **Backend tests** (`backend/tests/`, run: `cd backend && .venv/bin/pytest tests/ -q`): pricing service (line totals, warnings, subtotal/per-person, unknown-item, global low-person info), catalog filters over the real `items.json` via HTTP TestClient (36 items, 8 Lunch Buffets, diet/allergen/price/module/search/sections), draft storage (CRUD, path-traversal rejection, corrupted-file tolerance, sort order with controlled clock). **27 passed.**
+- **Frontend tests** (vitest, run: `cd frontend && npm test`): pricing unit + snapshot-based line totals, `normalizeCatalogItem` defensive normalization (defaults, guards, allergen sanitizing, foodish/non-foodish split). **20 passed.** `npm run build` stays green.
+- **Pricing parity guard** (`shared/pricing_fixtures.json`): one golden fixture set checked by BOTH pytest and vitest against their respective pricing implementations (totals + warning codes). If either side's formula changes without the other, its test suite fails. This is the containment for the known duplication of pricing logic (Python `pricing_service` vs TS `utils/pricing`).
+- **Accepted direction (not yet implemented):** when pricing grows beyond flat lines (Büffetpauschale, Anlieferung, MwSt.), the **backend becomes the single authoritative calculator** (`/api/offer/calculate`); the frontend keeps instant display marked *vorläufig*. The parity guard covers only the current flat formulas and must not be stretched to cover diverging ones.
+- Boundaries unchanged: drafts are not Orders/OrderVersions/Core truth; catalog remains a development fixture.
