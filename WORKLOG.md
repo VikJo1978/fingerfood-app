@@ -354,3 +354,39 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - **Pricing parity guard** (`shared/pricing_fixtures.json`): one golden fixture set checked by BOTH pytest and vitest against their respective pricing implementations (totals + warning codes). If either side's formula changes without the other, its test suite fails. This is the containment for the known duplication of pricing logic (Python `pricing_service` vs TS `utils/pricing`).
 - **Accepted direction (not yet implemented):** when pricing grows beyond flat lines (Büffetpauschale, Anlieferung, MwSt.), the **backend becomes the single authoritative calculator** (`/api/offer/calculate`); the frontend keeps instant display marked *vorläufig*. The parity guard covers only the current flat formulas and must not be stretched to cover diverging ones.
 - Boundaries unchanged: drafts are not Orders/OrderVersions/Core truth; catalog remains a development fixture.
+
+---
+
+## Accepted progress: Angebotsvorschau print/PDF + catalog composite audit (2026-07-06)
+
+- **Real gap found while testing office usability**: kitchen has no path to receive
+  composition (dish content) at all — the office panel's Küchenzettel (separate
+  repo) carries no dish info, and the Angebotsvorschau modal here had no print/PDF
+  affordance whatsoever (verified: no `window.print`, no `@media print` existed
+  anywhere in the frontend before this step).
+- **Angebotsvorschau print/PDF** (accepted progress): added a "Drucken / PDF"
+  button; global `@media print` rule (`index.css`) hides everything except
+  `[data-print-root]` (the preview card), with Tailwind `print:` variants
+  resetting the modal's max-height/overflow/shadow so full content flows across
+  pages. Browser's native "Print to PDF" produces the actual PDF — no PDF library
+  added (smallest safe fix, per reviewed plan: print step first, kitchen
+  integration deferred).
+- **Catalog composite/item_kind audit** (accepted progress, `backend/tests/test_catalog_composite_consistency.py`):
+  found by hand while testing — "Warmes Fingerfood-Buffet" (`buffet-finger`)
+  shows no composition in the Angebotsvorschau despite having `items_included`,
+  because `items_included` is overloaded for two meanings (real dish
+  composition vs. a logistics/service note) and this item is `item_kind: simple`.
+  Also found: `paket-getraenke-standard`, `paket-buffet-business` (composite,
+  but items_included is a one-line service note, not a dish list — would show
+  under a misleading "ZUSAMMENSETZUNG" heading) and `paket-service-empfang`
+  (composite with empty items_included — the "Paket" badge implies composition
+  that never renders). These four are catalog **data** questions, not code bugs
+  — the test documents them by name (`KNOWN_COMPOSITE_WITHOUT_REAL_DISH_LIST`,
+  `KNOWN_PACKAGE_LIKE_BUT_SIMPLE`) and fails if the set ever changes (fixed or
+  regressed) without a deliberate update to this file — a catalog owner decision,
+  not something guessed here.
+- Backend: 29 tests passing (was 27). Frontend: 20 passing (unchanged), build green.
+- **Still open** (deferred, not done here): composition still does not reach the
+  kitchen's Küchenzettel — that remains its own accepted step per
+  CONFIGURATOR_EXECUTION_PACK_V1 (catering-system repo) §3/§4, only after the
+  four catalog items above are reviewed by a catalog owner.

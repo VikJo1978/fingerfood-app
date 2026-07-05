@@ -44,18 +44,28 @@ export function OfferPreview({
       onClick={onClose}
     >
       <div
-        className="max-h-[min(90vh,48rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xl"
+        data-print-root
+        className="max-h-[min(90vh,48rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xl print:max-h-none print:w-auto print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-sm print:static print:border-0">
           <h2 className="text-base font-semibold text-slate-900">Angebotsvorschau</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-          >
-            Schließen
-          </button>
+          <div className="flex shrink-0 gap-2 print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              Drucken / PDF
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              Schließen
+            </button>
+          </div>
         </div>
 
         <div className="space-y-6 p-5 pb-6 text-sm text-slate-800">
