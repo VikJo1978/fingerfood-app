@@ -74,6 +74,20 @@ def test_search_matches_name_case_insensitive() -> None:
     )
 
 
+def test_search_matches_dishes_inside_buffet_composition() -> None:
+    """Bug found 2026-07-06 (owner, live): searching 'fisch' only found the one
+    item with 'Fisch' in its own name — nine buffets with fish dishes in their
+    Kalt/Warm/Dessert composition (items_included) were invisible, because
+    search never looked at items_included (buffets' `description` is generic
+    boilerplate, not the actual dish list)."""
+    items = client.get("/api/items", params={"search": "fisch"}).json()
+    names = {i["name"] for i in items}
+    assert "Asia Teigsäckchen mit pikantem Fisch gefüllt" in names  # match via name (regression guard)
+    assert "Hanseaten Büffet" in names  # match via items_included only
+    assert "Italienisches Büffet I" in names  # match via items_included only
+    assert len(items) >= 9
+
+
 def test_sections_endpoint_sorted_unique() -> None:
     sections = client.get("/api/items/sections").json()
     assert sections == sorted(set(sections))

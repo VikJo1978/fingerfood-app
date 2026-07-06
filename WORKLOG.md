@@ -580,3 +580,36 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   (Positionen, all three Pauschalen, both VAT amounts, grand total); adding
   one item (Party-Frikadelle, 14,00 €) correctly brings Pauschalen back
   (60,00 €) for a combined 74,00 € netto / 86,38 € incl. VAT.
+
+---
+
+## Bug fix: search does not find dishes inside buffet compositions (2026-07-06)
+
+- **Found by the owner while testing the running app**: searching "fisch"
+  in the configurator returned only one result, an à-la-carte item with
+  "Fisch" in its own name. Nine composite buffets that actually contain
+  fish dishes in their Kalt/Warm/Dessert composition (Bagels, Fingerfood V,
+  Rustikales Büffet IV, Hanseaten Büffet, Italienisches Büffet I/III/IV,
+  Mediterranes Büffet, Thailändisches Büffet V) were invisible to the
+  search. Root cause: a buffet's `description` field is generic boilerplate
+  ("… als Buffet/Paket, Paketpreis pro Person. Zusammensetzung siehe
+  Details.") — the actual dish list lives in `items_included`, which
+  neither the backend `/api/items` search filter nor the frontend
+  `filterCatalog.ts` predicate ever checked.
+- **Fix**: both search implementations now also match against
+  `items_included`.
+  - Backend: `routes/items.py` search condition gained
+    `or q in (i.items_included or "").lower()`.
+  - Frontend: `filterCatalog.ts` search predicate gained
+    `(i.items_included ?? "").toLowerCase().includes(q)`.
+- Added `test_search_matches_dishes_inside_buffet_composition` (backend)
+  asserting the fish search returns both the name-match item and buffet
+  items matched only via `items_included`, with a `len(items) >= 9` floor.
+  Created `frontend/src/utils/__tests__/filterCatalog.test.ts` (no test
+  file existed for this utility before), covering: name match (regression
+  guard), match via `items_included` only, and a true negative (unrelated
+  item not matched).
+- Backend: 42 tests passing (was 41). Frontend: 29 passing (was 26), build
+  green. Verified live: searching "fisch" in the running configurator now
+  returns all 10 expected items (1 name match + 9 buffets matched via their
+  composition), confirmed by reading the rendered result cards directly.

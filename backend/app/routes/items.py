@@ -67,6 +67,7 @@ def list_items(
             or q in i.description.lower()
             or q in i.category.lower()
             or q in i.diet_type.value
+            or q in (i.items_included or "").lower()
         ]
 
     if section:

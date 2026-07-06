@@ -33,7 +33,8 @@ export function filterCatalog(all: CatalogItem[], opts: CatalogFilterOpts): Cata
         i.name.toLowerCase().includes(q) ||
         i.description.toLowerCase().includes(q) ||
         i.category.toLowerCase().includes(q) ||
-        (i.diet_type ?? "").toLowerCase().includes(q)
+        (i.diet_type ?? "").toLowerCase().includes(q) ||
+        (i.items_included ?? "").toLowerCase().includes(q)
     );
   }
   if (opts.section.trim()) {
