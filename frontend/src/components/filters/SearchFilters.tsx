@@ -6,7 +6,7 @@ const MODULE_CHIPS: { value: CatalogModuleFilter; label: string }[] = [
   { value: "", label: "Alle" },
   { value: "food", label: "Speisen" },
   { value: "beverage", label: "Getränke" },
-  { value: "packages", label: "Pakete" },
+  { value: "packages", label: "Buffets & Pakete" },
   { value: "staff", label: "Personal" },
   { value: "tableware", label: "Geschirr" },
   { value: "equipment", label: "Equipment" },
