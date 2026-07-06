@@ -78,3 +78,19 @@ def test_sections_endpoint_sorted_unique() -> None:
     sections = client.get("/api/items/sections").json()
     assert sections == sorted(set(sections))
     assert "Lunch Buffets" in sections
+
+
+def test_all_food_items_are_7_percent_vat_including_composite_buffets() -> None:
+    """Owner rule per the permanent 7% catering-food rate (eff. 1 Jan 2026):
+    module=food stays 7% regardless of packaging — composite buffets are NOT
+    bumped to 19%. Beverages/service/equipment are 19% (see
+    test_vat_rate_classification_function below; the catalog currently has
+    no beverage/staff/tableware/equipment items to assert on directly)."""
+    items = client.get("/api/items").json()
+    food_items = [i for i in items if i["module"] == "food"]
+    assert food_items, "expected the catalog to contain food items"
+    wrong_rate = [i["id"] for i in food_items if i["vat_rate_percent"] != 7]
+    assert wrong_rate == [], f"food items not at 7% VAT: {wrong_rate}"
+    composite_food = [i for i in food_items if i["item_kind"] == "composite"]
+    assert composite_food, "expected at least one composite buffet/package in the catalog"
+    assert all(i["vat_rate_percent"] == 7 for i in composite_food)

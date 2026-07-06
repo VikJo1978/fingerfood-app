@@ -233,8 +233,9 @@ export function OfferPreview({
                 Treppen, direkt anfahrbar) und Geschirrpauschale sind oben enthalten.
               </li>
               <li className="font-semibold">
-                ⚠ MwSt.-Sätze (7%/19%) sind eine Einschätzung nach der Lieferung/sonstige-Leistung-
-                Abgrenzung (Abschn. 3.6 UStAE), keine steuerliche Prüfung. Bitte vor
+                ⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für Getränke,
+                Service/Personal und Equipment — nach dem seit 1.1.2026 geltenden ermäßigten
+                Steuersatz für Speisen im Catering. Keine steuerliche Prüfung. Bitte vor
                 Rechnungsstellung mit dem Steuerberater abstimmen.
               </li>
               <li className="font-semibold">

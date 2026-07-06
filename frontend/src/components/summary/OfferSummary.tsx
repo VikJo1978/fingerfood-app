@@ -115,8 +115,10 @@ export function OfferSummary({
           <span className="text-xl font-bold text-slate-900">{formatCurrency(vat.totalInclVat)}</span>
         </div>
         <p className="text-xs text-amber-900/80">
-          ⚠ MwSt.-Sätze (7%/19%) sind eine Einschätzung nach der Lieferung/sonstige-Leistung-Abgrenzung,
-          keine steuerliche Prüfung. Bitte vor Rechnungsstellung mit dem Steuerberater abstimmen.
+          ⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für Getränke, Service/Personal
+          und Equipment — nach dem seit 1.1.2026 geltenden ermäßigten Steuersatz für Speisen im
+          Catering. Keine steuerliche Prüfung. Bitte vor Rechnungsstellung mit dem Steuerberater
+          abstimmen.
         </p>
         <BudgetStatus enabled={budgetEnabled} totalBudget={totalBudget} subtotal={subtotal} />
       </div>

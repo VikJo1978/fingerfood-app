@@ -484,3 +484,48 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   Positionen → 273,00 € incl. Pauschalen (netto) → 0,98 € (7% on 14,00 €) +
   49,21 € (19% on 259,00 €) → 323,19 € Gesamtsumme inkl. MwSt., matching
   hand-calculation exactly.
+
+---
+
+## Correction: VAT rule fixed to match the actual 2026 catering rate (2026-07-06)
+
+- **Owner correction to the previous VAT classification**: the entry above
+  ("German catering VAT (7%/19%) split") classified composite buffets/packages
+  at 19% and grouped food+beverage together at 7%, based on a general
+  "Lieferung vs. sonstige Leistung" reading. The owner corrected this with
+  the actual current rule: **since 1 January 2026, Germany has a permanent
+  reduced 7% VAT rate for all Speisen (food) in catering — including
+  buffets/packages, regardless of bundling.** The 19% standard rate applies
+  to Getränke (beverages) and to service/equipment (Personal, Aufbau,
+  Möbel-/Geschirr-Verleih), not to food itself.
+- **Corrected rule** (`backend/scripts/derive_vat_rate.py`, full correction
+  history documented in its module docstring):
+  - `module == "food"` → 7%, regardless of `item_kind` (a buffet is still food)
+  - `module == "beverage"` → 19% (previously wrongly grouped with food at 7%)
+  - `module in (staff, tableware, equipment)` → 19% (unchanged)
+  - the three Pauschalen stay 19% (unchanged — they are service/logistics, not food)
+  - the tax office's 30%-Getränkeanteil flat-split fallback (for
+    undifferentiated all-inclusive billing) is explicitly NOT used, since
+    this catalog is itemized per dish/drink (`module` per item) — the exact
+    line-item separation the tax office itself prefers, per the owner's
+    own stated guidance
+  - all 201 real catalog items are `module=food` (no beverages exist in the
+    three source PDFs) — the correction has zero visible effect on today's
+    catalog content but is essential for correctness once beverages are
+    ever added, and fixes the 61 composite buffets that were wrongly at 19%
+- All UI disclaimers and code comments referencing the old "Lieferung vs.
+  sonstige Leistung / Abschn. 3.6 UStAE" framing were rewritten to state the
+  actual rule plainly, still marked as the owner's stated understanding
+  (not independently verified legal research) with the same "confirm with
+  Steuerberater before invoicing" disclaimer.
+- New test `test_all_food_items_are_7_percent_vat_including_composite_buffets`
+  (asserts against the real catalog: all `module=food` items, incl.
+  composite, are 7%) plus a new dedicated `test_derive_vat_rate.py`
+  (function-level tests for beverage/staff/tableware/equipment → 19%, since
+  the catalog currently has none of those to assert against directly).
+- Backend: 40 tests passing (was 35). Frontend: 25 passing (unchanged —
+  its parity tests exercise the arithmetic, not the classification rule
+  itself), build green. Verified live: Fingerfood I (composite buffet,
+  199,00 €) now correctly falls under the 7% base (13,93 €) instead of 19%;
+  Pauschalen (60,00 €) stay at 19% (11,40 €); total 284,33 € — recomputed
+  by hand and matched exactly.

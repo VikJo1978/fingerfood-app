@@ -31,8 +31,9 @@ class Item(BaseModel):
     explicitly reviewed and confirmed."""
 
     vat_rate_percent: Literal[7, 19] = 19
-    """Owner-approved best-effort classification per German catering VAT law
-    (Lieferung vs. sonstige Leistung, Abschn. 3.6 UStAE) — see
-    scripts/derive_vat_rate.py for the exact rule and rationale. NOT a
-    certified tax position; the office's Steuerberater should confirm before
-    this is relied on for real invoices."""
+    """Owner-stated classification per German catering VAT law: since
+    1 Jan 2026, food (Speisen, incl. buffets/packages) is taxed at 7%;
+    beverages and service/equipment are taxed at 19% — see
+    scripts/derive_vat_rate.py for the exact rule and rationale. NOT
+    independently verified legal research; the office's Steuerberater should
+    confirm before this is relied on for real invoices."""

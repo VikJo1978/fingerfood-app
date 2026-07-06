@@ -114,11 +114,12 @@ export function computePauschalen(subtotal: number, persons: number): Pauschalen
 }
 
 /**
- * Best-effort German catering VAT classification (7% pure food/beverage
- * delivery vs. 19% service/composite) — MUST mirror
+ * German catering VAT classification per the permanent 7% food rate
+ * effective 1 Jan 2026: food (incl. buffets/packages) = 7%; beverages and
+ * service/equipment = 19% — MUST mirror
  * backend/scripts/derive_vat_rate.py and backend/app/services/pricing_service.py
  * PAUSCHALEN_VAT_RATE_PERCENT exactly (checked by shared/pricing_fixtures.json
- * parity tests). NOT a certified tax position — see UI disclaimer.
+ * parity tests). Owner-stated rule, not independently verified — see UI disclaimer.
  */
 export const PAUSCHALEN_VAT_RATE_PERCENT = 19;
 

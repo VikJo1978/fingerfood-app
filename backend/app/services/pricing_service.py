@@ -17,9 +17,10 @@ PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON = 2.00
 # hand; no formula for that case is implemented here.
 PAUSCHALE_ANLIEFERUNG_FLAT = 35.00
 
-# Best-effort VAT classification (see scripts/derive_vat_rate.py) — owner-
-# approved rule, NOT a certified tax position. The three Pauschalen above are
-# service/logistics charges and always taxed at the standard rate.
+# VAT classification (see scripts/derive_vat_rate.py) — owner-stated rule per
+# the permanent 7% catering food rate effective 1 Jan 2026 (food incl.
+# buffets/packages = 7%; beverages/service/equipment = 19%). The three
+# Pauschalen above are service/logistics charges, not food — always 19%.
 PAUSCHALEN_VAT_RATE_PERCENT = 19
 
 

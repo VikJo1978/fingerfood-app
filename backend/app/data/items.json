@@ -213,7 +213,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "vollkorncanapees-2",
@@ -251,7 +251,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "wraps",
@@ -288,7 +288,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "business-hanseatisch",
@@ -325,7 +325,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "business-mediterran",
@@ -360,7 +360,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "business-vital",
@@ -396,7 +396,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "business-asia",
@@ -431,7 +431,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-buffet-1",
@@ -467,7 +467,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-buffet-2",
@@ -504,7 +504,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-buffet-3",
@@ -542,7 +542,7 @@
       "peanuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-buffet-4",
@@ -579,7 +579,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-buffet-5",
@@ -615,7 +615,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-pyramide",
@@ -653,7 +653,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "fingerfood-de-luxe",
@@ -693,7 +693,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "empfangsbuffet-1",
@@ -728,7 +728,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "empfangsbuffet-2",
@@ -764,7 +764,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "empfangsbuffet-3",
@@ -802,7 +802,7 @@
       "peanuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "empfangsbuffet-4",
@@ -839,7 +839,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-party-frikadelle",
@@ -4733,7 +4733,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "rustikales-buffet-2",
@@ -4768,7 +4768,7 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "rustikales-buffet-3",
@@ -4808,7 +4808,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "rustikales-buffet-4",
@@ -4846,7 +4846,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "hamburg-klassisch",
@@ -4883,7 +4883,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "hanseaten-buffet",
@@ -4919,7 +4919,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "festtagsbuffet-1",
@@ -4959,7 +4959,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "festtagsbuffet-2",
@@ -4997,7 +4997,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "festtagsbuffet-3",
@@ -5036,7 +5036,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "vegetarisches-buffet-1",
@@ -5073,7 +5073,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "vegetarisches-buffet-2",
@@ -5109,7 +5109,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "vegetarisches-buffet-3",
@@ -5147,7 +5147,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "veganes-buffet-1",
@@ -5182,7 +5182,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "veganes-buffet-2",
@@ -5217,7 +5217,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "veganes-buffet-3",
@@ -5253,7 +5253,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "italienisches-buffet-1",
@@ -5291,7 +5291,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "italienisches-buffet-2",
@@ -5328,7 +5328,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "italienisches-buffet-3",
@@ -5365,7 +5365,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "italienisches-buffet-4",
@@ -5403,7 +5403,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "mediterranes-buffet",
@@ -5441,7 +5441,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "franzoesisches-buffet-1",
@@ -5479,7 +5479,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "franzoesisches-buffet-2",
@@ -5516,7 +5516,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "griechisches-buffet",
@@ -5551,7 +5551,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "mexikanisches-buffet",
@@ -5586,7 +5586,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "karibisches-buffet",
@@ -5622,7 +5622,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "orientalisches-buffet",
@@ -5661,7 +5661,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "thailaendisches-buffet-1",
@@ -5695,7 +5695,7 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "thailaendisches-buffet-2",
@@ -5732,7 +5732,7 @@
       "peanuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "thailaendisches-buffet-3",
@@ -5770,7 +5770,7 @@
       "peanuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "thailaendisches-buffet-4",
@@ -5806,7 +5806,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "thailaendisches-buffet-5",
@@ -5844,7 +5844,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "grillbuffet-1",
@@ -5879,7 +5879,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "grillbuffet-2",
@@ -5917,7 +5917,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "grillbuffet-3",
@@ -5955,7 +5955,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "grillbuffet-4",
@@ -5994,7 +5994,7 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-1",
@@ -6030,7 +6030,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-2",
@@ -6068,7 +6068,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-3",
@@ -6105,7 +6105,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-4",
@@ -6140,7 +6140,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-5",
@@ -6178,7 +6178,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-6",
@@ -6213,7 +6213,7 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-7",
@@ -6251,7 +6251,7 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "lunch-buffet-2026-no-8",
@@ -6289,7 +6289,7 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 19
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m1",
