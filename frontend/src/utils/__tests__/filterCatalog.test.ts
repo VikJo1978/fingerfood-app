@@ -64,4 +64,17 @@ describe("filterCatalog search", () => {
     const out = filterCatalog(items, { ...baseOpts, search: "fisch" });
     expect(out).toEqual([]);
   });
+
+  it("matches fish dishes named only by species (Lachs/Forelle) via the allergens list", () => {
+    // Owner question 2026-07-06: does "fisch" also find Lachs/Forelle dishes
+    // with no literal "fisch" anywhere in their text? It didn't, until this
+    // — "fisch" now also matches items whose allergens include "fish"
+    // (already derived from the same species keywords at catalog build time).
+    const items = [
+      item({ id: "d", name: "Fingerfood I", description: "Mit Lachs und Frischkäse.", allergens: ["fish", "gluten", "milk"] }),
+      item({ id: "e", name: "Brötchen Mix 1", description: "Mit Käse.", allergens: ["milk"] }),
+    ];
+    const out = filterCatalog(items, { ...baseOpts, search: "fisch" });
+    expect(out.map((i) => i.id)).toEqual(["d"]);
+  });
 });

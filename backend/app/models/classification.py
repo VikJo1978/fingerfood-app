@@ -31,6 +31,29 @@ class Allergen(str, Enum):
 
 ALLERGEN_CODES: frozenset[str] = frozenset(a.value for a in Allergen)
 
+# German display labels. Must stay in sync with
+# frontend/src/constants/classification.ts ALLERGEN_LABELS_DE (parity-checked
+# by test_allergen_labels_match_frontend). Used to let a search for an
+# allergen-group word (e.g. "fisch") also match items via their already
+# audited `allergens` list (see scripts/derive_allergens.py) — not a new
+# keyword list, just reusing that one.
+ALLERGEN_LABELS_DE: dict[Allergen, str] = {
+    Allergen.gluten: "Gluten",
+    Allergen.milk: "Milch",
+    Allergen.egg: "Ei",
+    Allergen.soy: "Soja",
+    Allergen.nuts: "Schalenfrüchte",
+    Allergen.peanuts: "Erdnüsse",
+    Allergen.sesame: "Sesam",
+    Allergen.fish: "Fisch",
+    Allergen.crustaceans: "Krebstiere",
+    Allergen.celery: "Sellerie",
+    Allergen.mustard: "Senf",
+    Allergen.sulfites: "Sulfite",
+    Allergen.lupin: "Lupinen",
+    Allergen.molluscs: "Weichtiere",
+}
+
 
 class IngredientFlags(BaseModel):
     """Declared ingredients / composition flags (boolean)."""

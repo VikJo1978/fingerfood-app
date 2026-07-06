@@ -88,6 +88,22 @@ def test_search_matches_dishes_inside_buffet_composition() -> None:
     assert len(items) >= 9
 
 
+def test_search_matches_fish_dishes_by_species_name_via_allergen_group() -> None:
+    """Follow-up to the items_included fix, 2026-07-06: the owner asked whether
+    searching "fisch" would also find dishes named only by species, e.g.
+    "Lachs" (salmon) or "Forelle" (trout), with no literal "fisch" in their
+    text. It didn't — "fisch" is a plain substring search. Rather than
+    maintaining a second, separate species word list, "fisch" now also
+    matches any item whose already-audited `allergens` list contains "fish"
+    (scripts/derive_allergens.py derives that from the exact same species
+    keywords), so Lachs/Forelle dishes surface without new duplication."""
+    items = client.get("/api/items", params={"search": "fisch"}).json()
+    names = {i["name"] for i in items}
+    assert "Fingerfood I" in names  # contains "Lachs", no literal "fisch"
+    assert "Hamburg Klassisch" in names  # contains "Forelle", no literal "fisch"
+    assert all("fish" in i["allergens"] or "fisch" in (i["name"] + i["description"] + (i["items_included"] or "")).lower() for i in items)
+
+
 def test_sections_endpoint_sorted_unique() -> None:
     sections = client.get("/api/items/sections").json()
     assert sections == sorted(set(sections))

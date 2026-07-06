@@ -613,3 +613,43 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   green. Verified live: searching "fisch" in the running configurator now
   returns all 10 expected items (1 name match + 9 buffets matched via their
   composition), confirmed by reading the rendered result cards directly.
+
+---
+
+## Follow-up: "fisch" also matches species-only dishes (Lachs, Forelle, …) (2026-07-06)
+
+- **Owner's question after the items_included fix**: would searching "fisch"
+  also show dishes named only by species, e.g. "Lachs" (salmon) or "Forelle"
+  (trout)? Checked directly against the real catalog: no — 28 items mention
+  Lachs and 1 ("Hamburg Klassisch") mentions Forelle with no literal
+  "fisch"/"Fisch" anywhere in their name/description/category/items_included.
+  Plain substring search could never find these without a second species
+  word list.
+- **Fix, without duplicating a word list**: every item already carries an
+  audited `allergens` list computed at catalog-build time by
+  `scripts/derive_allergens.py`, whose `fish` keyword group already includes
+  lachs/forelle/hering/matjes/thunfisch/kabeljau/barsch/seeteufel/etc. — so
+  every one of those 28+1 items already has `"fish"` in `allergens`.
+  Deliberately did **not** fold in crustaceans/molluscs (Garnele, Scampi,
+  Hummer, Auster, Muschel) — those are distinct EU allergen categories from
+  fish, and the app already treats them separately for allergen-safety
+  reasons; conflating them for search would blur that distinction.
+  - Added `ALLERGEN_LABELS_DE` (German display labels per `Allergen` code) to
+    backend `app/models/classification.py`, matching the frontend's existing
+    `constants/classification.ts` `ALLERGEN_LABELS_DE` verbatim (parity test:
+    `test_allergen_labels_match_frontend`).
+  - Backend `routes/items.py` search: a query matching an allergen's German
+    label (e.g. "fisch" → "Fisch") now also matches items whose `allergens`
+    contains that code.
+  - Frontend `filterCatalog.ts`: same logic, reusing the frontend's existing
+    `ALLERGEN_LABELS_DE` constant directly (no new duplication needed there).
+- This generalizes for free to any allergen-group search term (e.g. "milch",
+  "nüsse"), not just fish — same mechanism, same already-audited data.
+- New tests: `test_classification.py` (label-dict parity + full Allergen
+  coverage), `test_search_matches_fish_dishes_by_species_name_via_allergen_group`
+  (backend), a fourth case in `filterCatalog.test.ts` (frontend).
+- Backend: 45 tests passing (was 42). Frontend: 30 passing (was 29), build
+  green. Verified live: searching "fisch" in the running configurator now
+  returns 49 items total, confirmed to include "Fingerfood I" (Lachs) and
+  "Hamburg Klassisch" (Forelle) — both with no literal "fisch" in their
+  visible text — via direct inspection of the rendered result cards.

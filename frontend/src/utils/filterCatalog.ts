@@ -1,5 +1,5 @@
-import { ALLERGENS } from "../constants/classification";
-import type { DietType } from "../constants/classification";
+import { ALLERGENS, ALLERGEN_LABELS_DE } from "../constants/classification";
+import type { AllergenCode, DietType } from "../constants/classification";
 import type { CatalogItem } from "../types";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { parseMaxUnitPriceInput } from "./maxUnitPrice";
@@ -12,6 +12,14 @@ export function parseExcludeAllergenCodes(raw: string): Set<string> {
     if (allowed.has(p)) s.add(p);
   }
   return s;
+}
+
+function allergenCodesForQuery(q: string): Set<AllergenCode> {
+  const hit = new Set<AllergenCode>();
+  for (const code of ALLERGENS) {
+    if (ALLERGEN_LABELS_DE[code].toLowerCase().includes(q)) hit.add(code);
+  }
+  return hit;
 }
 
 export interface CatalogFilterOpts {
@@ -28,13 +36,15 @@ export function filterCatalog(all: CatalogItem[], opts: CatalogFilterOpts): Cata
   let out = all;
   const q = opts.search.trim().toLowerCase();
   if (q) {
+    const allergenHit = allergenCodesForQuery(q);
     out = out.filter(
       (i) =>
         i.name.toLowerCase().includes(q) ||
         i.description.toLowerCase().includes(q) ||
         i.category.toLowerCase().includes(q) ||
         (i.diet_type ?? "").toLowerCase().includes(q) ||
-        (i.items_included ?? "").toLowerCase().includes(q)
+        (i.items_included ?? "").toLowerCase().includes(q) ||
+        (allergenHit.size > 0 && (i.allergens ?? []).some((a) => allergenHit.has(a)))
     );
   }
   if (opts.section.trim()) {

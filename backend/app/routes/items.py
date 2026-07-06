@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 
 from app.core.config import settings
-from app.models.classification import ALLERGEN_CODES, DietType
+from app.models.classification import ALLERGEN_CODES, ALLERGEN_LABELS_DE, Allergen, DietType
 from app.models.item import Item
 from app.services.item_service import load_items
 
@@ -15,6 +15,15 @@ def _all_items() -> list[Item]:
     if _cache is None:
         _cache = load_items(settings.items_json_path)
     return _cache
+
+
+def _allergen_codes_for_query(q: str) -> set[Allergen]:
+    """A search word matching a German allergen-group label (e.g. "fisch")
+    also matches items carrying that allergen — so "fisch" finds buffets
+    containing "Lachs" or "Forelle" even though the word "Fisch" itself never
+    appears in their text. Reuses the audited `allergens` list computed by
+    scripts/derive_allergens.py, no separate species word list to maintain."""
+    return {code for code, label in ALLERGEN_LABELS_DE.items() if q in label.lower()}
 
 
 def _parse_exclude_allergens(raw: str | None) -> set[str]:
@@ -49,7 +58,9 @@ def list_items(
 ) -> list[Item]:
     """
     Filtering plan:
-    - search: name, description, category, diet_type
+    - search: name, description, category, diet_type, items_included, and
+      allergen-group labels (e.g. "fisch" also matches items whose derived
+      allergens include "fish", such as Lachs/Forelle dishes)
     - section, price_type: exact
     - diet: one DietType
     - exclude_allergens: hide items declaring any of these allergens
@@ -60,6 +71,7 @@ def list_items(
 
     if search:
         q = search.lower().strip()
+        allergen_hit = _allergen_codes_for_query(q)
         out = [
             i
             for i in out
@@ -68,6 +80,7 @@ def list_items(
             or q in i.category.lower()
             or q in i.diet_type.value
             or q in (i.items_included or "").lower()
+            or (allergen_hit and allergen_hit.intersection(i.allergens))
         ]
 
     if section:
