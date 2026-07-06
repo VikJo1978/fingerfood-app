@@ -127,8 +127,8 @@ export function HomePage() {
   }, [offerDraft.lines, offerDraft.persons]);
 
   const pauschalen = useMemo(
-    () => computePauschalen(subtotal, offerDraft.persons),
-    [subtotal, offerDraft.persons]
+    () => computePauschalen(subtotal, offerDraft.persons, offerDraft.lines.length > 0),
+    [subtotal, offerDraft.persons, offerDraft.lines.length]
   );
 
   const vat = useMemo(

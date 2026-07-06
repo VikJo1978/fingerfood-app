@@ -74,9 +74,12 @@ def test_price_offer_global_low_person_info() -> None:
 
 def test_pauschalen_parity_fixtures() -> None:
     for case in FIXTURES["pauschalen_cases"]:
-        buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * case["persons"], 2)
-        geschirrpauschale = round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * case["persons"], 2)
-        anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2)
+        has_lines = case["has_lines"]
+        buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * case["persons"], 2) if has_lines else 0.0
+        geschirrpauschale = (
+            round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * case["persons"], 2) if has_lines else 0.0
+        )
+        anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2) if has_lines else 0.0
         grand_total = round(case["subtotal"] + buffetpauschale + geschirrpauschale + anlieferung, 2)
         assert buffetpauschale == case["expected_buffetpauschale"], case["name"]
         assert geschirrpauschale == case["expected_geschirrpauschale"], case["name"]
@@ -84,22 +87,39 @@ def test_pauschalen_parity_fixtures() -> None:
         assert grand_total == case["expected_grand_total"], case["name"]
 
 
-def test_price_offer_includes_pauschalen() -> None:
-    resp = price_offer({}, OfferRequest(persons=10, lines=[]))
+def test_price_offer_includes_pauschalen_when_order_has_items() -> None:
+    item = _item(1.0, "piece", 1, "Stück")
+    resp = price_offer(
+        {"a": item}, OfferRequest(persons=10, lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1)])
+    )
     assert resp.buffetpauschale == 5.0
     assert resp.geschirrpauschale == 20.0
     assert resp.anlieferung == 35.0
-    assert resp.grand_total == 60.0
+    assert resp.grand_total == round(1.0 + 60.0, 2)
+
+
+def test_price_offer_empty_lines_has_zero_pauschalen() -> None:
+    """Bug found 2026-07-06: an offer with zero lines was still charging
+    Pauschalen from `persons` alone — nothing to deliver/set up for an empty
+    order. Fixed: Pauschalen are 0 when there are no priced lines."""
+    resp = price_offer({}, OfferRequest(persons=10, lines=[]))
+    assert resp.buffetpauschale == 0.0
+    assert resp.geschirrpauschale == 0.0
+    assert resp.anlieferung == 0.0
+    assert resp.grand_total == 0.0
+    assert resp.vat_7_percent_amount == 0.0
+    assert resp.vat_19_percent_amount == 0.0
+    assert resp.total_incl_vat == 0.0
 
 
 def test_vat_classification_and_pauschalen_are_19_percent() -> None:
-    """Empty offer: no lines, so only the Pauschalen carry VAT — always 19%."""
-    resp = price_offer({}, OfferRequest(persons=10, lines=[]))
-    assert resp.vat_7_percent_base == 0.0
-    assert resp.vat_7_percent_amount == 0.0
-    assert resp.vat_19_percent_base == 60.0  # 5 + 20 + 35 Pauschalen
-    assert resp.vat_19_percent_amount == 11.40  # round(60 * 0.19, 2)
-    assert resp.total_incl_vat == round(60.0 + 11.40, 2)
+    """An order with items (so Pauschalen apply): Pauschalen carry VAT at 19%."""
+    item = _item(1.0, "piece", 1, "Stück")  # vat_rate_percent defaults to 19 on _item()
+    resp = price_offer(
+        {"a": item}, OfferRequest(persons=10, lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1)])
+    )
+    assert resp.vat_19_percent_base == 61.0  # 1.0 line + 5 + 20 + 35 Pauschalen
+    assert resp.vat_19_percent_amount == round(61.0 * 0.19, 2)
 
 
 def test_vat_splits_lines_by_item_rate() -> None:

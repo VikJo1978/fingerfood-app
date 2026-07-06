@@ -118,9 +118,17 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
         )
 
     per_person = subtotal / req.persons if req.persons else 0.0
-    buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * req.persons, 2)
-    geschirrpauschale = round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * req.persons, 2)
-    anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2)
+
+    # Pauschalen only apply to an actual order — an empty offer (no priced
+    # lines) has nothing to deliver, set up, or provide tableware for. Bug
+    # found 2026-07-06: these were previously computed from `persons` alone,
+    # so an empty draft already showed 60,00 € before anything was added.
+    has_order = bool(line_results)
+    buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * req.persons, 2) if has_order else 0.0
+    geschirrpauschale = (
+        round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * req.persons, 2) if has_order else 0.0
+    )
+    anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2) if has_order else 0.0
     grand_total = round(subtotal + buffetpauschale + geschirrpauschale + anlieferung, 2)
 
     # Pauschalen are always 19% (service/logistics charges).

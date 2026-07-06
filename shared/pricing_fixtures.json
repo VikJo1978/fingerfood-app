@@ -58,16 +58,22 @@
   ],
   "pauschalen_cases": [
     {
-      "name": "ten_persons_zero_subtotal",
-      "subtotal": 0.0, "persons": 10,
+      "name": "ten_persons_zero_priced_lines_but_has_order",
+      "subtotal": 0.0, "persons": 10, "has_lines": true,
       "expected_buffetpauschale": 5.0, "expected_geschirrpauschale": 20.0,
       "expected_anlieferung": 35.0, "expected_grand_total": 60.0
     },
     {
       "name": "twenty_five_persons_with_subtotal",
-      "subtotal": 500.0, "persons": 25,
+      "subtotal": 500.0, "persons": 25, "has_lines": true,
       "expected_buffetpauschale": 12.5, "expected_geschirrpauschale": 50.0,
       "expected_anlieferung": 35.0, "expected_grand_total": 597.5
+    },
+    {
+      "name": "empty_offer_no_lines_bug_2026_07_06",
+      "subtotal": 0.0, "persons": 10, "has_lines": false,
+      "expected_buffetpauschale": 0.0, "expected_geschirrpauschale": 0.0,
+      "expected_anlieferung": 0.0, "expected_grand_total": 0.0
     }
   ],
   "vat_cases": [

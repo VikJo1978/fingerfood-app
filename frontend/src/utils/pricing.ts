@@ -105,7 +105,20 @@ export interface PauschalenBreakdown {
   grandTotal: number;
 }
 
-export function computePauschalen(subtotal: number, persons: number): PauschalenBreakdown {
+/**
+ * Pauschalen only apply to an actual order — an empty offer (no lines) has
+ * nothing to deliver, set up, or provide tableware for. Bug found
+ * 2026-07-06: these were previously computed from `persons` alone, so an
+ * empty draft already showed 60,00 € before anything was added.
+ */
+export function computePauschalen(
+  subtotal: number,
+  persons: number,
+  hasLines: boolean
+): PauschalenBreakdown {
+  if (!hasLines) {
+    return { buffetpauschale: 0, geschirrpauschale: 0, anlieferung: 0, grandTotal: 0 };
+  }
   const buffetpauschale = Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
   const geschirrpauschale = Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
   const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;

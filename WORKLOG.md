@@ -549,3 +549,34 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - Backend: 40 tests passing (unchanged). Frontend: 25 passing (unchanged),
   build green. Verified live: disclaimer text renders verbatim in the
   configurator's Angebot summary.
+
+---
+
+## Bug fix: Pauschalen charged on an empty offer (2026-07-06)
+
+- **Found by the owner while testing the running app**: opening a fresh
+  configurator with zero lines added already showed Büffetpauschale 5,00 €,
+  Geschirrpauschale 20,00 €, Anlieferung 35,00 € — 60,00 € netto / 71,40 €
+  incl. VAT for an order containing literally nothing. Root cause: both
+  `price_offer` (backend) and `computePauschalen` (frontend) computed the
+  three Pauschalen from `persons` alone, never checking whether the offer
+  actually had any line items.
+- **Fix**: Pauschalen (and therefore their VAT) are now 0 whenever the offer
+  has no priced lines — nothing to deliver, set up, or provide tableware for.
+  - Backend: `price_offer` gates on `bool(line_results)`.
+  - Frontend: `computePauschalen(subtotal, persons, hasLines)` gained a
+    required `hasLines` parameter; `HomePage.tsx` passes
+    `offerDraft.lines.length > 0`.
+- Two backend tests that had (silently) encoded the bug as expected
+  behavior — asserting Pauschalen for an explicitly empty `lines=[]` request
+  — were corrected to assert zero for the empty case and moved their
+  original (non-empty-order) assertions to new tests that add a real line
+  first. Added `test_price_offer_empty_lines_has_zero_pauschalen` as the
+  direct regression test. Frontend fixtures gained an explicit `has_lines`
+  field (true for the existing cases, plus a new `empty_offer_no_lines_bug_2026_07_06`
+  case asserting all-zero) so the parity-guard now also covers this branch.
+- Backend: 41 tests passing (was 40). Frontend: 26 passing (was 25), build
+  green. Verified live: empty configurator now shows 0,00 € everywhere
+  (Positionen, all three Pauschalen, both VAT amounts, grand total); adding
+  one item (Party-Frikadelle, 14,00 €) correctly brings Pauschalen back
+  (60,00 €) for a combined 74,00 € netto / 86,38 € incl. VAT.

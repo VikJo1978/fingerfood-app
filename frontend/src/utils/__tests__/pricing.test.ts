@@ -92,7 +92,7 @@ describe("VAT arithmetic (parity fixtures, must match backend)", () => {
 describe("computePauschalen (parity fixtures, must match backend)", () => {
   for (const c of fixtures.pauschalen_cases) {
     it(c.name, () => {
-      const result = computePauschalen(c.subtotal, c.persons);
+      const result = computePauschalen(c.subtotal, c.persons, c.has_lines);
       expect(result.buffetpauschale).toBe(c.expected_buffetpauschale);
       expect(result.geschirrpauschale).toBe(c.expected_geschirrpauschale);
       expect(result.anlieferung).toBe(c.expected_anlieferung);
