@@ -34,6 +34,13 @@ This reflects the owner's stated understanding of current law, not
 independent legal research — the office's Steuerberater should confirm
 before this is relied on for real invoices. See Item.vat_rate_percent
 docstring and the UI disclaimer.
+
+Schutzformulierung: Die automatische USt.-Zuordnung gilt für Leistungen ab
+01.01.2026; historische Leistungen werden nicht steuerlich bewertet. This
+module intentionally has no date-based logic — the app has no concept of a
+backdated/retroactive Angebot today, so a fixed as-of-2026-01-01 rate is
+applied unconditionally rather than adding date-branching for a case that
+cannot currently occur. Revisit if retro-Angebote are ever supported.
 """
 
 from __future__ import annotations

@@ -36,4 +36,7 @@ class Item(BaseModel):
     beverages and service/equipment are taxed at 19% — see
     scripts/derive_vat_rate.py for the exact rule and rationale. NOT
     independently verified legal research; the office's Steuerberater should
-    confirm before this is relied on for real invoices."""
+    confirm before this is relied on for real invoices.
+
+    Schutzformulierung: Die automatische USt.-Zuordnung gilt für Leistungen ab
+    01.01.2026; historische Leistungen werden nicht steuerlich bewertet."""

@@ -118,7 +118,8 @@ export function OfferSummary({
           ⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für Getränke, Service/Personal
           und Equipment — nach dem seit 1.1.2026 geltenden ermäßigten Steuersatz für Speisen im
           Catering. Keine steuerliche Prüfung. Bitte vor Rechnungsstellung mit dem Steuerberater
-          abstimmen.
+          abstimmen. Die automatische USt.-Zuordnung gilt für Leistungen ab 01.01.2026; historische
+          Leistungen werden nicht steuerlich bewertet.
         </p>
         <BudgetStatus enabled={budgetEnabled} totalBudget={totalBudget} subtotal={subtotal} />
       </div>

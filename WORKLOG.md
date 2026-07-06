@@ -529,3 +529,23 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   199,00 €) now correctly falls under the 7% base (13,93 €) instead of 19%;
   Pauschalen (60,00 €) stay at 19% (11,40 €); total 284,33 € — recomputed
   by hand and matched exactly.
+
+---
+
+## Accepted: fff3f5a is the correct Stand for Leistungen ab 01.01.2026 (2026-07-06)
+
+- Owner confirmed `fff3f5a` (food=7% always, beverage/service/equipment=19%)
+  as correct.
+- Added the requested explicit Schutzformulierung verbatim, in both UI
+  disclaimers (`OfferSummary.tsx`, `OfferPreview.tsx`) and in code
+  (`Item.vat_rate_percent` docstring, `derive_vat_rate.py` module docstring):
+  "Die automatische USt.-Zuordnung gilt für Leistungen ab 01.01.2026;
+  historische Leistungen werden nicht steuerlich bewertet."
+- Per explicit instruction, `derive_vat_rate` stays date-independent — no
+  date-based branching was added, since the app has no concept of a
+  backdated/retroactive Angebot today. Noted in the module docstring as a
+  deliberate simplification to revisit only if retro-Angebote are ever
+  supported.
+- Backend: 40 tests passing (unchanged). Frontend: 25 passing (unchanged),
+  build green. Verified live: disclaimer text renders verbatim in the
+  configurator's Angebot summary.
