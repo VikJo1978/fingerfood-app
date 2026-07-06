@@ -17,6 +17,11 @@ PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON = 2.00
 # hand; no formula for that case is implemented here.
 PAUSCHALE_ANLIEFERUNG_FLAT = 35.00
 
+# Best-effort VAT classification (see scripts/derive_vat_rate.py) — owner-
+# approved rule, NOT a certified tax position. The three Pauschalen above are
+# service/logistics charges and always taxed at the standard rate.
+PAUSCHALEN_VAT_RATE_PERCENT = 19
+
 
 def _line_total(item: Item, persons: int, quantity_mode: str, quantity: float) -> float:
     if item.price_type == "piece":
@@ -80,6 +85,8 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
         )
 
     subtotal = 0.0
+    vat_7_base = 0.0
+    vat_19_base = 0.0
     for line in req.lines:
         item = items.get(line.item_id)
         if item is None:
@@ -93,6 +100,10 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
             continue
         total = _line_total(item, req.persons, line.quantity_mode, line.quantity)
         subtotal += total
+        if item.vat_rate_percent == 7:
+            vat_7_base += total
+        else:
+            vat_19_base += total
         line_results.append(
             LinePricing(
                 item_id=line.item_id,
@@ -100,6 +111,8 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
                 quantity=line.quantity,
                 line_total=round(total, 2),
                 warnings=_line_warnings(item, req.persons, line.quantity_mode, line.quantity),
+                vat_rate_percent=item.vat_rate_percent,
+                vat_amount=round(total * item.vat_rate_percent / 100, 2),
             )
         )
 
@@ -108,6 +121,13 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
     geschirrpauschale = round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * req.persons, 2)
     anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2)
     grand_total = round(subtotal + buffetpauschale + geschirrpauschale + anlieferung, 2)
+
+    # Pauschalen are always 19% (service/logistics charges).
+    vat_19_base += buffetpauschale + geschirrpauschale + anlieferung
+    vat_7_amount = round(vat_7_base * 7 / 100, 2)
+    vat_19_amount = round(vat_19_base * 19 / 100, 2)
+    total_incl_vat = round(grand_total + vat_7_amount + vat_19_amount, 2)
+
     return OfferResponse(
         persons=req.persons,
         subtotal=round(subtotal, 2),
@@ -118,4 +138,9 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
         geschirrpauschale=geschirrpauschale,
         anlieferung=anlieferung,
         grand_total=grand_total,
+        vat_7_percent_base=round(vat_7_base, 2),
+        vat_7_percent_amount=vat_7_amount,
+        vat_19_percent_base=round(vat_19_base, 2),
+        vat_19_percent_amount=vat_19_amount,
+        total_incl_vat=total_incl_vat,
     )

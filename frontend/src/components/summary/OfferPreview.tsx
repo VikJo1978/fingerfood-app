@@ -4,6 +4,7 @@ import {
   formatCurrency,
   isPieceUnitBasis,
   type PauschalenBreakdown,
+  type VatBreakdown,
 } from "../../utils/pricing";
 
 function dashIfEmpty(v: string | undefined): string {
@@ -27,6 +28,7 @@ export interface OfferPreviewProps {
   subtotal: number;
   pricePerPerson: number;
   pauschalen: PauschalenBreakdown;
+  vat: VatBreakdown;
 }
 
 export function OfferPreview({
@@ -37,6 +39,7 @@ export function OfferPreview({
   subtotal,
   pricePerPerson,
   pauschalen,
+  vat,
 }: OfferPreviewProps) {
   if (!open) return null;
 
@@ -140,7 +143,10 @@ export function OfferPreview({
                         {unitBasis}: {formatCurrency(line.snapshot.chosen_price)}
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
-                        Zeilensumme: {formatCurrency(lineTotal)}
+                        Zeilensumme: {formatCurrency(lineTotal)}{" "}
+                        <span className="text-xs font-normal text-slate-500">
+                          (netto, {it?.vat_rate_percent ?? 19}% MwSt.)
+                        </span>
                       </p>
                       {composite && itemsIncluded ? (
                         <div className="mt-3 border-t border-slate-200/80 pt-3">
@@ -195,9 +201,23 @@ export function OfferPreview({
                 <span>{formatCurrency(pauschalen.anlieferung)}</span>
               </div>
               <div className="flex justify-between gap-4 border-t border-slate-100 pt-2">
-                <span className="font-medium text-slate-700">Gesamtsumme inkl. Pauschalen</span>
+                <span className="font-medium text-slate-700">Gesamtsumme inkl. Pauschalen (netto)</span>
                 <span className="font-semibold text-slate-900">
                   {formatCurrency(pauschalen.grandTotal)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs text-slate-500">
+                <span>zzgl. 7% MwSt. (auf {formatCurrency(vat.vat7Base)})</span>
+                <span>{formatCurrency(vat.vat7Amount)}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs text-slate-500">
+                <span>zzgl. 19% MwSt. (auf {formatCurrency(vat.vat19Base)})</span>
+                <span>{formatCurrency(vat.vat19Amount)}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-slate-100 pt-2">
+                <span className="font-semibold text-slate-800">Gesamtsumme inkl. MwSt.</span>
+                <span className="text-base font-bold text-slate-900">
+                  {formatCurrency(vat.totalInclVat)}
                 </span>
               </div>
             </div>
@@ -210,8 +230,12 @@ export function OfferPreview({
               <li>Preis bleibt vorläufig.</li>
               <li>
                 Büffetpauschale, Anlieferung (Standardzone: Innenstadt Hamburg, barrierefrei, ohne
-                Treppen, direkt anfahrbar) und Geschirrpauschale sind unten enthalten; MwSt. wird
-                nicht automatisch kalkuliert.
+                Treppen, direkt anfahrbar) und Geschirrpauschale sind oben enthalten.
+              </li>
+              <li className="font-semibold">
+                ⚠ MwSt.-Sätze (7%/19%) sind eine Einschätzung nach der Lieferung/sonstige-Leistung-
+                Abgrenzung (Abschn. 3.6 UStAE), keine steuerliche Prüfung. Bitte vor
+                Rechnungsstellung mit dem Steuerberater abstimmen.
               </li>
               <li className="font-semibold">
                 ⚠ Allergenangaben sind, sofern nicht anders vermerkt, automatisch aus den

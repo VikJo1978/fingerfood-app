@@ -70,6 +70,9 @@ export interface CatalogItem {
    * NOT a checked food-safety declaration — UI must show a warning wherever
    * allergens are displayed. True: a human has reviewed and confirmed them. */
   allergens_verified?: boolean;
+  /** Best-effort German catering VAT classification (7 or 19), NOT a
+   * certified tax position — see backend scripts/derive_vat_rate.py. */
+  vat_rate_percent?: 7 | 19;
   module: ItemModule;
   source_type: SourceType;
   item_kind: ItemKind;

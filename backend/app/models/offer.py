@@ -28,6 +28,10 @@ class LinePricing(BaseModel):
     quantity: float
     line_total: float
     warnings: list[OfferWarning] = Field(default_factory=list)
+    # Best-effort VAT classification (see scripts/derive_vat_rate.py) — not a
+    # certified tax position.
+    vat_rate_percent: int = 19
+    vat_amount: float = 0.0
 
 
 class OfferResponse(BaseModel):
@@ -44,3 +48,11 @@ class OfferResponse(BaseModel):
     geschirrpauschale: float = 0.0
     anlieferung: float = 0.0
     grand_total: float = 0.0
+    # Best-effort VAT breakdown (see scripts/derive_vat_rate.py) — owner-approved
+    # classification rule, NOT a certified tax position; confirm with the
+    # Steuerberater before relying on this for real invoices.
+    vat_7_percent_base: float = 0.0
+    vat_7_percent_amount: float = 0.0
+    vat_19_percent_base: float = 0.0
+    vat_19_percent_amount: float = 0.0
+    total_incl_vat: float = 0.0

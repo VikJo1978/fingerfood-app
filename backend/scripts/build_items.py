@@ -23,6 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.derive_allergens import derive_allergens, derive_ingredient_flags  # noqa: E402
+from scripts.derive_vat_rate import derive_vat_rate  # noqa: E402
 
 ITEMS_JSON_PATH = Path(__file__).resolve().parents[1] / "app" / "data" / "items.json"
 
@@ -82,6 +83,7 @@ def buffet(
         "ingredient_flags": derive_ingredient_flags(derive_text),
         "allergens": derive_allergens(derive_text),
         "allergens_verified": False,
+        "vat_rate_percent": derive_vat_rate("food", "composite"),
     }
 
 
@@ -121,6 +123,7 @@ def piece(
         "ingredient_flags": derive_ingredient_flags(derive_text),
         "allergens": derive_allergens(derive_text),
         "allergens_verified": False,
+        "vat_rate_percent": derive_vat_rate(module, item_kind),
     }
 
 

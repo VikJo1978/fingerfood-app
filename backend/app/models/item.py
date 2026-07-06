@@ -29,3 +29,10 @@ class Item(BaseModel):
     food-safety declaration. Must not be relied on for a client with allergies
     without kitchen/owner verification. True is reserved for items a human has
     explicitly reviewed and confirmed."""
+
+    vat_rate_percent: Literal[7, 19] = 19
+    """Owner-approved best-effort classification per German catering VAT law
+    (Lieferung vs. sonstige Leistung, Abschn. 3.6 UStAE) — see
+    scripts/derive_vat_rate.py for the exact rule and rationale. NOT a
+    certified tax position; the office's Steuerberater should confirm before
+    this is relied on for real invoices."""

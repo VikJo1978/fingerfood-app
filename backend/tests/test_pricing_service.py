@@ -90,3 +90,47 @@ def test_price_offer_includes_pauschalen() -> None:
     assert resp.geschirrpauschale == 20.0
     assert resp.anlieferung == 35.0
     assert resp.grand_total == 60.0
+
+
+def test_vat_classification_and_pauschalen_are_19_percent() -> None:
+    """Empty offer: no lines, so only the Pauschalen carry VAT — always 19%."""
+    resp = price_offer({}, OfferRequest(persons=10, lines=[]))
+    assert resp.vat_7_percent_base == 0.0
+    assert resp.vat_7_percent_amount == 0.0
+    assert resp.vat_19_percent_base == 60.0  # 5 + 20 + 35 Pauschalen
+    assert resp.vat_19_percent_amount == 11.40  # round(60 * 0.19, 2)
+    assert resp.total_incl_vat == round(60.0 + 11.40, 2)
+
+
+def test_vat_splits_lines_by_item_rate() -> None:
+    item_7 = _item(2.0, "piece", 1, "Stück")  # module="food" default via Item(...); vat default 19 unless set
+    item_7 = item_7.model_copy(update={"vat_rate_percent": 7})
+    item_19 = _item(3.0, "piece", 1, "Stück").model_copy(update={"vat_rate_percent": 19})
+    items = {"a": item_7, "b": item_19}
+    req = OfferRequest(
+        persons=10,
+        lines=[
+            OfferLineIn(item_id="a", quantity_mode="total", quantity=10),  # 20.0 net @7%
+            OfferLineIn(item_id="b", quantity_mode="total", quantity=10),  # 30.0 net @19%
+        ],
+    )
+    resp = price_offer(items, req)
+    assert resp.subtotal == 50.0
+    assert resp.vat_7_percent_base == 20.0
+    assert resp.vat_7_percent_amount == 1.40
+    # 30.0 line + 60.0 Pauschalen (10 persons) = 90.0 base @19%
+    assert resp.vat_19_percent_base == 90.0
+    assert resp.vat_19_percent_amount == 17.10
+    line_a = next(l for l in resp.lines if l.item_id == "a")
+    assert line_a.vat_rate_percent == 7
+    assert line_a.vat_amount == 1.40
+
+
+def test_vat_arithmetic_parity_fixtures() -> None:
+    for case in FIXTURES["vat_cases"]:
+        vat7 = round(case["vat7_base"] * 0.07, 2)
+        vat19 = round(case["vat19_base"] * 0.19, 2)
+        total_incl = round(case["grand_total"] + vat7 + vat19, 2)
+        assert vat7 == case["expected_vat7_amount"], case["name"]
+        assert vat19 == case["expected_vat19_amount"], case["name"]
+        assert total_incl == case["expected_total_incl_vat"], case["name"]

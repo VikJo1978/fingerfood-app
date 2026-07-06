@@ -1,4 +1,4 @@
-import type { CatalogItem, OfferLine, OfferWarning, PriceType, QuantityMode } from "../types";
+import type { CatalogItem, OfferDraft, OfferLine, OfferWarning, PriceType, QuantityMode } from "../types";
 
 /**
  * Line totals use `price_type` (unit basis: piece vs person), not `pricing_mode`.
@@ -111,4 +111,47 @@ export function computePauschalen(subtotal: number, persons: number): Pauschalen
   const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;
   const grandTotal = Math.round((subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100) / 100;
   return { buffetpauschale, geschirrpauschale, anlieferung, grandTotal };
+}
+
+/**
+ * Best-effort German catering VAT classification (7% pure food/beverage
+ * delivery vs. 19% service/composite) — MUST mirror
+ * backend/scripts/derive_vat_rate.py and backend/app/services/pricing_service.py
+ * PAUSCHALEN_VAT_RATE_PERCENT exactly (checked by shared/pricing_fixtures.json
+ * parity tests). NOT a certified tax position — see UI disclaimer.
+ */
+export const PAUSCHALEN_VAT_RATE_PERCENT = 19;
+
+export interface VatBreakdown {
+  vat7Base: number;
+  vat7Amount: number;
+  vat19Base: number;
+  vat19Amount: number;
+  totalInclVat: number;
+}
+
+export function computeVatBreakdown(
+  draft: Pick<OfferDraft, "lines" | "persons">,
+  itemsById: Record<string, CatalogItem>,
+  pauschalen: PauschalenBreakdown
+): VatBreakdown {
+  let vat7Base = 0;
+  let vat19Base = 0;
+  for (const line of draft.lines) {
+    const total = computeOfferLineTotal(line, draft.persons);
+    const rate = itemsById[line.itemId]?.vat_rate_percent ?? 19;
+    if (rate === 7) vat7Base += total;
+    else vat19Base += total;
+  }
+  vat19Base += pauschalen.buffetpauschale + pauschalen.geschirrpauschale + pauschalen.anlieferung;
+  const vat7Amount = Math.round(vat7Base * 0.07 * 100) / 100;
+  const vat19Amount = Math.round(vat19Base * 0.19 * 100) / 100;
+  const totalInclVat = Math.round((pauschalen.grandTotal + vat7Amount + vat19Amount) * 100) / 100;
+  return {
+    vat7Base: Math.round(vat7Base * 100) / 100,
+    vat7Amount,
+    vat19Base: Math.round(vat19Base * 100) / 100,
+    vat19Amount,
+    totalInclVat,
+  };
 }

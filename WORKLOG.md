@@ -444,3 +444,43 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 - Boundaries unchanged: still no configurator→Core bridge, drafts still not
   Orders/OrderVersions, catalog still a fixture Core does not own (per
   CONFIGURATOR_EXECUTION_PACK_V1 in the catering-system repo).
+
+---
+
+## Accepted progress: German catering VAT (7%/19%) split (2026-07-06)
+
+- **Owner-clarified fact**: all three source PDFs consistently state prices
+  are net/exclusive of VAT ("zzgl. der gesetzlichen Mehrwertsteuer" /
+  "ohne Umsatzsteuer"). Already correctly not auto-calculated before this
+  step; now made explicit and correct.
+- **Owner-approved VAT classification rule** (`backend/scripts/derive_vat_rate.py`,
+  NOT a certified tax position — Steuerberater should confirm before real
+  invoicing): 7% for simple, individually-priced food/beverage items (pure
+  delivery, no service character); 19% for all composite buffets/packages
+  (inherently require chafing dishes/setup per their own Büffetpauschale
+  rationale), all staff/tableware/equipment items, and all three Pauschalen
+  (Büffetpauschale, Geschirrpauschale, Anliefergebühr — service/logistics
+  charges). Based on the German "Lieferung vs. sonstige Leistung" combined-
+  supply doctrine (Abschn. 3.6 UStAE).
+  - `Item.vat_rate_percent: Literal[7, 19] = 19` added to schema (Python +
+    TS `CatalogItem.vat_rate_percent`), computed once at catalog-build time
+    via `derive_vat_rate(module, item_kind)` and baked into items.json (140
+    items at 7%, 61 at 19% — verified by direct count after rebuild).
+  - Backend: `OfferResponse` gained `vat_7_percent_base/amount`,
+    `vat_19_percent_base/amount`, `total_incl_vat`; each `LinePricing` carries
+    its own `vat_rate_percent`/`vat_amount`. Pauschalen always taxed at 19%.
+  - Frontend: `computeVatBreakdown()` in `utils/pricing.ts` mirrors the
+    backend exactly (rate lookup via `itemsById`, same 7%/19% constants),
+    checked against new `vat_cases` in `shared/pricing_fixtures.json` (same
+    parity-guard mechanism as line-pricing and Pauschalen).
+  - UI: per-line rate/net note in Angebotsvorschau positions; Summen sections
+    (sidebar + preview modal) show the 7%/19% bases, amounts, and a final
+    "inkl. MwSt." total; a loud disclaimer states this is an estimate per the
+    Lieferung/sonstige-Leistung distinction, not a tax review, and to confirm
+    with the Steuerberater before invoicing.
+- Backend: 35 tests passing (was 32). Frontend: 25 passing (was 22), build
+  green. Verified live in-browser: mixed 7%/19% offer (Fingerfood I composite
+  @19% + Party-Frikadelle simple @7%, 10 persons) computed 213,00 €
+  Positionen → 273,00 € incl. Pauschalen (netto) → 0,98 € (7% on 14,00 €) +
+  49,21 € (19% on 259,00 €) → 323,19 € Gesamtsumme inkl. MwSt., matching
+  hand-calculation exactly.

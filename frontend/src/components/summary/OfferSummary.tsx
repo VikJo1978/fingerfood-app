@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CatalogItem, OfferDraft, QuantityMode } from "../../types";
-import { formatCurrency, type PauschalenBreakdown } from "../../utils/pricing";
+import { formatCurrency, type PauschalenBreakdown, type VatBreakdown } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
@@ -13,6 +13,7 @@ interface OfferSummaryProps {
   subtotal: number;
   pricePerPerson: number;
   pauschalen: PauschalenBreakdown;
+  vat: VatBreakdown;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;
   onCustomizationNoteChange: (lineId: string, note: string) => void;
@@ -30,6 +31,7 @@ export function OfferSummary({
   subtotal,
   pricePerPerson,
   pauschalen,
+  vat,
   onQuantityChange,
   onModeChange,
   onCustomizationNoteChange,
@@ -95,11 +97,27 @@ export function OfferSummary({
           <span>{formatCurrency(pauschalen.anlieferung)}</span>
         </div>
         <div className="flex items-baseline justify-between gap-4 border-t border-slate-100 pt-2">
-          <span className="text-sm font-medium text-slate-700">Gesamtsumme inkl. Pauschalen</span>
+          <span className="text-sm font-medium text-slate-700">Gesamtsumme inkl. Pauschalen (netto)</span>
           <span className="text-xl font-semibold text-slate-900">
             {formatCurrency(pauschalen.grandTotal)}
           </span>
         </div>
+        <div className="flex items-baseline justify-between gap-4 text-xs text-slate-500">
+          <span>zzgl. 7% MwSt. (auf {formatCurrency(vat.vat7Base)})</span>
+          <span>{formatCurrency(vat.vat7Amount)}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 text-xs text-slate-500">
+          <span>zzgl. 19% MwSt. (auf {formatCurrency(vat.vat19Base)})</span>
+          <span>{formatCurrency(vat.vat19Amount)}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 border-t border-slate-100 pt-2">
+          <span className="text-sm font-semibold text-slate-800">Gesamtsumme inkl. MwSt.</span>
+          <span className="text-xl font-bold text-slate-900">{formatCurrency(vat.totalInclVat)}</span>
+        </div>
+        <p className="text-xs text-amber-900/80">
+          ⚠ MwSt.-Sätze (7%/19%) sind eine Einschätzung nach der Lieferung/sonstige-Leistung-Abgrenzung,
+          keine steuerliche Prüfung. Bitte vor Rechnungsstellung mit dem Steuerberater abstimmen.
+        </p>
         <BudgetStatus enabled={budgetEnabled} totalBudget={totalBudget} subtotal={subtotal} />
       </div>
 
@@ -160,6 +178,7 @@ export function OfferSummary({
         subtotal={subtotal}
         pricePerPerson={pricePerPerson}
         pauschalen={pauschalen}
+        vat={vat}
       />
     </aside>
   );

@@ -69,5 +69,19 @@
       "expected_buffetpauschale": 12.5, "expected_geschirrpauschale": 50.0,
       "expected_anlieferung": 35.0, "expected_grand_total": 597.5
     }
+  ],
+  "vat_cases": [
+    {
+      "name": "ten_persons_no_lines_pauschalen_only",
+      "vat7_base": 0.0, "vat19_base": 60.0, "grand_total": 60.0,
+      "expected_vat7_amount": 0.0, "expected_vat19_amount": 11.40,
+      "expected_total_incl_vat": 71.40
+    },
+    {
+      "name": "mixed_rates_ten_persons",
+      "vat7_base": 20.0, "vat19_base": 90.0, "grand_total": 110.0,
+      "expected_vat7_amount": 1.40, "expected_vat19_amount": 17.10,
+      "expected_total_incl_vat": 128.50
+    }
   ]
 }

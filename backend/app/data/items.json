@@ -32,7 +32,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "broetchen-mix-2",
@@ -66,7 +67,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "broetchen-mix-3",
@@ -101,7 +103,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "sandwiches",
@@ -137,7 +140,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "bagels",
@@ -172,7 +176,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "vollkorncanapees-1",
@@ -207,7 +212,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "vollkorncanapees-2",
@@ -244,7 +250,8 @@
       "milk",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "wraps",
@@ -280,7 +287,8 @@
       "gluten",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "business-hanseatisch",
@@ -316,7 +324,8 @@
       "milk",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "business-mediterran",
@@ -350,7 +359,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "business-vital",
@@ -385,7 +395,8 @@
       "gluten",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "business-asia",
@@ -419,7 +430,8 @@
       "gluten",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-buffet-1",
@@ -454,7 +466,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-buffet-2",
@@ -490,7 +503,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-buffet-3",
@@ -527,7 +541,8 @@
       "nuts",
       "peanuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-buffet-4",
@@ -563,7 +578,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-buffet-5",
@@ -598,7 +614,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-pyramide",
@@ -635,7 +652,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "fingerfood-de-luxe",
@@ -674,7 +692,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "empfangsbuffet-1",
@@ -708,7 +727,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "empfangsbuffet-2",
@@ -743,7 +763,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "empfangsbuffet-3",
@@ -780,7 +801,8 @@
       "nuts",
       "peanuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "empfangsbuffet-4",
@@ -816,7 +838,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "ff-party-frikadelle",
@@ -847,7 +870,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-pizza",
@@ -880,7 +904,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-datteln-speck",
@@ -911,7 +936,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-pflaumen-speck",
@@ -942,7 +968,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-hackbaellchen-cherry",
@@ -973,7 +1000,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-cantaloupe-schinken",
@@ -1004,7 +1032,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-tortilla-tacobeef",
@@ -1037,7 +1066,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-tropenbarsch-spiess",
@@ -1070,7 +1100,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-wrap-rind-paprika",
@@ -1103,7 +1134,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-wrap-lachs-dill",
@@ -1137,7 +1169,8 @@
       "fish",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-wrap-falafel-vegan",
@@ -1170,7 +1203,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-wrap-putenbrust",
@@ -1203,7 +1237,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-fruehlingsrolle-veg",
@@ -1234,7 +1269,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-shrimps-wan-tan",
@@ -1269,7 +1305,8 @@
       "gluten",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-asia-teigsaeckchen-fisch",
@@ -1302,7 +1339,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-yakitori-spiess",
@@ -1333,7 +1371,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-samosatasche-veg",
@@ -1364,7 +1403,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-tandoori-lachs",
@@ -1397,7 +1437,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-lachspraline-sesam",
@@ -1431,7 +1472,8 @@
       "fish",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-shandong-shrimps",
@@ -1465,7 +1507,8 @@
       "crustaceans",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-reisplaetzchen-scampi",
@@ -1498,7 +1541,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-maxi-sate-huhn",
@@ -1531,7 +1575,8 @@
     "allergens": [
       "peanuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-garnelenspiess-jamjam",
@@ -1564,7 +1609,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-haehnchentaler-cornflakes",
@@ -1597,7 +1643,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-chicken-fingers-bbq",
@@ -1628,7 +1675,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-curry-kokos-chicken",
@@ -1659,7 +1707,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-chicken-pineapple-stick",
@@ -1690,7 +1739,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-zucchini-rucola-roellchen",
@@ -1723,7 +1773,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-auberginen-roellchen-grill",
@@ -1756,7 +1807,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-tomate-mozzarella-spiess",
@@ -1789,7 +1841,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-polenta-haeppchen",
@@ -1822,7 +1875,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-croustini-tomatenconfit",
@@ -1853,7 +1907,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-wiesenchampignon-frischkaese",
@@ -1886,7 +1941,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-gemuesetatar-kartoffelroesti",
@@ -1917,7 +1973,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-fetakaese-spiess",
@@ -1950,7 +2007,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-gemuesespiess-antipasti",
@@ -1981,7 +2039,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-gemuesesticks-sourcream",
@@ -2012,7 +2071,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-feigentaler-ziegenkaese",
@@ -2045,7 +2105,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-kartoffelpizza-haehnchen",
@@ -2078,7 +2139,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-kartoffelpizza-spinat",
@@ -2111,7 +2173,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-quiche-appenzeller",
@@ -2144,7 +2207,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-quiche-spinat-oliven",
@@ -2177,7 +2241,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-reibekuchen-lachs",
@@ -2211,7 +2276,8 @@
       "fish",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-erdaepfel-matjes",
@@ -2244,7 +2310,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-roulade-zucchini-lachs",
@@ -2277,7 +2344,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-laugengebaeck-kraeuterschaum",
@@ -2310,7 +2378,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-laugengebaeck-kapernpesto",
@@ -2343,7 +2412,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-champignons-raeucherlachstatar",
@@ -2376,7 +2446,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-auberginenpizza-parmaschinken",
@@ -2409,7 +2480,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-roastbeef-pesto-champignons",
@@ -2440,7 +2512,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-safran-meeresfruechte-risotto",
@@ -2471,7 +2544,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-garnelen-mango-papaya",
@@ -2504,7 +2578,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-lachsfilet-mangoldragout",
@@ -2537,7 +2612,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-schweinefilet-sesam-pflaume",
@@ -2570,7 +2646,8 @@
     "allergens": [
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-schweinefilet-speck-pflaume",
@@ -2601,7 +2678,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-scampispiess-orange-ingwer",
@@ -2634,7 +2712,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-rinderfilet-medaillon-rucola",
@@ -2667,7 +2746,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-lachspraline-kraeuterschaum",
@@ -2700,7 +2780,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-curry-pute-banane",
@@ -2731,7 +2812,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-linsensalat-koriander",
@@ -2765,7 +2847,8 @@
       "egg",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-kirschtomaten-mozzarella-salat",
@@ -2798,7 +2881,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-austernpilze-salbei-speck",
@@ -2829,7 +2913,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-matjestatar-kaviar",
@@ -2862,7 +2947,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-shrimps-avocadosalat",
@@ -2895,7 +2981,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-flusskrebstatar-carambole",
@@ -2928,7 +3015,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-lachs-feldsalat-dill",
@@ -2961,7 +3049,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-entenbrust-paprika-duftreis",
@@ -2992,7 +3081,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-rinderfilet-mango-kokoscurry",
@@ -3023,7 +3113,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-scampi-rote-linsen",
@@ -3056,7 +3147,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-scampi-safranrisotto",
@@ -3089,7 +3181,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-ananas-parmaschinken-gefuellt",
@@ -3120,7 +3213,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-scampi-palmzucker-koriander",
@@ -3153,7 +3247,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-saltimbocca-marsala",
@@ -3184,7 +3279,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-riesengarnele-schinkenmantel",
@@ -3217,7 +3313,8 @@
     "allergens": [
       "crustaceans"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-rinderfilet-praline-mango",
@@ -3248,7 +3345,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-salat-schafskaese-miniglas",
@@ -3281,7 +3379,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-salat-couscous-miniglas",
@@ -3314,7 +3413,8 @@
     "allergens": [
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-salat-kartoffel-mediterran-miniglas",
@@ -3347,7 +3447,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-salat-putenbrust-curry-miniglas",
@@ -3381,7 +3482,8 @@
       "egg",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-hamburger-matjessalat-miniglas",
@@ -3414,7 +3516,8 @@
     "allergens": [
       "fish"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-brotkorb-dips",
@@ -3447,7 +3550,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-sahne-windbeutel",
@@ -3480,7 +3584,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-schoko-eclair",
@@ -3511,7 +3616,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-schoko-blaubeer-muffin",
@@ -3542,7 +3648,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-kaese-fruechte-spiess",
@@ -3576,7 +3683,8 @@
       "egg",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-creme-caramell-tasse",
@@ -3607,7 +3715,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-exotischer-fruechtespiess",
@@ -3638,7 +3747,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-praline-butterkuchen",
@@ -3672,7 +3782,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-kokosreisbaellchen",
@@ -3703,7 +3814,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-chili-schoko-banane",
@@ -3734,7 +3846,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mini-banane-kuvertuere",
@@ -3767,7 +3880,8 @@
     "allergens": [
       "egg"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-amarenakirschen-spiess",
@@ -3798,7 +3912,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-fruechte-schokomantel",
@@ -3829,7 +3944,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-obstspalten-frisch",
@@ -3860,7 +3976,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-ananaswuerfel-kokosnuss",
@@ -3893,7 +4010,8 @@
     "allergens": [
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-praline-schoko-erdbeere",
@@ -3924,7 +4042,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mascarpone-honigcreme-miniglas",
@@ -3957,7 +4076,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-kirschmousse-miniglas",
@@ -3990,7 +4110,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mandelcreme-pistazien-miniglas",
@@ -4023,7 +4144,8 @@
     "allergens": [
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-mousse-schokolade-erdbeere-miniglas",
@@ -4057,7 +4179,8 @@
       "egg",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-limonen-joghurtcreme-miniglas",
@@ -4091,7 +4214,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "ff-orangen-safran-creme-miniglas",
@@ -4122,7 +4246,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-tomatencreme",
@@ -4155,7 +4280,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-karotten-ingwer",
@@ -4189,7 +4315,8 @@
       "gluten",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-pfefferrahm",
@@ -4223,7 +4350,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-kartoffelcreme-flusskrebs",
@@ -4257,7 +4385,8 @@
       "crustaceans",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-kartoffel-deftig",
@@ -4291,7 +4420,8 @@
       "celery",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-suesskartoffel",
@@ -4324,7 +4454,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-schweizer-kaese-lauch",
@@ -4358,7 +4489,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-ungarische-gulasch",
@@ -4391,7 +4523,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-soljanka",
@@ -4424,7 +4557,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-indische-curry",
@@ -4458,7 +4592,8 @@
       "gluten",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-orientalische-creme",
@@ -4491,7 +4626,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-thai-zitronengras",
@@ -4525,7 +4661,8 @@
       "crustaceans",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "suppe-thai-kokos",
@@ -4558,7 +4695,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "rustikales-buffet-1",
@@ -4594,7 +4732,8 @@
       "mustard",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "rustikales-buffet-2",
@@ -4628,7 +4767,8 @@
       "fish",
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "rustikales-buffet-3",
@@ -4667,7 +4807,8 @@
       "mustard",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "rustikales-buffet-4",
@@ -4704,7 +4845,8 @@
       "milk",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "hamburg-klassisch",
@@ -4740,7 +4882,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "hanseaten-buffet",
@@ -4775,7 +4918,8 @@
       "gluten",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "festtagsbuffet-1",
@@ -4814,7 +4958,8 @@
       "mustard",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "festtagsbuffet-2",
@@ -4851,7 +4996,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "festtagsbuffet-3",
@@ -4889,7 +5035,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "vegetarisches-buffet-1",
@@ -4925,7 +5072,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "vegetarisches-buffet-2",
@@ -4960,7 +5108,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "vegetarisches-buffet-3",
@@ -4997,7 +5146,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "veganes-buffet-1",
@@ -5031,7 +5181,8 @@
       "gluten",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "veganes-buffet-2",
@@ -5065,7 +5216,8 @@
       "gluten",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "veganes-buffet-3",
@@ -5100,7 +5252,8 @@
       "gluten",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "italienisches-buffet-1",
@@ -5137,7 +5290,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "italienisches-buffet-2",
@@ -5173,7 +5327,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "italienisches-buffet-3",
@@ -5209,7 +5364,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "italienisches-buffet-4",
@@ -5246,7 +5402,8 @@
       "milk",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "mediterranes-buffet",
@@ -5283,7 +5440,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "franzoesisches-buffet-1",
@@ -5320,7 +5478,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "franzoesisches-buffet-2",
@@ -5356,7 +5515,8 @@
       "mustard",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "griechisches-buffet",
@@ -5390,7 +5550,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "mexikanisches-buffet",
@@ -5424,7 +5585,8 @@
       "gluten",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "karibisches-buffet",
@@ -5459,7 +5621,8 @@
       "gluten",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "orientalisches-buffet",
@@ -5497,7 +5660,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "thailaendisches-buffet-1",
@@ -5530,7 +5694,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "thailaendisches-buffet-2",
@@ -5566,7 +5731,8 @@
       "nuts",
       "peanuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "thailaendisches-buffet-3",
@@ -5603,7 +5769,8 @@
       "nuts",
       "peanuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "thailaendisches-buffet-4",
@@ -5638,7 +5805,8 @@
       "gluten",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "thailaendisches-buffet-5",
@@ -5675,7 +5843,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "grillbuffet-1",
@@ -5709,7 +5878,8 @@
       "gluten",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "grillbuffet-2",
@@ -5746,7 +5916,8 @@
       "milk",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "grillbuffet-3",
@@ -5783,7 +5954,8 @@
       "milk",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "grillbuffet-4",
@@ -5821,7 +5993,8 @@
       "milk",
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-1",
@@ -5856,7 +6029,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-2",
@@ -5893,7 +6067,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-3",
@@ -5929,7 +6104,8 @@
       "nuts",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-4",
@@ -5963,7 +6139,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-5",
@@ -6000,7 +6177,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-6",
@@ -6034,7 +6212,8 @@
       "gluten",
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-7",
@@ -6071,7 +6250,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "lunch-buffet-2026-no-8",
@@ -6108,7 +6288,8 @@
       "mustard",
       "sesame"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 19
   },
   {
     "id": "mittagsmenue-m1",
@@ -6141,7 +6322,8 @@
     "allergens": [
       "soy"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m2",
@@ -6174,7 +6356,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m3",
@@ -6209,7 +6392,8 @@
       "milk",
       "soy"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m3-plus",
@@ -6240,7 +6424,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m4",
@@ -6271,7 +6456,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m5",
@@ -6304,7 +6490,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m6",
@@ -6335,7 +6522,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m7",
@@ -6368,7 +6556,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m8",
@@ -6401,7 +6590,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m9",
@@ -6434,7 +6624,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m10",
@@ -6467,7 +6658,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m10-plus-katenschinken",
@@ -6498,7 +6690,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-m10-plusplus-putensteaks",
@@ -6529,7 +6722,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-d1",
@@ -6563,7 +6757,8 @@
       "milk",
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-d2",
@@ -6594,7 +6789,8 @@
       "contains_gelatin": false
     },
     "allergens": [],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-d3",
@@ -6627,7 +6823,8 @@
     "allergens": [
       "milk"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-d4",
@@ -6660,7 +6857,8 @@
     "allergens": [
       "nuts"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-s1",
@@ -6693,7 +6891,8 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-s2",
@@ -6726,7 +6925,8 @@
     "allergens": [
       "mustard"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   },
   {
     "id": "mittagsmenue-brot",
@@ -6759,6 +6959,7 @@
     "allergens": [
       "gluten"
     ],
-    "allergens_verified": false
+    "allergens_verified": false,
+    "vat_rate_percent": 7
   }
 ]

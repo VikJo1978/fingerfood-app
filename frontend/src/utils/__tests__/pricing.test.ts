@@ -2,7 +2,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { CatalogItem, PriceType, QuantityMode } from "../../types";
-import { computeLineTotalFromPrice, computeOfferLineTotal, computePauschalen, lineWarnings } from "../pricing";
+import {
+  computeLineTotalFromPrice,
+  computeOfferLineTotal,
+  computePauschalen,
+  computeVatBreakdown,
+  lineWarnings,
+} from "../pricing";
 import fixtures from "../../../../shared/pricing_fixtures.json";
 
 function fixtureItem(c: {
@@ -70,6 +76,19 @@ describe("computeOfferLineTotal (snapshot-based)", () => {
   });
 });
 
+describe("VAT arithmetic (parity fixtures, must match backend)", () => {
+  for (const c of fixtures.vat_cases) {
+    it(c.name, () => {
+      const vat7 = Math.round(c.vat7_base * 0.07 * 100) / 100;
+      const vat19 = Math.round(c.vat19_base * 0.19 * 100) / 100;
+      const totalIncl = Math.round((c.grand_total + vat7 + vat19) * 100) / 100;
+      expect(vat7).toBe(c.expected_vat7_amount);
+      expect(vat19).toBe(c.expected_vat19_amount);
+      expect(totalIncl).toBe(c.expected_total_incl_vat);
+    });
+  }
+});
+
 describe("computePauschalen (parity fixtures, must match backend)", () => {
   for (const c of fixtures.pauschalen_cases) {
     it(c.name, () => {
@@ -80,4 +99,29 @@ describe("computePauschalen (parity fixtures, must match backend)", () => {
       expect(result.grandTotal).toBe(c.expected_grand_total);
     });
   }
+});
+
+describe("computeVatBreakdown", () => {
+  it("splits lines by item vat_rate_percent and adds Pauschalen at 19%", () => {
+    const itemsById = {
+      a: fixtureItem({ price: 2, price_type: "piece", min_order: 1, unit_label: "Stück" }),
+      b: fixtureItem({ price: 3, price_type: "piece", min_order: 1, unit_label: "Stück" }),
+    };
+    (itemsById.a as any).vat_rate_percent = 7;
+    (itemsById.b as any).vat_rate_percent = 19;
+    const draft = {
+      persons: 10,
+      lines: [
+        { lineId: "l1", itemId: "a", quantityMode: "total" as const, quantity: 10, snapshot: { chosen_price: 2, price_type: "piece" as PriceType } },
+        { lineId: "l2", itemId: "b", quantityMode: "total" as const, quantity: 10, snapshot: { chosen_price: 3, price_type: "piece" as PriceType } },
+      ],
+    };
+    const pauschalen = { buffetpauschale: 5, geschirrpauschale: 20, anlieferung: 35, grandTotal: 110 };
+    const result = computeVatBreakdown(draft as never, itemsById as never, pauschalen);
+    expect(result.vat7Base).toBe(20);
+    expect(result.vat7Amount).toBe(1.4);
+    expect(result.vat19Base).toBe(90); // 30 line + 60 Pauschalen
+    expect(result.vat19Amount).toBe(17.1);
+    expect(result.totalInclVat).toBe(128.5);
+  });
 });

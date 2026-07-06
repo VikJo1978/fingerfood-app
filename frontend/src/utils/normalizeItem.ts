@@ -139,6 +139,7 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
       ? sanitizeAllergens(r.allergens)
       : undefined;
   const allergens_verified = typeof r.allergens_verified === "boolean" ? r.allergens_verified : false;
+  const vat_rate_percent: 7 | 19 = r.vat_rate_percent === 7 ? 7 : 19;
 
   return {
     id,
@@ -156,6 +157,7 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
     ingredient_flags,
     allergens,
     allergens_verified,
+    vat_rate_percent,
     module,
     source_type,
     item_kind,
