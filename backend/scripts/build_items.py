@@ -103,6 +103,8 @@ def piece(
     price_type: str = "piece",
     items_included: str | None = None,
     module: str = "food",
+    surcharge_label: str | None = None,
+    surcharge_amount: float | None = None,
 ) -> dict:
     derive_text = f"{name} {description} {items_included or ''}"
     return {
@@ -124,6 +126,8 @@ def piece(
         "allergens": derive_allergens(derive_text),
         "allergens_verified": False,
         "vat_rate_percent": derive_vat_rate(module, item_kind),
+        "surcharge_label": surcharge_label,
+        "surcharge_amount": surcharge_amount,
     }
 
 
@@ -172,6 +176,7 @@ items.append(piece(
         "Rindersaftschinken mit Remoulade und Kirschtomate\n"
         "Räucherlachs mit feinem Meerrettich"
     ),
+    surcharge_label="Lachs oder Rind", surcharge_amount=1.00,
 ))
 items.append(piece(
     "sandwiches", "Sandwiches", "Brötchen, Sandwiches, Bagels", "Sandwiches",
@@ -184,6 +189,7 @@ items.append(piece(
         "Putenbrustscheiben mit geröstetem Speck, Käse und Ananassalat\n"
         "Geräucherter Lachs mit einem Gurken-Dillsalat und Sahnemeerrettich"
     ),
+    surcharge_label="Lachs oder Rind", surcharge_amount=1.00,
 ))
 items.append(piece(
     "bagels", "Bagels", "Brötchen, Sandwiches, Bagels", "Bagels",
@@ -196,6 +202,7 @@ items.append(piece(
         "Roastbeef mit Gemüsegurke und Remoladensauce\n"
         "Gegrillte Hähnchenbrust, Lauchzwiebeln und marinierten Zucchini"
     ),
+    surcharge_label="Lachs oder Rind", surcharge_amount=1.00,
 ))
 items.append(piece(
     "vollkorncanapees-1", "Vollkorncanapées – Variante I", "Brötchen, Sandwiches, Bagels", "Canapées",

@@ -20,6 +20,16 @@ class Item(BaseModel):
     module: Literal["food", "beverage", "staff", "tableware", "equipment"] = "food"
     item_kind: Literal["simple", "composite"] = "simple"
 
+    surcharge_label: str | None = None
+    surcharge_amount: float | None = Field(default=None, ge=0)
+    """Single optional per-unit surcharge stated in the real menu text (e.g.
+    "+ 1,00 € Aufpreis für Lachs oder Rind" on Brötchen Mix 3/Sandwiches/
+    Bagels) that the fixed catalog price cannot express on its own. This is
+    deliberately NOT a general variant/topping system — just one optional
+    checkbox surcharge per item, applied with the same quantity-mode
+    multiplier as the base price and the same VAT rate (see
+    scripts/derive_vat_rate.py). None for every item without such a note."""
+
     diet_type: DietType
     ingredient_flags: IngredientFlags = Field(default_factory=IngredientFlags)
     allergens: list[Allergen] = Field(default_factory=list)

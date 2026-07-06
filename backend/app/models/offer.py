@@ -15,6 +15,10 @@ class OfferLineIn(BaseModel):
     item_id: str
     quantity_mode: Literal["total", "per_person"]
     quantity: float = Field(gt=0)
+    # Opt-in for the item's single optional surcharge (see
+    # Item.surcharge_amount), e.g. "Lachs oder Rind" on Brötchen Mix 3/
+    # Sandwiches/Bagels. No-op if the item has no surcharge configured.
+    surcharge_selected: bool = False
 
 
 class OfferRequest(BaseModel):
@@ -32,6 +36,9 @@ class LinePricing(BaseModel):
     # certified tax position.
     vat_rate_percent: int = 19
     vat_amount: float = 0.0
+    # Portion of line_total contributed by the item's optional surcharge (see
+    # Item.surcharge_amount); 0.0 when not selected or not configured.
+    surcharge_amount: float = 0.0
 
 
 class OfferResponse(BaseModel):

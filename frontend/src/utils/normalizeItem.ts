@@ -141,6 +141,10 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
   const allergens_verified = typeof r.allergens_verified === "boolean" ? r.allergens_verified : false;
   const vat_rate_percent: 7 | 19 = r.vat_rate_percent === 7 ? 7 : 19;
 
+  const surcharge_label = typeof r.surcharge_label === "string" ? r.surcharge_label : null;
+  const surcharge_amount =
+    typeof r.surcharge_amount === "number" && Number.isFinite(r.surcharge_amount) ? r.surcharge_amount : null;
+
   return {
     id,
     name,
@@ -163,6 +167,8 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
     item_kind,
     pricing_mode,
     customization_mode,
+    surcharge_label,
+    surcharge_amount,
   };
 }
 

@@ -79,6 +79,12 @@ export interface CatalogItem {
   /** Commercial mode from catalog; snapshot for offers. Line math in UI still keys off `price_type` today. */
   pricing_mode: PricingMode;
   customization_mode: CustomizationMode;
+  /** Single optional per-unit surcharge from the real menu text (e.g. "+1,00 €
+   * Aufpreis für Lachs oder Rind" on Brötchen Mix 3/Sandwiches/Bagels) that the
+   * fixed `price` can't express alone. Not a general variant system — one
+   * optional checkbox per item. null/undefined for items with no such note. */
+  surcharge_label?: string | null;
+  surcharge_amount?: number | null;
 }
 
 /** @deprecated Prefer CatalogItem — legacy name from early fingerfood scope. */
@@ -95,6 +101,12 @@ export interface OfferLineCatalogSnapshot {
   chosen_price: number;
   /** Simple line vs composite / package row (optional for older snapshots). */
   item_kind?: ItemKind;
+  /** Whether the item's single optional surcharge (see CatalogItem.surcharge_amount)
+   * was selected at add-time. Frozen with the label/amount for the audit trail
+   * even when false, so it's clear the option existed and wasn't chosen. */
+  surchargeSelected?: boolean;
+  surchargeLabel?: string | null;
+  surchargeAmount?: number | null;
 }
 
 export interface OfferLine {

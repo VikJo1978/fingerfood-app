@@ -3,15 +3,18 @@
 import json
 from pathlib import Path
 
+from app.core.config import settings
 from app.models.classification import DietType
 from app.models.item import Item
 from app.models.offer import OfferLineIn, OfferRequest
+from app.services.item_service import load_items
 from app.services.pricing_service import (
     PAUSCHALE_ANLIEFERUNG_FLAT,
     PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON,
     PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON,
     _line_total,
     _line_warnings,
+    _surcharge_total,
     price_offer,
 )
 
@@ -20,7 +23,13 @@ FIXTURES = json.loads(
 )
 
 
-def _item(price: float, price_type: str, min_order: int, unit_label: str) -> Item:
+def _item(
+    price: float,
+    price_type: str,
+    min_order: int,
+    unit_label: str,
+    surcharge_amount: float | None = None,
+) -> Item:
     return Item(
         id="fx-item",
         name="Fixture Item",
@@ -31,6 +40,7 @@ def _item(price: float, price_type: str, min_order: int, unit_label: str) -> Ite
         min_order=min_order,
         unit_label=unit_label,
         diet_type=DietType.omnivore,
+        surcharge_amount=surcharge_amount,
     )
 
 
@@ -154,3 +164,68 @@ def test_vat_arithmetic_parity_fixtures() -> None:
         assert vat7 == case["expected_vat7_amount"], case["name"]
         assert vat19 == case["expected_vat19_amount"], case["name"]
         assert total_incl == case["expected_total_incl_vat"], case["name"]
+
+
+def test_surcharge_parity_fixtures() -> None:
+    """Optional per-item surcharge (see Item.surcharge_amount) — one checkbox
+    per item, no generic variant system. Prices/quantities mirror the real
+    catalog items (Brötchen Mix 3 2,60€, Sandwiches 3,30€, Bagels 3,45€)."""
+    for case in FIXTURES["surcharge_cases"]:
+        item = _item(
+            case["price"], case["price_type"], case["min_order"], case["unit_label"],
+            surcharge_amount=case["surcharge_amount"],
+        )
+        base = _line_total(item, case["persons"], case["quantity_mode"], case["quantity"])
+        surcharge = _surcharge_total(
+            item, case["persons"], case["quantity_mode"], case["quantity"], case["surcharge_selected"]
+        )
+        assert round(base + surcharge, 2) == case["expected_total"], case["name"]
+
+
+def test_price_offer_surcharge_real_catalog_items() -> None:
+    """Real affected items (owner-confirmed 2026-07-06, live): Brötchen Mix 3,
+    Sandwiches, Bagels each carry a "+1,00 € Aufpreis für Lachs oder Rind"
+    menu note the fixed catalog price alone can't express."""
+    items = {i.id: i for i in load_items(settings.items_json_path)}
+    broetchen = items["broetchen-mix-3"]
+    assert broetchen.surcharge_label == "Lachs oder Rind"
+    assert broetchen.surcharge_amount == 1.0
+
+    resp_off = price_offer(
+        items,
+        OfferRequest(
+            persons=10,
+            lines=[OfferLineIn(item_id="broetchen-mix-3", quantity_mode="total", quantity=10)],
+        ),
+    )
+    assert resp_off.lines[0].line_total == 26.0  # 2.60 * 10, surcharge not selected
+    assert resp_off.lines[0].surcharge_amount == 0.0
+
+    resp_on = price_offer(
+        items,
+        OfferRequest(
+            persons=10,
+            lines=[
+                OfferLineIn(
+                    item_id="broetchen-mix-3", quantity_mode="total", quantity=10, surcharge_selected=True
+                )
+            ],
+        ),
+    )
+    assert resp_on.lines[0].line_total == 36.0  # 26.0 base + 1.00*10 surcharge
+    assert resp_on.lines[0].surcharge_amount == 10.0
+    assert resp_on.lines[0].vat_rate_percent == 7  # still food, same VAT treatment
+    assert resp_on.lines[0].vat_amount == round(36.0 * 0.07, 2)
+
+
+def test_surcharge_selected_ignored_when_item_has_none() -> None:
+    item = _item(2.30, "piece", 1, "Stück")  # no surcharge configured
+    resp = price_offer(
+        {"a": item},
+        OfferRequest(
+            persons=10,
+            lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=10, surcharge_selected=True)],
+        ),
+    )
+    assert resp.lines[0].line_total == 23.0
+    assert resp.lines[0].surcharge_amount == 0.0

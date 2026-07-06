@@ -51,6 +51,11 @@ export function OfferLineItem({
             {isPieceUnitBasis(line.snapshot.price_type) ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
             {formatCurrency(line.snapshot.chosen_price)}
           </p>
+          {line.snapshot.surchargeSelected ? (
+            <p className="text-xs font-medium text-slate-700">
+              + {line.snapshot.surchargeLabel} ({formatCurrency(line.snapshot.surchargeAmount ?? 0)} Aufpreis)
+            </p>
+          ) : null}
         </div>
         <button
           type="button"

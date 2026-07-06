@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CatalogItem, PriceType, QuantityMode } from "../../types";
 import {
+  computeLineTotal,
   computeLineTotalFromPrice,
   computeOfferLineTotal,
   computePauschalen,
@@ -16,6 +17,7 @@ function fixtureItem(c: {
   price_type: string;
   min_order: number;
   unit_label: string;
+  surcharge_amount?: number | null;
 }): CatalogItem {
   return {
     id: "fx-item",
@@ -37,6 +39,8 @@ function fixtureItem(c: {
     item_kind: "simple",
     pricing_mode: c.price_type === "piece" ? "per_piece" : "per_person",
     customization_mode: "fixed",
+    surcharge_label: c.surcharge_amount != null ? "Lachs oder Rind" : null,
+    surcharge_amount: c.surcharge_amount ?? null,
   };
 }
 
@@ -62,6 +66,25 @@ describe("parity fixtures (must match backend)", () => {
   }
 });
 
+describe("surcharge parity fixtures (must match backend)", () => {
+  // Prices/quantities mirror the real catalog items (Brötchen Mix 3 2,60€,
+  // Sandwiches 3,30€, Bagels 3,45€) with their "+1,00 € Aufpreis für Lachs
+  // oder Rind" checkbox.
+  for (const c of fixtures.surcharge_cases) {
+    it(c.name, () => {
+      const item = fixtureItem(c);
+      const total = computeLineTotal(
+        item,
+        c.persons,
+        c.quantity_mode as QuantityMode,
+        c.quantity,
+        c.surcharge_selected
+      );
+      expect(Math.round(total * 100) / 100).toBe(c.expected_total);
+    });
+  }
+});
+
 describe("computeOfferLineTotal (snapshot-based)", () => {
   it("uses the snapshot price and unit basis, not the live catalog", () => {
     const line = {
@@ -73,6 +96,26 @@ describe("computeOfferLineTotal (snapshot-based)", () => {
     };
     // 4.5 * 2 * 10 persons = 90 — regardless of any current catalog price
     expect(computeOfferLineTotal(line as never, 10)).toBe(90);
+  });
+
+  it("adds the snapshotted surcharge only when surchargeSelected was frozen true", () => {
+    // Real item: Brötchen Mix 3, 2,60 €/Stück, "+1,00 € Aufpreis für Lachs oder Rind".
+    const lineOff = {
+      lineId: "l1",
+      itemId: "broetchen-mix-3",
+      quantityMode: "total" as QuantityMode,
+      quantity: 10,
+      snapshot: {
+        chosen_price: 2.6,
+        price_type: "piece" as PriceType,
+        surchargeSelected: false,
+        surchargeLabel: "Lachs oder Rind",
+        surchargeAmount: 1.0,
+      },
+    };
+    const lineOn = { ...lineOff, snapshot: { ...lineOff.snapshot, surchargeSelected: true } };
+    expect(computeOfferLineTotal(lineOff as never, 10)).toBe(26.0);
+    expect(computeOfferLineTotal(lineOn as never, 10)).toBe(36.0);
   });
 });
 

@@ -33,7 +33,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "broetchen-mix-2",
@@ -68,7 +70,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "broetchen-mix-3",
@@ -104,7 +108,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": "Lachs oder Rind",
+    "surcharge_amount": 1.0
   },
   {
     "id": "sandwiches",
@@ -141,7 +147,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": "Lachs oder Rind",
+    "surcharge_amount": 1.0
   },
   {
     "id": "bagels",
@@ -177,7 +185,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": "Lachs oder Rind",
+    "surcharge_amount": 1.0
   },
   {
     "id": "vollkorncanapees-1",
@@ -213,7 +223,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "vollkorncanapees-2",
@@ -251,7 +263,9 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "wraps",
@@ -288,7 +302,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "business-hanseatisch",
@@ -325,7 +341,9 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "business-mediterran",
@@ -360,7 +378,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "business-vital",
@@ -396,7 +416,9 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "business-asia",
@@ -431,7 +453,9 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "fingerfood-buffet-1",
@@ -871,7 +895,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-pizza",
@@ -905,7 +931,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-datteln-speck",
@@ -937,7 +965,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-pflaumen-speck",
@@ -969,7 +999,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-hackbaellchen-cherry",
@@ -1001,7 +1033,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-cantaloupe-schinken",
@@ -1033,7 +1067,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-tortilla-tacobeef",
@@ -1067,7 +1103,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-tropenbarsch-spiess",
@@ -1101,7 +1139,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-wrap-rind-paprika",
@@ -1135,7 +1175,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-wrap-lachs-dill",
@@ -1170,7 +1212,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-wrap-falafel-vegan",
@@ -1204,7 +1248,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-wrap-putenbrust",
@@ -1238,7 +1284,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-fruehlingsrolle-veg",
@@ -1270,7 +1318,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-shrimps-wan-tan",
@@ -1306,7 +1356,9 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-asia-teigsaeckchen-fisch",
@@ -1340,7 +1392,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-yakitori-spiess",
@@ -1372,7 +1426,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-samosatasche-veg",
@@ -1404,7 +1460,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-tandoori-lachs",
@@ -1438,7 +1496,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-lachspraline-sesam",
@@ -1473,7 +1533,9 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-shandong-shrimps",
@@ -1508,7 +1570,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-reisplaetzchen-scampi",
@@ -1542,7 +1606,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-maxi-sate-huhn",
@@ -1576,7 +1642,9 @@
       "peanuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-garnelenspiess-jamjam",
@@ -1610,7 +1678,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-haehnchentaler-cornflakes",
@@ -1644,7 +1714,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-chicken-fingers-bbq",
@@ -1676,7 +1748,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-curry-kokos-chicken",
@@ -1708,7 +1782,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-chicken-pineapple-stick",
@@ -1740,7 +1816,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-zucchini-rucola-roellchen",
@@ -1774,7 +1852,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-auberginen-roellchen-grill",
@@ -1808,7 +1888,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-tomate-mozzarella-spiess",
@@ -1842,7 +1924,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-polenta-haeppchen",
@@ -1876,7 +1960,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-croustini-tomatenconfit",
@@ -1908,7 +1994,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-wiesenchampignon-frischkaese",
@@ -1942,7 +2030,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-gemuesetatar-kartoffelroesti",
@@ -1974,7 +2064,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-fetakaese-spiess",
@@ -2008,7 +2100,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-gemuesespiess-antipasti",
@@ -2040,7 +2134,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-gemuesesticks-sourcream",
@@ -2072,7 +2168,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-feigentaler-ziegenkaese",
@@ -2106,7 +2204,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-kartoffelpizza-haehnchen",
@@ -2140,7 +2240,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-kartoffelpizza-spinat",
@@ -2174,7 +2276,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-quiche-appenzeller",
@@ -2208,7 +2312,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-quiche-spinat-oliven",
@@ -2242,7 +2348,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-reibekuchen-lachs",
@@ -2277,7 +2385,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-erdaepfel-matjes",
@@ -2311,7 +2421,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-roulade-zucchini-lachs",
@@ -2345,7 +2457,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-laugengebaeck-kraeuterschaum",
@@ -2379,7 +2493,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-laugengebaeck-kapernpesto",
@@ -2413,7 +2529,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-champignons-raeucherlachstatar",
@@ -2447,7 +2565,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-auberginenpizza-parmaschinken",
@@ -2481,7 +2601,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-roastbeef-pesto-champignons",
@@ -2513,7 +2635,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-safran-meeresfruechte-risotto",
@@ -2545,7 +2669,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-garnelen-mango-papaya",
@@ -2579,7 +2705,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-lachsfilet-mangoldragout",
@@ -2613,7 +2741,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-schweinefilet-sesam-pflaume",
@@ -2647,7 +2777,9 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-schweinefilet-speck-pflaume",
@@ -2679,7 +2811,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-scampispiess-orange-ingwer",
@@ -2713,7 +2847,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-rinderfilet-medaillon-rucola",
@@ -2747,7 +2883,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-lachspraline-kraeuterschaum",
@@ -2781,7 +2919,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-curry-pute-banane",
@@ -2813,7 +2953,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-linsensalat-koriander",
@@ -2848,7 +2990,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-kirschtomaten-mozzarella-salat",
@@ -2882,7 +3026,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-austernpilze-salbei-speck",
@@ -2914,7 +3060,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-matjestatar-kaviar",
@@ -2948,7 +3096,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-shrimps-avocadosalat",
@@ -2982,7 +3132,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-flusskrebstatar-carambole",
@@ -3016,7 +3168,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-lachs-feldsalat-dill",
@@ -3050,7 +3204,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-entenbrust-paprika-duftreis",
@@ -3082,7 +3238,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-rinderfilet-mango-kokoscurry",
@@ -3114,7 +3272,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-scampi-rote-linsen",
@@ -3148,7 +3308,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-scampi-safranrisotto",
@@ -3182,7 +3344,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-ananas-parmaschinken-gefuellt",
@@ -3214,7 +3378,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-scampi-palmzucker-koriander",
@@ -3248,7 +3414,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-saltimbocca-marsala",
@@ -3280,7 +3448,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-riesengarnele-schinkenmantel",
@@ -3314,7 +3484,9 @@
       "crustaceans"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-rinderfilet-praline-mango",
@@ -3346,7 +3518,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-salat-schafskaese-miniglas",
@@ -3380,7 +3554,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-salat-couscous-miniglas",
@@ -3414,7 +3590,9 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-salat-kartoffel-mediterran-miniglas",
@@ -3448,7 +3626,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-salat-putenbrust-curry-miniglas",
@@ -3483,7 +3663,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-hamburger-matjessalat-miniglas",
@@ -3517,7 +3699,9 @@
       "fish"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-brotkorb-dips",
@@ -3551,7 +3735,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-sahne-windbeutel",
@@ -3585,7 +3771,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-schoko-eclair",
@@ -3617,7 +3805,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-schoko-blaubeer-muffin",
@@ -3649,7 +3839,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-kaese-fruechte-spiess",
@@ -3684,7 +3876,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-creme-caramell-tasse",
@@ -3716,7 +3910,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-exotischer-fruechtespiess",
@@ -3748,7 +3944,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-praline-butterkuchen",
@@ -3783,7 +3981,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-kokosreisbaellchen",
@@ -3815,7 +4015,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-chili-schoko-banane",
@@ -3847,7 +4049,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mini-banane-kuvertuere",
@@ -3881,7 +4085,9 @@
       "egg"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-amarenakirschen-spiess",
@@ -3913,7 +4119,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-fruechte-schokomantel",
@@ -3945,7 +4153,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-obstspalten-frisch",
@@ -3977,7 +4187,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-ananaswuerfel-kokosnuss",
@@ -4011,7 +4223,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-praline-schoko-erdbeere",
@@ -4043,7 +4257,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mascarpone-honigcreme-miniglas",
@@ -4077,7 +4293,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-kirschmousse-miniglas",
@@ -4111,7 +4329,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mandelcreme-pistazien-miniglas",
@@ -4145,7 +4365,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-mousse-schokolade-erdbeere-miniglas",
@@ -4180,7 +4402,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-limonen-joghurtcreme-miniglas",
@@ -4215,7 +4439,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "ff-orangen-safran-creme-miniglas",
@@ -4247,7 +4473,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-tomatencreme",
@@ -4281,7 +4509,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-karotten-ingwer",
@@ -4316,7 +4546,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-pfefferrahm",
@@ -4351,7 +4583,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-kartoffelcreme-flusskrebs",
@@ -4386,7 +4620,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-kartoffel-deftig",
@@ -4421,7 +4657,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-suesskartoffel",
@@ -4455,7 +4693,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-schweizer-kaese-lauch",
@@ -4490,7 +4730,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-ungarische-gulasch",
@@ -4524,7 +4766,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-soljanka",
@@ -4558,7 +4802,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-indische-curry",
@@ -4593,7 +4839,9 @@
       "sesame"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-orientalische-creme",
@@ -4627,7 +4875,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-thai-zitronengras",
@@ -4662,7 +4912,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "suppe-thai-kokos",
@@ -4696,7 +4948,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "rustikales-buffet-1",
@@ -6323,7 +6577,9 @@
       "soy"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m2",
@@ -6357,7 +6613,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m3",
@@ -6393,7 +6651,9 @@
       "soy"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m3-plus",
@@ -6425,7 +6685,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m4",
@@ -6457,7 +6719,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m5",
@@ -6491,7 +6755,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m6",
@@ -6523,7 +6789,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m7",
@@ -6557,7 +6825,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m8",
@@ -6591,7 +6861,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m9",
@@ -6625,7 +6897,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m10",
@@ -6659,7 +6933,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m10-plus-katenschinken",
@@ -6691,7 +6967,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-m10-plusplus-putensteaks",
@@ -6723,7 +7001,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-d1",
@@ -6758,7 +7038,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-d2",
@@ -6790,7 +7072,9 @@
     },
     "allergens": [],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-d3",
@@ -6824,7 +7108,9 @@
       "milk"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-d4",
@@ -6858,7 +7144,9 @@
       "nuts"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-s1",
@@ -6892,7 +7180,9 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-s2",
@@ -6926,7 +7216,9 @@
       "mustard"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   },
   {
     "id": "mittagsmenue-brot",
@@ -6960,6 +7252,8 @@
       "gluten"
     ],
     "allergens_verified": false,
-    "vat_rate_percent": 7
+    "vat_rate_percent": 7,
+    "surcharge_label": null,
+    "surcharge_amount": null
   }
 ]

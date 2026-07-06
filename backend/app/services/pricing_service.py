@@ -35,6 +35,17 @@ def _line_total(item: Item, persons: int, quantity_mode: str, quantity: float) -
     return item.price * quantity * persons
 
 
+def _surcharge_total(item: Item, persons: int, quantity_mode: str, quantity: float, surcharge_selected: bool) -> float:
+    """Optional per-line surcharge (see Item.surcharge_amount) — same
+    quantity-mode multiplier as the base price, added only when explicitly
+    selected for this line. 0.0 for the ~198 items with no surcharge."""
+    if not surcharge_selected or not item.surcharge_amount:
+        return 0.0
+    if quantity_mode == "total":
+        return item.surcharge_amount * quantity
+    return item.surcharge_amount * quantity * persons
+
+
 def _line_warnings(item: Item, persons: int, quantity_mode: str, quantity: float) -> list[OfferWarning]:
     warnings: list[OfferWarning] = []
     if quantity_mode == "total" and item.price_type == "piece" and quantity < item.min_order:
@@ -99,7 +110,11 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
                 )
             )
             continue
-        total = _line_total(item, req.persons, line.quantity_mode, line.quantity)
+        surcharge = _surcharge_total(
+            item, req.persons, line.quantity_mode, line.quantity, line.surcharge_selected
+        )
+        # Surcharge is the same food line, same VAT treatment as the base price.
+        total = _line_total(item, req.persons, line.quantity_mode, line.quantity) + surcharge
         subtotal += total
         if item.vat_rate_percent == 7:
             vat_7_base += total
@@ -114,6 +129,7 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
                 warnings=_line_warnings(item, req.persons, line.quantity_mode, line.quantity),
                 vat_rate_percent=item.vat_rate_percent,
                 vat_amount=round(total * item.vat_rate_percent / 100, 2),
+                surcharge_amount=round(surcharge, 2),
             )
         )
 

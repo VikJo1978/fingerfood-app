@@ -76,6 +76,43 @@
       "expected_anlieferung": 0.0, "expected_grand_total": 0.0
     }
   ],
+  "surcharge_cases": [
+    {
+      "name": "broetchen_mix_3_surcharge_off_quantity_gt_1",
+      "price": 2.60, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 10, "quantity_mode": "total", "quantity": 10,
+      "surcharge_amount": 1.00, "surcharge_selected": false,
+      "expected_total": 26.0
+    },
+    {
+      "name": "broetchen_mix_3_surcharge_on_quantity_gt_1",
+      "price": 2.60, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 10, "quantity_mode": "total", "quantity": 10,
+      "surcharge_amount": 1.00, "surcharge_selected": true,
+      "expected_total": 36.0
+    },
+    {
+      "name": "sandwiches_surcharge_on_per_person_quantity_gt_1",
+      "price": 3.30, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 20, "quantity_mode": "per_person", "quantity": 2,
+      "surcharge_amount": 1.00, "surcharge_selected": true,
+      "expected_total": 172.0
+    },
+    {
+      "name": "bagels_surcharge_on_quantity_one",
+      "price": 3.45, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 10, "quantity_mode": "total", "quantity": 1,
+      "surcharge_amount": 1.00, "surcharge_selected": true,
+      "expected_total": 4.45
+    },
+    {
+      "name": "no_surcharge_configured_selected_flag_ignored",
+      "price": 2.30, "price_type": "piece", "min_order": 1, "unit_label": "Stück",
+      "persons": 10, "quantity_mode": "total", "quantity": 10,
+      "surcharge_amount": null, "surcharge_selected": true,
+      "expected_total": 23.0
+    }
+  ],
   "vat_cases": [
     {
       "name": "ten_persons_no_lines_pauschalen_only",

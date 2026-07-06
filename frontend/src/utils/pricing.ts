@@ -12,30 +12,40 @@ export function isPieceUnitBasis(priceType: PriceType): boolean {
 
 /**
  * Line total from unit price and unit basis (`price_type`).
- * Same rules as `computeLineTotal`.
+ * Same rules as `computeLineTotal`. `surchargeAmount` is the item's single
+ * optional per-unit surcharge (see CatalogItem.surcharge_amount), already
+ * zeroed out by the caller when not selected/not configured — applied with
+ * the same quantity-mode multiplier as the base price (mirrors backend
+ * pricing_service.py `_line_total` + `_surcharge_total`).
  */
 export function computeLineTotalFromPrice(
   unitPrice: number,
   unitBasis: PriceType,
   persons: number,
   mode: QuantityMode,
-  quantity: number
+  quantity: number,
+  surchargeAmount = 0
 ): number {
-  if (isPieceUnitBasis(unitBasis)) {
-    if (mode === "total") return unitPrice * quantity;
-    return unitPrice * quantity * persons;
-  }
-  if (mode === "total") return unitPrice * quantity;
-  return unitPrice * quantity * persons;
+  const base = isPieceUnitBasis(unitBasis)
+    ? mode === "total"
+      ? unitPrice * quantity
+      : unitPrice * quantity * persons
+    : mode === "total"
+      ? unitPrice * quantity
+      : unitPrice * quantity * persons;
+  const surcharge = mode === "total" ? surchargeAmount * quantity : surchargeAmount * quantity * persons;
+  return base + surcharge;
 }
 
 export function computeLineTotal(
   item: CatalogItem,
   persons: number,
   mode: QuantityMode,
-  quantity: number
+  quantity: number,
+  surchargeSelected = false
 ): number {
-  return computeLineTotalFromPrice(item.price, item.price_type, persons, mode, quantity);
+  const surchargeAmount = surchargeSelected ? (item.surcharge_amount ?? 0) : 0;
+  return computeLineTotalFromPrice(item.price, item.price_type, persons, mode, quantity, surchargeAmount);
 }
 
 /**
@@ -44,12 +54,14 @@ export function computeLineTotal(
  * Kein Live-Katalog nötig.
  */
 export function computeOfferLineTotal(line: OfferLine, persons: number): number {
+  const surchargeAmount = line.snapshot.surchargeSelected ? (line.snapshot.surchargeAmount ?? 0) : 0;
   return computeLineTotalFromPrice(
     line.snapshot.chosen_price,
     line.snapshot.price_type,
     persons,
     line.quantityMode,
-    line.quantity
+    line.quantity,
+    surchargeAmount
   );
 }
 

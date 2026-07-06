@@ -63,6 +63,22 @@ describe("normalizeCatalogItem", () => {
     expect(item!.ingredient_flags!.contains_fish).toBe(false);
     expect("contains_unicorn" in item!.ingredient_flags!).toBe(false);
   });
+
+  it("passes through surcharge_label/surcharge_amount from the API", () => {
+    // Regression guard: this field pair was added for the Brötchen Mix 3/
+    // Sandwiches/Bagels "+1,00 € Aufpreis" checkbox (2026-07-06) — without
+    // this, the backend value would be silently dropped at the normalization
+    // boundary and the checkbox would never appear.
+    const item = normalizeCatalogItem({ ...minimal, surcharge_label: "Lachs oder Rind", surcharge_amount: 1.0 });
+    expect(item!.surcharge_label).toBe("Lachs oder Rind");
+    expect(item!.surcharge_amount).toBe(1.0);
+  });
+
+  it("defaults surcharge fields to null when absent or malformed", () => {
+    expect(normalizeCatalogItem(minimal)!.surcharge_label).toBeNull();
+    expect(normalizeCatalogItem(minimal)!.surcharge_amount).toBeNull();
+    expect(normalizeCatalogItem({ ...minimal, surcharge_amount: "1.00" })!.surcharge_amount).toBeNull();
+  });
 });
 
 describe("normalizeItemList", () => {

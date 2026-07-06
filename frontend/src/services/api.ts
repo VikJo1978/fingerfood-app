@@ -69,6 +69,9 @@ export interface OfferCalculateLine {
   item_id: string;
   quantity_mode: "total" | "per_person";
   quantity: number;
+  // Opt-in for the item's single optional surcharge (see
+  // CatalogItem.surcharge_amount); no-op if the item has none.
+  surcharge_selected: boolean;
 }
 
 export interface OfferCalculateBody {
@@ -84,6 +87,7 @@ export function offerDraftToCalculateBody(draft: OfferDraft): OfferCalculateBody
       item_id: l.itemId,
       quantity_mode: l.quantityMode,
       quantity: l.quantity,
+      surcharge_selected: l.snapshot.surchargeSelected ?? false,
     })),
   };
 }
@@ -98,6 +102,7 @@ export interface OfferCalculateResponse {
     quantity: number;
     line_total: number;
     warnings: OfferWarning[];
+    surcharge_amount: number;
   }[];
   warnings: OfferWarning[];
 }

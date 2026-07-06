@@ -8,7 +8,7 @@ import { activeIngredientLabels, dietLabelDe } from "../../utils/classificationD
 interface ItemCardProps {
   item: CatalogItem;
   persons: number;
-  onAdd: (item: CatalogItem, mode: QuantityMode, quantity: number) => void;
+  onAdd: (item: CatalogItem, mode: QuantityMode, quantity: number, surchargeSelected: boolean) => void;
 }
 
 function defaultQuantity(mode: QuantityMode): number {
@@ -26,12 +26,14 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
   const [mode, setMode] = useState<QuantityMode>("total");
   const [quantity, setQuantity] = useState(defaultQuantity("total"));
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [surchargeSelected, setSurchargeSelected] = useState(false);
 
   useEffect(() => {
     setQuantity(defaultQuantity(mode));
   }, [mode]);
 
-  const preview = computeLineTotal(item, persons, mode, quantity);
+  const hasSurcharge = item.surcharge_amount != null && !!item.surcharge_label;
+  const preview = computeLineTotal(item, persons, mode, quantity, surchargeSelected);
   const warnings = lineWarnings(item, persons, mode, quantity);
   // Label follows unit basis (`price_type`); `pricing_mode` is carried separately on the item.
   const priceLabel = isPieceUnitBasis(item.price_type)
@@ -171,6 +173,18 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         </label>
       </div>
 
+      {hasSurcharge ? (
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={surchargeSelected}
+            onChange={(e) => setSurchargeSelected(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
+          />
+          {item.surcharge_label} ({formatCurrency(item.surcharge_amount ?? 0)} Aufpreis)
+        </label>
+      ) : null}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm">
           <span className="text-slate-500">Vorschau: </span>
@@ -178,7 +192,7 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         </div>
         <button
           type="button"
-          onClick={() => onAdd(item, mode, quantity)}
+          onClick={() => onAdd(item, mode, quantity, surchargeSelected)}
           className="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
         >
           Zum Angebot hinzufügen

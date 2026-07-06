@@ -165,8 +165,14 @@ export function HomePage() {
     setPageMode("configurator");
   }, []);
 
-  const onAddLine = (item: CatalogItem, mode: QuantityMode, quantity: number) => {
+  const onAddLine = (
+    item: CatalogItem,
+    mode: QuantityMode,
+    quantity: number,
+    surchargeSelected: boolean
+  ) => {
     const lineId = crypto.randomUUID();
+    const hasSurcharge = item.surcharge_amount != null && !!item.surcharge_label;
     const line: OfferLine = {
       lineId,
       itemId: item.id,
@@ -180,6 +186,15 @@ export function HomePage() {
         price_type: item.price_type,
         chosen_price: item.price,
         item_kind: item.item_kind,
+        // Frozen even when the item has no surcharge (undefined) or wasn't
+        // selected (false) — keeps the audit trail of what was offered.
+        ...(hasSurcharge
+          ? {
+              surchargeSelected,
+              surchargeLabel: item.surcharge_label,
+              surchargeAmount: item.surcharge_amount,
+            }
+          : {}),
       } satisfies OfferLine["snapshot"],
     };
     setOfferDraft((d) => ({ ...d, lines: [...d.lines, line] }));

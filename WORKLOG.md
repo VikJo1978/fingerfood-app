@@ -653,3 +653,77 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   returns 49 items total, confirmed to include "Fingerfood I" (Lachs) and
   "Hamburg Klassisch" (Forelle) — both with no literal "fisch" in their
   visible text — via direct inspection of the rendered result cards.
+
+---
+
+## Feature: single optional surcharge checkbox (Lachs/Rind Aufpreis) (2026-07-06)
+
+- **Owner-flagged gap**: three real items — Brötchen Mix 3 (2,60 €),
+  Sandwiches (3,30 €), Bagels (3,45 €) — carry a menu note the fixed catalog
+  price alone can't express: "+ 1,00 € Aufpreis für Lachs oder Rind." No
+  mechanism existed to add this at order time; `customization_mode` only
+  ever had the value `"fixed"`, and `OfferLine.customizationNote` is
+  documented as "planning only; kein Preisdelta" (no price effect at all).
+- **Explicit hard boundary set by the owner**: only these 3 items, one
+  optional surcharge checkbox per item, no generic variant/customization
+  framework, no `customization_mode` redesign, no VAT semantics change, no
+  broader catalog redesign.
+- **Implementation** (Python and TS kept strictly aligned):
+  - `Item.surcharge_label: str | None` / `Item.surcharge_amount: float | None`
+    (backend `app/models/item.py`) — None for the other ~198 items.
+  - `scripts/build_items.py`: `piece()` helper gained the two optional kwargs;
+    set for exactly Brötchen Mix 3/Sandwiches/Bagels
+    (`surcharge_label="Lachs oder Rind", surcharge_amount=1.00`);
+    `app/data/items.json` regenerated (diff confirmed: only these two new
+    keys added per item, values non-null only for the 3 target items).
+  - `OfferLineIn.surcharge_selected: bool = False` (request opt-in) and
+    `LinePricing.surcharge_amount: float = 0.0` (applied amount, for
+    transparency) added to `app/models/offer.py`.
+  - `pricing_service.py`: new `_surcharge_total()` — same quantity-mode
+    multiplier as `_line_total()`, added into the line's `total` before VAT
+    split, so the surcharge is the same food line, same 7% VAT treatment, no
+    special-casing needed.
+  - Frontend: `CatalogItem.surcharge_label/surcharge_amount` (`types/index.ts`);
+    **`normalizeItem.ts` updated too** — without this the new backend fields
+    would have been silently dropped at the API-normalization boundary and
+    the checkbox would never have appeared (caught before shipping).
+    `pricing.ts`: `computeLineTotalFromPrice` gained an optional
+    `surchargeAmount` parameter (default 0, backward compatible);
+    `computeLineTotal` and `computeOfferLineTotal` thread it through from the
+    item / frozen snapshot respectively.
+  - `OfferLineCatalogSnapshot` gained `surchargeSelected` / `surchargeLabel` /
+    `surchargeAmount`, frozen at add-time in `HomePage.tsx`'s `onAddLine` —
+    captured whenever the item has a surcharge configured, regardless of
+    whether it was selected, so the audit trail shows the option existed.
+  - `ItemCard.tsx`: one checkbox, rendered only when
+    `item.surcharge_amount != null && item.surcharge_label` is truthy — so
+    the ~198 unaffected items show nothing new.
+  - `OfferLineItem.tsx`: shows "+ {label} ({amount} Aufpreis)" under an
+    already-added line when its snapshot has `surchargeSelected: true`.
+  - `services/api.ts`: `OfferCalculateLine.surcharge_selected` /
+    `OfferCalculateResponse.lines[].surcharge_amount` added for backend/
+    frontend request-shape parity (the `/api/offer/calculate` endpoint isn't
+    wired into the live UI yet — the configurator computes client-side — but
+    kept aligned per the no-drift discipline used throughout this project).
+- **Tests**: `shared/pricing_fixtures.json` gained `surcharge_cases` (5 cases:
+  off/on with quantity=10, per_person with quantity=2, quantity=1, and a
+  "selected=true but item has no surcharge configured → ignored" guard) using
+  the real catalog prices. Backend: `test_surcharge_parity_fixtures`,
+  `test_price_offer_surcharge_real_catalog_items` (end-to-end through
+  `price_offer` against the actual loaded "broetchen-mix-3" catalog row, not
+  just a synthetic fixture), `test_surcharge_selected_ignored_when_item_has_none`.
+  Frontend: fixture-driven `surcharge parity fixtures` block in
+  `pricing.test.ts`, a `computeOfferLineTotal` snapshot on/off case, and two
+  new `normalizeItem.test.ts` cases guarding the normalization pass-through
+  bug described above.
+- Backend: 48 tests passing (was 45). Frontend: 38 passing (was 30), build
+  green. Verified live: found the backend preview server was still running
+  pre-change code (no `--reload`, needed a manual restart to pick up the new
+  `Item` fields) — after restart, `/api/items` correctly returns
+  `surcharge_label`/`surcharge_amount` for the 3 items only; in the running
+  configurator, ticking "Lachs oder Rind (1,00 € Aufpreis)" on Brötchen Mix 3
+  (qty 10) moved the preview from 26,00 € to 36,00 €, and after adding to the
+  offer the summary showed Positionen 36,00 €, 7% MwSt. base 36,00 €
+  (2,52 €), Pauschalen unchanged at 19% (11,40 €), and the line itself
+  displayed "+ Lachs oder Rind (1,00 € Aufpreis)"; Brötchen Mix 1 (no
+  surcharge) correctly shows zero checkboxes.
