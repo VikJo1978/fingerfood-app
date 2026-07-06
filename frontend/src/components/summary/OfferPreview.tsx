@@ -1,5 +1,10 @@
 import type { CatalogItem, OfferDraft, OfferLine } from "../../types";
-import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis } from "../../utils/pricing";
+import {
+  computeOfferLineTotal,
+  formatCurrency,
+  isPieceUnitBasis,
+  type PauschalenBreakdown,
+} from "../../utils/pricing";
 
 function dashIfEmpty(v: string | undefined): string {
   const t = v?.trim();
@@ -21,6 +26,7 @@ export interface OfferPreviewProps {
   itemsById: Record<string, CatalogItem>;
   subtotal: number;
   pricePerPerson: number;
+  pauschalen: PauschalenBreakdown;
 }
 
 export function OfferPreview({
@@ -30,6 +36,7 @@ export function OfferPreview({
   itemsById,
   subtotal,
   pricePerPerson,
+  pauschalen,
 }: OfferPreviewProps) {
   if (!open) return null;
 
@@ -168,12 +175,30 @@ export function OfferPreview({
             </h3>
             <div className="mt-3 flex flex-col gap-2">
               <div className="flex justify-between gap-4">
-                <span className="text-slate-600">Gesamtsumme</span>
+                <span className="text-slate-600">Positionen</span>
                 <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between gap-4 text-sm">
-                <span className="text-slate-600">Preis pro Person</span>
+                <span className="text-slate-600">Preis pro Person (Positionen)</span>
                 <span className="font-semibold text-slate-800">{formatCurrency(pricePerPerson)}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs text-slate-500">
+                <span>Büffetpauschale</span>
+                <span>{formatCurrency(pauschalen.buffetpauschale)}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs text-slate-500">
+                <span>Geschirrpauschale</span>
+                <span>{formatCurrency(pauschalen.geschirrpauschale)}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-xs text-slate-500">
+                <span>Anlieferung (Standardzone)</span>
+                <span>{formatCurrency(pauschalen.anlieferung)}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-slate-100 pt-2">
+                <span className="font-medium text-slate-700">Gesamtsumme inkl. Pauschalen</span>
+                <span className="font-semibold text-slate-900">
+                  {formatCurrency(pauschalen.grandTotal)}
+                </span>
               </div>
             </div>
           </section>
@@ -184,7 +209,14 @@ export function OfferPreview({
               <li>Änderungen am Paket müssen intern geprüft werden.</li>
               <li>Preis bleibt vorläufig.</li>
               <li>
-                Büffetpauschale, Anlieferung und MwSt. werden in V1 nicht automatisch kalkuliert.
+                Büffetpauschale, Anlieferung (Standardzone: Innenstadt Hamburg, barrierefrei, ohne
+                Treppen, direkt anfahrbar) und Geschirrpauschale sind unten enthalten; MwSt. wird
+                nicht automatisch kalkuliert.
+              </li>
+              <li className="font-semibold">
+                ⚠ Allergenangaben sind, sofern nicht anders vermerkt, automatisch aus den
+                Beschreibungen abgeleitet und küchenseitig ungeprüft — bei Kundenanfragen zu
+                Allergien bitte vor Zusage in der Küche nachfragen.
               </li>
             </ul>
           </section>

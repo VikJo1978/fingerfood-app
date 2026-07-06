@@ -87,3 +87,28 @@ export function lineWarnings(
 
 export const formatCurrency = (n: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
+/**
+ * Real Silberlöffel V1 flat fees — MUST mirror backend/app/services/pricing_service.py
+ * PAUSCHALE_* constants exactly (checked by shared/pricing_fixtures.json parity tests).
+ * Applied unconditionally per offer in V1; see backend comment for the
+ * Anliefergebühr 30€/35€ sourcing decision.
+ */
+export const PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON = 0.5;
+export const PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON = 2.0;
+export const PAUSCHALE_ANLIEFERUNG_FLAT = 35.0;
+
+export interface PauschalenBreakdown {
+  buffetpauschale: number;
+  geschirrpauschale: number;
+  anlieferung: number;
+  grandTotal: number;
+}
+
+export function computePauschalen(subtotal: number, persons: number): PauschalenBreakdown {
+  const buffetpauschale = Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
+  const geschirrpauschale = Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
+  const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;
+  const grandTotal = Math.round((subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100) / 100;
+  return { buffetpauschale, geschirrpauschale, anlieferung, grandTotal };
+}

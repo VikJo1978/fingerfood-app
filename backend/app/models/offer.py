@@ -36,3 +36,11 @@ class OfferResponse(BaseModel):
     price_per_person: float
     lines: list[LinePricing]
     warnings: list[OfferWarning] = Field(default_factory=list)
+    # Real Silberlöffel V1 flat fees (see pricing_service.py PAUSCHALEN_*).
+    # Applied unconditionally per offer for V1 — not conditioned on delivery
+    # vs. pickup or on order size; a documented approximation, not a rule
+    # derived from customer choice.
+    buffetpauschale: float = 0.0
+    geschirrpauschale: float = 0.0
+    anlieferung: float = 0.0
+    grand_total: float = 0.0

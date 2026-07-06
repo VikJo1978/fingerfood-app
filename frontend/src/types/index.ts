@@ -66,6 +66,10 @@ export interface CatalogItem {
   ingredient_flags?: IngredientFlags;
   /** Declared allergens when relevant; optional for non-food modules. */
   allergens?: AllergenCode[];
+  /** False (default): allergens mechanically derived from description text only,
+   * NOT a checked food-safety declaration — UI must show a warning wherever
+   * allergens are displayed. True: a human has reviewed and confirmed them. */
+  allergens_verified?: boolean;
   module: ItemModule;
   source_type: SourceType;
   item_kind: ItemKind;

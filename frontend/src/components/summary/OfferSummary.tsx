@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CatalogItem, OfferDraft, QuantityMode } from "../../types";
-import { formatCurrency } from "../../utils/pricing";
+import { formatCurrency, type PauschalenBreakdown } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
@@ -12,6 +12,7 @@ interface OfferSummaryProps {
   itemsById: Record<string, CatalogItem>;
   subtotal: number;
   pricePerPerson: number;
+  pauschalen: PauschalenBreakdown;
   onQuantityChange: (lineId: string, q: number) => void;
   onModeChange: (lineId: string, m: QuantityMode) => void;
   onCustomizationNoteChange: (lineId: string, note: string) => void;
@@ -28,6 +29,7 @@ export function OfferSummary({
   itemsById,
   subtotal,
   pricePerPerson,
+  pauschalen,
   onQuantityChange,
   onModeChange,
   onCustomizationNoteChange,
@@ -73,12 +75,30 @@ export function OfferSummary({
 
       <div className="space-y-3 border-t border-slate-100 pt-4">
         <div className="flex items-baseline justify-between gap-4">
-          <span className="text-sm text-slate-600">Gesamtsumme</span>
+          <span className="text-sm text-slate-600">Positionen</span>
           <span className="text-xl font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
         </div>
         <div className="flex items-baseline justify-between gap-4 text-sm">
-          <span className="text-slate-600">Preis pro Person</span>
+          <span className="text-slate-600">Preis pro Person (Positionen)</span>
           <span className="font-semibold text-slate-800">{formatCurrency(pricePerPerson)}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 text-xs text-slate-500">
+          <span>Büffetpauschale</span>
+          <span>{formatCurrency(pauschalen.buffetpauschale)}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 text-xs text-slate-500">
+          <span>Geschirrpauschale</span>
+          <span>{formatCurrency(pauschalen.geschirrpauschale)}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 text-xs text-slate-500">
+          <span>Anlieferung (Standardzone)</span>
+          <span>{formatCurrency(pauschalen.anlieferung)}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 border-t border-slate-100 pt-2">
+          <span className="text-sm font-medium text-slate-700">Gesamtsumme inkl. Pauschalen</span>
+          <span className="text-xl font-semibold text-slate-900">
+            {formatCurrency(pauschalen.grandTotal)}
+          </span>
         </div>
         <BudgetStatus enabled={budgetEnabled} totalBudget={totalBudget} subtotal={subtotal} />
       </div>
@@ -139,6 +159,7 @@ export function OfferSummary({
         itemsById={itemsById}
         subtotal={subtotal}
         pricePerPerson={pricePerPerson}
+        pauschalen={pauschalen}
       />
     </aside>
   );

@@ -110,7 +110,9 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
 
             {(item.allergens ?? []).length ? (
               <div className="space-y-1.5">
-                <p className="text-xs font-medium text-slate-500">Allergene (deklariert)</p>
+                <p className="text-xs font-medium text-slate-500">
+                  {item.allergens_verified ? "Allergene (deklariert)" : "Allergene (Hinweis, ungeprüft)"}
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {(item.allergens ?? []).map((code) => (
                     <span
@@ -122,9 +124,13 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
                   ))}
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-slate-400">Keine Allergene nach Stammdaten deklariert.</p>
-            )}
+            ) : null}
+            {!item.allergens_verified ? (
+              <p className="text-xs font-medium text-amber-900/90">
+                ⚠ Allergene nur automatisch aus der Beschreibung abgeleitet, nicht küchenseitig
+                geprüft. Vor Zusagen an Kunden mit Allergien bitte in der Küche nachfragen.
+              </p>
+            ) : null}
 
             {warnings.length ? (
               <ul className="space-y-1 text-xs">

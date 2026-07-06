@@ -138,6 +138,7 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
     : "allergens" in r
       ? sanitizeAllergens(r.allergens)
       : undefined;
+  const allergens_verified = typeof r.allergens_verified === "boolean" ? r.allergens_verified : false;
 
   return {
     id,
@@ -154,6 +155,7 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
     diet_type,
     ingredient_flags,
     allergens,
+    allergens_verified,
     module,
     source_type,
     item_kind,

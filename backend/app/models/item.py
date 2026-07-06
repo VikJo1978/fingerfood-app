@@ -23,3 +23,9 @@ class Item(BaseModel):
     diet_type: DietType
     ingredient_flags: IngredientFlags = Field(default_factory=IngredientFlags)
     allergens: list[Allergen] = Field(default_factory=list)
+    allergens_verified: bool = False
+    """False (default) means allergens were mechanically derived from the menu
+    description text only (see scripts/derive_allergens.py) — NOT a checked
+    food-safety declaration. Must not be relied on for a client with allergies
+    without kitchen/owner verification. True is reserved for items a human has
+    explicitly reviewed and confirmed."""

@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CatalogItem, PriceType, QuantityMode } from "../../types";
-import { computeLineTotalFromPrice, computeOfferLineTotal, lineWarnings } from "../pricing";
+import { computeLineTotalFromPrice, computeOfferLineTotal, computePauschalen, lineWarnings } from "../pricing";
 import fixtures from "../../../../shared/pricing_fixtures.json";
 
 function fixtureItem(c: {
@@ -68,4 +68,16 @@ describe("computeOfferLineTotal (snapshot-based)", () => {
     // 4.5 * 2 * 10 persons = 90 — regardless of any current catalog price
     expect(computeOfferLineTotal(line as never, 10)).toBe(90);
   });
+});
+
+describe("computePauschalen (parity fixtures, must match backend)", () => {
+  for (const c of fixtures.pauschalen_cases) {
+    it(c.name, () => {
+      const result = computePauschalen(c.subtotal, c.persons);
+      expect(result.buffetpauschale).toBe(c.expected_buffetpauschale);
+      expect(result.geschirrpauschale).toBe(c.expected_geschirrpauschale);
+      expect(result.anlieferung).toBe(c.expected_anlieferung);
+      expect(result.grandTotal).toBe(c.expected_grand_total);
+    });
+  }
 });

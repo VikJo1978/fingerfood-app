@@ -55,5 +55,19 @@
       "persons": 7, "quantity_mode": "per_person", "quantity": 1.5,
       "expected_total": 33.6, "expected_warning_codes": ["PER_PERSON_BELOW_USUAL_MIN_PERSONS"]
     }
+  ],
+  "pauschalen_cases": [
+    {
+      "name": "ten_persons_zero_subtotal",
+      "subtotal": 0.0, "persons": 10,
+      "expected_buffetpauschale": 5.0, "expected_geschirrpauschale": 20.0,
+      "expected_anlieferung": 35.0, "expected_grand_total": 60.0
+    },
+    {
+      "name": "twenty_five_persons_with_subtotal",
+      "subtotal": 500.0, "persons": 25,
+      "expected_buffetpauschale": 12.5, "expected_geschirrpauschale": 50.0,
+      "expected_anlieferung": 35.0, "expected_grand_total": 597.5
+    }
   ]
 }

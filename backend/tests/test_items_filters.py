@@ -11,7 +11,7 @@ def test_all_items_load() -> None:
     resp = client.get("/api/items")
     assert resp.status_code == 200
     items = resp.json()
-    assert len(items) == 36
+    assert len(items) == 201  # real Silberlöffel catalog (2026-07-06 rebuild)
 
 
 def test_lunch_buffets_section_has_eight() -> None:

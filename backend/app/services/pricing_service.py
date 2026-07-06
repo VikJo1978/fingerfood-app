@@ -1,6 +1,22 @@
 from app.models.item import Item
 from app.models.offer import LinePricing, OfferRequest, OfferResponse, OfferWarning
 
+# Real Silberlöffel V1 flat fees, per Cateringangebot.pdf / Lunch_Buffets_2026.pdf /
+# Mittagsmenue.pdf (all three agree on Büffetpauschale). Applied unconditionally
+# per offer in V1 (not conditioned on pickup vs. delivery or order size — a
+# documented approximation, see OfferResponse).
+PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON = 0.50
+PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON = 2.00
+# Anliefergebühr: PDFs show two figures — 30,00 € "Anlieferung im
+# HH-Innenstadtgebiet" (delivery only) vs. 35,00 € in the Mittagsmenue T&Cs for
+# "Anlieferung, inklusive der Abholung" (delivery + pickup). We use the
+# delivery+pickup figure since equipment/chafing dishes are always collected
+# afterwards, scoped to the standard zone stated in the source documents
+# (Innenstadt Hamburg, barrierefrei, ohne Treppen, direkt anfahrbar) — outside
+# that zone/condition this flat figure does not apply and must be adjusted by
+# hand; no formula for that case is implemented here.
+PAUSCHALE_ANLIEFERUNG_FLAT = 35.00
+
 
 def _line_total(item: Item, persons: int, quantity_mode: str, quantity: float) -> float:
     if item.price_type == "piece":
@@ -88,10 +104,18 @@ def price_offer(items: dict[str, Item], req: OfferRequest) -> OfferResponse:
         )
 
     per_person = subtotal / req.persons if req.persons else 0.0
+    buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * req.persons, 2)
+    geschirrpauschale = round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * req.persons, 2)
+    anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2)
+    grand_total = round(subtotal + buffetpauschale + geschirrpauschale + anlieferung, 2)
     return OfferResponse(
         persons=req.persons,
         subtotal=round(subtotal, 2),
         price_per_person=round(per_person, 2),
         lines=line_results,
         warnings=global_warnings,
+        buffetpauschale=buffetpauschale,
+        geschirrpauschale=geschirrpauschale,
+        anlieferung=anlieferung,
+        grand_total=grand_total,
     )

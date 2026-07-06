@@ -390,3 +390,57 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   kitchen's Küchenzettel — that remains its own accepted step per
   CONFIGURATOR_EXECUTION_PACK_V1 (catering-system repo) §3/§4, only after the
   four catalog items above are reviewed by a catalog owner.
+
+---
+
+## Accepted progress: real Silberlöffel catalog rebuild + Pauschalen (2026-07-06)
+
+- **Full catalog replacement**: the entire 36-item placeholder catalog (incl.
+  the three "[Demo]"-prefixed packages under "Demo Pakete") was deleted and
+  rebuilt from three real source menus: Cateringangebot.pdf (34 pages),
+  Lunch_Buffets_2026.pdf (8 buffets; Lunch_Buffets1_2026.pdf confirmed an
+  identical duplicate), and Mittagsmenue.pdf (own "Mittagsmenue" section:
+  M1-M10 + M3+/M10+/M10++ addons, D1-D4 desserts included in the menu price,
+  S1/S2 salads, bread). **201 real items**, authored via
+  `backend/scripts/build_items.py` (reviewable Python source, not hand-typed
+  JSON) — 61 composite (buffets/packages with full Kalt/Warm/Dessert
+  compositions transcribed from source), 140 simple.
+- **Allergen safety decision (owner-approved)**: none of the three source
+  PDFs contain structured allergen/ingredient data — only prose descriptions
+  and occasional "vegetarisch/vegan" tags. Per explicit instruction, allergens
+  are NOT guessed. `Item.allergens_verified: bool = False` was added to the
+  schema (mirrored as `CatalogItem.allergens_verified` on the frontend); every
+  real item gets `False`. Allergens/ingredient_flags are derived only via a
+  literal, auditable keyword scan (`backend/scripts/derive_allergens.py`,
+  not a runtime module — a content-authoring tool). UI shows a loud warning
+  wherever allergens are displayed (ItemCard detail view; Angebotsvorschau
+  Hinweise) — "nur automatisch aus der Beschreibung abgeleitet, nicht
+  küchenseitig geprüft". `allergens_verified=True` is reserved for a future
+  human-reviewed state; a test asserts no item currently claims it.
+- **Catalog consistency audit rewritten** (`test_catalog_composite_consistency.py`):
+  the old known-gaps (three "[Demo]" packages) no longer exist — the file was
+  rewritten, not patched, with the known-sets now empty (verified zero
+  findings of that class on the real catalog). Same discipline as before: the
+  test fails if the sets ever change without a deliberate update.
+- **Pauschalen — real V1 automatic calculation** (owner-approved, replacing
+  the former "not automatically calculated" Hinweis): Büffetpauschale
+  0,50 €/person, Geschirrpauschale 2,00 €/person (both consistent across all
+  three source PDFs), Anliefergebühr 35,00 € flat — chosen as the
+  delivery+pickup figure from the Mittagsmenue T&Cs (vs. the 30,00 €
+  delivery-only figure seen elsewhere), scoped to the source's stated
+  standard zone (Innenstadt Hamburg, barrierefrei, ohne Treppen, direkt
+  anfahrbar) and noted as such in the UI — not a universal formula. Applied
+  unconditionally per offer in V1 (not conditioned on pickup vs. delivery or
+  order size — documented in code as an approximation).
+  - Backend: `OfferResponse` gained `buffetpauschale`, `geschirrpauschale`,
+    `anlieferung`, `grand_total` (additive, non-breaking).
+  - Frontend: `computePauschalen()` in `utils/pricing.ts` mirrors the backend
+    constants exactly; both checked against new `pauschalen_cases` in
+    `shared/pricing_fixtures.json` (same parity-guard mechanism as the
+    existing line-pricing fixtures).
+  - UI: Summen sections (sidebar `OfferSummary` and `OfferPreview` modal) show
+    the full breakdown and a grand total.
+- Backend: 32 tests passing (was 29). Frontend: 22 passing, build green.
+- Boundaries unchanged: still no configurator→Core bridge, drafts still not
+  Orders/OrderVersions, catalog still a fixture Core does not own (per
+  CONFIGURATOR_EXECUTION_PACK_V1 in the catering-system repo).

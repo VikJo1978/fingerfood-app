@@ -12,7 +12,7 @@ import { createDraft, fetchItems, updateDraft } from "../services/api";
 import type { CatalogItem, InquiryToConfiguratorTransferV1, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
-import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis } from "../utils/pricing";
+import { computeOfferLineTotal, computePauschalen, formatCurrency, isPieceUnitBasis } from "../utils/pricing";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -119,6 +119,11 @@ export function HomePage() {
     const ppp = offerDraft.persons > 0 ? sub / offerDraft.persons : 0;
     return { subtotal: Math.round(sub * 100) / 100, pricePerPerson: Math.round(ppp * 100) / 100 };
   }, [offerDraft.lines, offerDraft.persons]);
+
+  const pauschalen = useMemo(
+    () => computePauschalen(subtotal, offerDraft.persons),
+    [subtotal, offerDraft.persons]
+  );
 
   const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
 
@@ -408,6 +413,7 @@ export function HomePage() {
             itemsById={itemsById}
             subtotal={subtotal}
             pricePerPerson={pricePerPerson}
+            pauschalen={pauschalen}
             onQuantityChange={onLineQty}
             onModeChange={onLineMode}
             onCustomizationNoteChange={onLineCustomizationNote}

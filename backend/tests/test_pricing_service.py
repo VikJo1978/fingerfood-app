@@ -6,7 +6,14 @@ from pathlib import Path
 from app.models.classification import DietType
 from app.models.item import Item
 from app.models.offer import OfferLineIn, OfferRequest
-from app.services.pricing_service import _line_total, _line_warnings, price_offer
+from app.services.pricing_service import (
+    PAUSCHALE_ANLIEFERUNG_FLAT,
+    PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON,
+    PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON,
+    _line_total,
+    _line_warnings,
+    price_offer,
+)
 
 FIXTURES = json.loads(
     (Path(__file__).resolve().parents[2] / "shared" / "pricing_fixtures.json").read_text()
@@ -63,3 +70,23 @@ def test_price_offer_global_low_person_info() -> None:
     resp = price_offer({}, OfferRequest(persons=5, lines=[]))
     assert [w.code for w in resp.warnings] == ["GLOBAL_LOW_PERSON_COUNT"]
     assert resp.warnings[0].severity == "info"
+
+
+def test_pauschalen_parity_fixtures() -> None:
+    for case in FIXTURES["pauschalen_cases"]:
+        buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * case["persons"], 2)
+        geschirrpauschale = round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * case["persons"], 2)
+        anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2)
+        grand_total = round(case["subtotal"] + buffetpauschale + geschirrpauschale + anlieferung, 2)
+        assert buffetpauschale == case["expected_buffetpauschale"], case["name"]
+        assert geschirrpauschale == case["expected_geschirrpauschale"], case["name"]
+        assert anlieferung == case["expected_anlieferung"], case["name"]
+        assert grand_total == case["expected_grand_total"], case["name"]
+
+
+def test_price_offer_includes_pauschalen() -> None:
+    resp = price_offer({}, OfferRequest(persons=10, lines=[]))
+    assert resp.buffetpauschale == 5.0
+    assert resp.geschirrpauschale == 20.0
+    assert resp.anlieferung == 35.0
+    assert resp.grand_total == 60.0
