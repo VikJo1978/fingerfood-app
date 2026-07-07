@@ -11,11 +11,11 @@ export function AppShell({ children }: AppShellProps) {
       {/* White brand band: the logo is an opaque JPEG, so it must sit on a
           white surface — never directly on the tinted page background. */}
       <div className="border-b border-slate-200/70 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
           <img
             src={logo}
             alt="Silberlöffel Event Catering Service"
-            className="h-14 w-auto sm:h-16"
+            className="h-20 w-auto sm:h-28"
           />
         </div>
       </div>
