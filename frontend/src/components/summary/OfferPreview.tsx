@@ -325,9 +325,10 @@ export function OfferPreview({
             <p className="border-t border-slate-400 pt-1.5">Stempel, Unterschrift</p>
           </section>
 
-          {/* Legal footer, per Impressumspflicht — TODO Büro: exact registration
-              details must be confirmed before this is used for real clients;
-              placeholder text mirrors the most recent historical Angebot on file. */}
+          {/* Legal footer, per Impressumspflicht. Sitz (registered seat) is
+              Ahrensburg — that's what belongs next to the Handelsregister
+              entry. Hinschenfelder Str. 60 is the Hamburg kitchen, not the
+              legal seat; shown separately, not as the company's address. */}
           <footer className="grid gap-2 border-t border-slate-200 pt-4 text-[11px] leading-relaxed text-slate-500 sm:grid-cols-3">
             <p>
               Silberlöffel Catering GmbH
@@ -335,8 +336,12 @@ export function OfferPreview({
               Geschäftsführer: Hinrich Both
               <br />
               Amtsgericht Lübeck, HRB 24548 HL
+              <br />
+              Sitz: Manhagener Allee 25a, 22926 Ahrensburg
             </p>
             <p>
+              Küche Hamburg:
+              <br />
               Hinschenfelder Str. 60
               <br />
               22041 Hamburg
