@@ -165,6 +165,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
         eventDate,
         eventTime: eventTime.trim(),
         location: location.trim(),
+        billingAddress: billingAddressDifferent ? billingAddress.trim() : "",
         remarks: composeConfiguratorRemarks({
           eventType,
           serviceStyle,

@@ -156,6 +156,7 @@ export function HomePage() {
         eventDate: pre.eventDate,
         eventTime: pre.eventTime,
         location: pre.location,
+        billingAddress: pre.billingAddress.trim() ? pre.billingAddress.trim() : undefined,
         remarks: remarksTrim ? remarksTrim : undefined,
       },
     }));

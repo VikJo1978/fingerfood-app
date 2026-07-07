@@ -125,7 +125,12 @@ export interface OrderContextV1 {
   contactPerson: string;
   eventDate: string;
   eventTime: string;
+  /** Lieferadresse / Veranstaltungsort — this is what the driver needs, always shown prominently. */
   location: string;
+  /** Rechnungsadresse, only set if it differs from location. Kept deliberately
+   * secondary in the UI/print layout (see OfferPreview) — drivers historically
+   * misread a same-priority billing address and delivered to the wrong place. */
+  billingAddress?: string;
   remarks?: string;
 }
 
@@ -195,6 +200,8 @@ export interface ConfiguratorOrderContextPrefillV1 {
   eventDate: string;
   eventTime: string;
   location: string;
+  /** "" when the intake's billing address was left blank / not marked abweichend. */
+  billingAddress: string;
   remarks: string;
 }
 

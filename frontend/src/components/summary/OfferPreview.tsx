@@ -79,6 +79,18 @@ export function OfferPreview({
         </div>
 
         <div className="space-y-6 p-5 pb-6 text-sm text-slate-800">
+          {oc.billingAddress?.trim() ? (
+            <section className="rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 print:border-black">
+              <p className="text-sm font-bold text-amber-900">
+                ⚠ Achtung: abweichender Lieferort — Rechnungsadresse ≠ Lieferadresse!
+              </p>
+              <p className="mt-1 text-xs text-amber-800">
+                Lieferung/Anlieferung an <strong>{oc.location}</strong>. Rechnungsadresse (unten,
+                separat) ist NICHT der Lieferort.
+              </p>
+            </section>
+          ) : null}
+
           <section>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Basisdaten
@@ -101,13 +113,19 @@ export function OfferPreview({
                 <dd className="font-medium text-slate-900">{dashIfEmpty(oc.eventTime)}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs text-slate-500">Ort</dt>
+                <dt className="text-xs text-slate-500">Ort / Lieferadresse</dt>
                 <dd className="font-medium text-slate-900">{dashIfEmpty(oc.location)}</dd>
               </div>
               <div>
                 <dt className="text-xs text-slate-500">Personen</dt>
                 <dd className="font-medium text-slate-900">{draft.persons}</dd>
               </div>
+              {oc.billingAddress?.trim() ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-xs text-slate-500">Rechnungsadresse (abweichend)</dt>
+                  <dd className="font-medium text-slate-900">{oc.billingAddress}</dd>
+                </div>
+              ) : null}
             </dl>
           </section>
 
