@@ -193,7 +193,7 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         <button
           type="button"
           onClick={() => onAdd(item, mode, quantity, surchargeSelected)}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-deep active:scale-[0.98]"
         >
           Zum Angebot hinzufügen
         </button>

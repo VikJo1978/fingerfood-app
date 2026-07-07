@@ -5,7 +5,9 @@
 :root {
   font-family: "DM Sans", system-ui, sans-serif;
   color: #0f172a;
-  background-color: #f8fafc;
+  /* Warm off-white with a hint of the logo's sage — must match AppShell's
+     bg-[#f6f7f6] so overscroll doesn't flash a different color. */
+  background-color: #f6f7f6;
 }
 
 body {

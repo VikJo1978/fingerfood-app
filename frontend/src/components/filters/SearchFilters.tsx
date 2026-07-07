@@ -89,7 +89,7 @@ export function SearchFilters({
                 onClick={() => onCatalogModuleChange(value)}
                 className={
                   active
-                    ? "rounded-full border border-accent bg-accent px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                    ? "rounded-full border border-accent bg-accent px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-deep"
                     : "rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                 }
               >

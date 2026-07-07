@@ -448,7 +448,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
         <button
           type="button"
           onClick={handlePrepare}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-deep"
         >
           Angebot vorbereiten
         </button>
