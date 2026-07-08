@@ -19,6 +19,7 @@ import {
   formatCurrency,
   isPieceUnitBasis,
 } from "../utils/pricing";
+import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -274,6 +275,32 @@ export function HomePage() {
     );
   };
 
+  const onExportProposalJson = () => {
+    // Guard (accepted 2026-07-08): the Office Panel's /proposal-preview
+    // validates event_date, so exporting without one would produce a file
+    // that predictably fails import. Abort with a hint instead — nothing is
+    // persisted or sent anywhere either way.
+    if (!offerDraft.orderContext.eventDate) {
+      alert(
+        "Büro-Export braucht ein Eventdatum: bitte zuerst im Auftragskontext " +
+          "das Datum setzen."
+      );
+      return;
+    }
+    const payload = buildProposalPayloadV1(
+      offerDraft,
+      itemsById,
+      pauschalen.grandTotal,
+      vat.totalInclVat,
+      currentDraftId
+    );
+    downloadText(
+      `proposal-${new Date().toISOString().slice(0, 10)}.json`,
+      JSON.stringify(payload, null, 2),
+      "application/json"
+    );
+  };
+
   const onSaveDraft = useCallback(async () => {
     setDraftSaveStatus("saving");
     setDraftSaveMessage(null);
@@ -448,6 +475,7 @@ export function HomePage() {
             onRemove={onRemoveLine}
             onExportJson={onExportJson}
             onExportCsv={onExportCsv}
+            onExportProposalJson={onExportProposalJson}
             draftSaveStatus={draftSaveStatus}
             draftSaveMessage={draftSaveMessage}
             onSaveDraft={onSaveDraft}
