@@ -20,6 +20,9 @@ import {
   isPieceUnitBasis,
 } from "../utils/pricing";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
+import {
+  consumeCoreInquiryHandoff,
+} from "../utils/coreInquiryHandoff";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -43,6 +46,8 @@ export function HomePage() {
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSaveMessage, setDraftSaveMessage] = useState<string | null>(null);
+  const [importedInquiryId, setImportedInquiryId] = useState<string | null>(null);
+  const [handoffError, setHandoffError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
@@ -144,7 +149,7 @@ export function HomePage() {
     const remarksTrim = pre.remarks.trim();
     setOfferDraft((d) => ({
       ...d,
-      persons: clampPersons(planning.persons),
+      persons: planning.persons === null ? d.persons : clampPersons(planning.persons),
       budgetEnabled: planning.budgetEnabled,
       totalBudget:
         planning.budgetEnabled && planning.budget != null
@@ -154,6 +159,8 @@ export function HomePage() {
         ...d.orderContext,
         companyName: pre.companyName,
         contactPerson: pre.contactPerson,
+        email: pre.email,
+        phone: pre.phone,
         eventDate: pre.eventDate,
         eventTime: pre.eventTime,
         location: pre.location,
@@ -166,6 +173,17 @@ export function HomePage() {
     }
     setPageMode("configurator");
   }, []);
+
+  useEffect(() => {
+    const result = consumeCoreInquiryHandoff(window.location, window.history);
+    if (!result.present) return;
+    if (result.handoff === null) {
+      setHandoffError("Anfragedaten konnten nicht sicher übernommen werden.");
+      return;
+    }
+    handlePrepareOffer(result.handoff.transfer);
+    setImportedInquiryId(result.handoff.inquiry_id);
+  }, [handlePrepareOffer]);
 
   const onAddLine = (
     item: CatalogItem,
@@ -354,6 +372,7 @@ export function HomePage() {
             title="Neue Anfrage erfassen"
             subtitle="Weiches Anfrage-Protokoll für die Akquise — ohne Speicherung. Anschließend starten Sie den Konfigurator mit den wichtigsten Standardwerten."
           />
+          {handoffError ? <WarningBanner message={handoffError} /> : null}
           <InquiryIntake onPrepareOffer={handlePrepareOffer} />
         </div>
       </AppShell>
@@ -367,6 +386,12 @@ export function HomePage() {
           title="Catering-Angebot zusammenstellen"
           subtitle="Stellen Sie Ihr Catering-Angebot in wenigen Schritten zusammen — mit klarer Kalkulation und ohne Fachjargon."
         />
+
+        {importedInquiryId ? (
+          <WarningBanner
+            message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
+          />
+        ) : null}
 
         <p className="text-sm text-slate-500">
           <button

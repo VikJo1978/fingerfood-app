@@ -124,14 +124,16 @@ export function OfferPreview({
           <section className="grid gap-1 text-sm">
             <p className="font-semibold text-slate-900">{dashIfEmpty(oc.companyName)}</p>
             <p className="text-slate-700">{dashIfEmpty(oc.contactPerson)}</p>
+            {oc.email?.trim() ? <p className="text-slate-700">{oc.email}</p> : null}
+            {oc.phone?.trim() ? <p className="text-slate-700">{oc.phone}</p> : null}
           </section>
 
           <p className="leading-relaxed text-slate-800">
             Angebot für Ihre Veranstaltung am <strong>{formatDateDe(oc.eventDate)}</strong>
             {oc.eventTime ? (
               <>
-                {" "}
-                um <strong>{oc.eventTime} Uhr</strong>
+                {", Zeitfenster "}
+                <strong>{oc.eventTime}</strong>
               </>
             ) : null}{" "}
             mit <strong>{draft.persons} Personen</strong>.
@@ -141,7 +143,7 @@ export function OfferPreview({
             <p>
               <span className="text-slate-500">Anlieferung: </span>
               <span className="font-medium text-slate-900">
-                {oc.eventTime ? `${oc.eventTime} Uhr, ` : ""}
+                {oc.eventTime ? `${oc.eventTime}, ` : ""}
                 {dashIfEmpty(oc.location)}
               </span>
             </p>

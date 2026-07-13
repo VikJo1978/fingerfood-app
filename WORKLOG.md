@@ -52,6 +52,15 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
 
 ## Accepted progress (snapshot)
 
+- **Core Inquiry → Angebot prefill V1** (**implemented locally 2026-07-13**):
+  the configurator accepts the strict `core_inquiry_offer_prefill_v1` envelope
+  from the URL fragment, clears the fragment immediately, and opens an editable
+  offer draft with known company/contact/event values. Unknown guest count does
+  not overwrite the existing editable default. The import is visibly marked as
+  prefill only: it creates no Order, sends nothing, and writes nothing back to
+  Core. E-mail and phone are now part of the offer context and preview. GitHub
+  Actions now runs backend tests plus frontend tests/build on pushes and PRs.
+
 - **Lunch Buffet No 1–8** from the **Silberlöffel 2026 PDF** are in **`items.json`** as **real composite** seed items (`lunch-buffet-2026-no-1` … **`no-8`**).
 - In the **UI**, they show under **Baustein-Typ → Pakete** and section **Lunch Buffets**.
 - Placeholder packages are **`[Demo]`** in the name and live under section **Demo Pakete**.

@@ -162,6 +162,8 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
       orderContextPrefill: {
         companyName: company.trim(),
         contactPerson: contactPerson.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
         eventDate,
         eventTime: eventTime.trim(),
         location: location.trim(),

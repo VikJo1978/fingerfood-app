@@ -41,6 +41,30 @@ export function OrderContextCard({
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            E-Mail
+          </span>
+          <input
+            type="email"
+            autoComplete="email"
+            value={oc.email ?? ""}
+            onChange={(e) => onOrderContextChange({ email: e.target.value })}
+            className={inputClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Telefon
+          </span>
+          <input
+            type="tel"
+            autoComplete="tel"
+            value={oc.phone ?? ""}
+            onChange={(e) => onOrderContextChange({ phone: e.target.value })}
+            className={inputClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Ansprechpartner
           </span>
           <input
@@ -75,10 +99,11 @@ export function OrderContextCard({
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Uhrzeit
+            Uhrzeit / Zeitfenster
           </span>
           <input
-            type="time"
+            type="text"
+            placeholder="z. B. 18:30–23:00 oder abends"
             value={oc.eventTime}
             onChange={(e) => onOrderContextChange({ eventTime: e.target.value })}
             className={inputClass}

@@ -123,6 +123,8 @@ export interface OfferLine {
 export interface OrderContextV1 {
   companyName: string;
   contactPerson: string;
+  email?: string;
+  phone?: string;
   eventDate: string;
   eventTime: string;
   /** Lieferadresse / Veranstaltungsort — this is what the driver needs, always shown prominently. */
@@ -184,7 +186,8 @@ export interface InquiryV1 {
  * Boundary: planning-relevant inputs only — not Auftragskontext / Stammdaten.
  */
 export interface ConfiguratorPlanningContextV1 {
-  persons: number;
+  /** null means the source inquiry did not provide a count; keep the editable UI default. */
+  persons: number | null;
   budget: number | null;
   budgetEnabled: boolean;
   desiredModules: ItemModule[];
@@ -197,6 +200,8 @@ export interface ConfiguratorPlanningContextV1 {
 export interface ConfiguratorOrderContextPrefillV1 {
   companyName: string;
   contactPerson: string;
+  email: string;
+  phone: string;
   eventDate: string;
   eventTime: string;
   location: string;
