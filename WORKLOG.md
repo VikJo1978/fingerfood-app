@@ -59,7 +59,8 @@ Living notes on project truth, boundaries, and sequencing. Update when scope or 
   not overwrite the existing editable default. The import is visibly marked as
   prefill only: it creates no Order, sends nothing, and writes nothing back to
   Core. E-mail and phone are now part of the offer context and preview. GitHub
-  Actions now runs backend tests plus frontend tests/build on pushes and PRs.
+  Actions now runs backend tests plus frontend tests/build on pushes and PRs;
+  clean-runner test dependencies live in `backend/requirements-dev.txt`.
 
 - **Lunch Buffet No 1–8** from the **Silberlöffel 2026 PDF** are in **`items.json`** as **real composite** seed items (`lunch-buffet-2026-no-1` … **`no-8`**).
 - In the **UI**, they show under **Baustein-Typ → Pakete** and section **Lunch Buffets**.
