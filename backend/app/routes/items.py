@@ -1,19 +1,22 @@
 from fastapi import APIRouter, Query
 
-from app.core.config import settings
 from app.models.classification import ALLERGEN_CODES, ALLERGEN_LABELS_DE, Allergen, DietType
 from app.models.item import Item
-from app.services.item_service import load_items
+from app.services.catalog_factory import build_catalog_adapter
 
 router = APIRouter(prefix="/api/items", tags=["items"])
 
 _cache: list[Item] | None = None
+_cache_source: str | None = None
 
 
 def _all_items() -> list[Item]:
-    global _cache
-    if _cache is None:
-        _cache = load_items(settings.items_json_path)
+    global _cache, _cache_source
+    adapter = build_catalog_adapter()
+    loaded = adapter.load_items_for_compose()
+    if _cache is None or _cache_source != loaded.catalog_revision:
+        _cache = list(loaded.items.values())
+        _cache_source = loaded.catalog_revision
     return _cache
 
 
