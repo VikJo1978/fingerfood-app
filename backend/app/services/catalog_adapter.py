@@ -14,6 +14,7 @@ from app.services.catalog_allergens import eu_allergen_codes_from_configurator
 from app.services.catalog_client import CatalogClient, CatalogClientError
 from app.services.catalog_ids import dish_id_from_source_id
 from app.services.item_service import load_items
+from app.services.pricing_math import cents_to_float, euros_to_cents
 
 _log = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ CatalogSource = Literal["catalog", "items_json", "mixed"]
 @dataclass(frozen=True)
 class CatalogAdapterLoadResult:
     items: dict[str, Item]
+    unit_net_cents_by_item_id: dict[str, int]
     source: CatalogSource
     catalog_revision: str
     warnings: tuple[str, ...]
@@ -40,9 +42,7 @@ class CatalogAdapter:
     ) -> None:
         self._client = catalog_client
         self._items_path = items_path or settings.items_json_path
-        self._strict = (
-            settings.catalog_adapter_strict if strict is None else strict
-        )
+        self._strict = settings.catalog_adapter_strict if strict is None else strict
         self._items_json_by_id: dict[str, Item] | None = None
         self._items_json_by_dish_id: dict[str, Item] | None = None
 
@@ -52,6 +52,7 @@ class CatalogAdapter:
         if not self._client.is_configured():
             return CatalogAdapterLoadResult(
                 items=json_items,
+                unit_net_cents_by_item_id=self._legacy_prices(json_items),
                 source="items_json",
                 catalog_revision="items-json-local",
                 warnings=("catalog client not configured",),
@@ -64,18 +65,22 @@ class CatalogAdapter:
                 raise
             return CatalogAdapterLoadResult(
                 items=json_items,
+                unit_net_cents_by_item_id=self._legacy_prices(json_items),
                 source="items_json",
                 catalog_revision="items-json-fallback",
                 warnings=(f"catalog unavailable: {exc}",),
             )
 
-        merged, warnings = self._merge_catalog_with_items_json(dishes, json_items)
+        merged, prices, warnings = self._merge_catalog_with_items_json(
+            dishes, json_items
+        )
         source: CatalogSource = "catalog" if not warnings else "mixed"
         revision = self._catalog_revision(dishes)
         if warnings:
             _log.warning("catalog adapter warnings: %s", "; ".join(warnings))
         return CatalogAdapterLoadResult(
             items=merged,
+            unit_net_cents_by_item_id=prices,
             source=source,
             catalog_revision=revision,
             warnings=tuple(warnings),
@@ -114,28 +119,36 @@ class CatalogAdapter:
         self,
         dishes: list[CoreCatalogDishSummary],
         json_items: dict[str, Item],
-    ) -> tuple[dict[str, Item], list[str]]:
+    ) -> tuple[dict[str, Item], dict[str, int], list[str]]:
         by_dish_id = self._items_json_by_dish_id_map(json_items)
         merged: dict[str, Item] = {}
+        prices: dict[str, int] = {}
         warnings: list[str] = []
         for dish in dishes:
             if not dish.active:
                 continue
             template = by_dish_id.get(dish.dish_id)
             if template is None:
-                warnings.append(f"catalog dish {dish.dish_id!r} has no items.json template")
+                warnings.append(
+                    f"catalog dish {dish.dish_id!r} has no items.json template"
+                )
                 continue
             merged[template.id] = template.model_copy(
-                update={"price": round(dish.current_unit_net_cents / 100, 2)}
+                update={"price": cents_to_float(dish.current_unit_net_cents)}
             )
+            prices[template.id] = dish.current_unit_net_cents
         if not merged and dishes:
             warnings.append("catalog returned dishes but none matched items.json ids")
             if self._strict:
-                return {}, warnings
-            return json_items, [*warnings, "using items.json because catalog merge empty"]
+                return {}, {}, warnings
+            return (
+                json_items,
+                self._legacy_prices(json_items),
+                [*warnings, "using items.json because catalog merge empty"],
+            )
         if not merged:
-            return json_items, warnings
-        return merged, warnings
+            return json_items, self._legacy_prices(json_items), warnings
+        return merged, prices, warnings
 
     def _resolved_from_catalog(
         self,
@@ -149,7 +162,7 @@ class CatalogAdapter:
                 f"catalog dish {dish.dish_id!r} missing items.json template"
             )
         item = template.model_copy(
-            update={"price": round(dish.current_unit_net_cents / 100, 2)}
+            update={"price": cents_to_float(dish.current_unit_net_cents)}
         )
         return ResolvedCatalogLine(
             line_id=line_id,
@@ -157,7 +170,9 @@ class CatalogAdapter:
             item=item,
             unit_net_cents=dish.current_unit_net_cents,
             allergens=tuple(sorted(set(dish.allergens))),
-            description=getattr(dish, "description", None) or template.description or None,
+            description=getattr(dish, "description", None)
+            or template.description
+            or None,
             composition=getattr(dish, "composition", None) or template.items_included,
             notes=getattr(dish, "notes", None),
             source="catalog",
@@ -166,7 +181,7 @@ class CatalogAdapter:
     def _resolved_from_items_json(
         self, line_id: str, item: Item
     ) -> ResolvedCatalogLine:
-        cents = int(round(item.price * 100))
+        cents = euros_to_cents(item.price)
         return ResolvedCatalogLine(
             line_id=line_id,
             catalog_item_id=dish_id_from_source_id(line_id),
@@ -178,6 +193,10 @@ class CatalogAdapter:
             notes=None,
             source="items_json",
         )
+
+    @staticmethod
+    def _legacy_prices(items: dict[str, Item]) -> dict[str, int]:
+        return {item_id: euros_to_cents(item.price) for item_id, item in items.items()}
 
     def _items_json_map(self) -> dict[str, Item]:
         if self._items_json_by_id is None:

@@ -4,24 +4,22 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
-from app.models.offer import OfferLineIn, OfferRequest, OfferResponse
+from app.models.offer import OfferLineIn, OfferRequest
 from app.models.resolved_catalog import ResolvedCatalogLine
 from app.services.catalog_adapter import CatalogAdapter
-from app.services.pricing_service import price_offer
+from app.services.pricing_service import (
+    OfferPricingCents,
+    PricingLineCents,
+    calculate_offer_cents,
+)
 from app.services.snapshot_hash import compute_snapshot_hash
 
 SCHEMA_VERSION_V2 = "offer_snapshot_v2"
 SOURCE = "fingerfood-configurator-backend"
 CURRENCY = "EUR"
 CALCULATOR_NAME = "fingerfood-backend"
-
-
-def _cents(value: float) -> int:
-    return int(
-        (Decimal(str(value)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-    )
 
 
 def _quantity_string(value: float) -> str:
@@ -35,13 +33,13 @@ def _build_catalog_position(
     *,
     resolved: ResolvedCatalogLine,
     line: OfferLineIn,
-    pricing_line,
+    pricing_line: PricingLineCents,
     position_id: str,
 ) -> dict[str, object]:
-    unit_net = resolved.unit_net_cents
-    net_total = _cents(pricing_line.line_total)
+    unit_net = pricing_line.unit_net_cents
+    net_total = pricing_line.net_cents
     vat_rate = pricing_line.vat_rate_percent
-    vat_amount = _cents(pricing_line.vat_amount)
+    vat_amount = pricing_line.vat_cents
     gross_total = net_total + vat_amount
     return {
         "position_id": position_id,
@@ -83,16 +81,20 @@ def build_offer_snapshot_v2(
 ) -> dict[str, object]:
     """Compose OfferSnapshot V2 from resolved Catalog lines + pricing."""
     load = adapter.load_items_for_compose()
-    priced = price_offer(load.items, offer)
+    priced = calculate_offer_cents(
+        load.items,
+        offer,
+        unit_net_cents_by_item_id=load.unit_net_cents_by_item_id,
+    )
 
     positions: list[dict[str, object]] = []
-    priced_by_item = {line.item_id: line for line in priced.lines}
+    priced_lines = iter(priced.lines)
     for line in offer.lines:
+        if line.item_id not in load.items:
+            continue
+        pricing_line = next(priced_lines)
         resolved = adapter.resolve_line(line.item_id)
         if resolved is None:
-            continue
-        pricing_line = priced_by_item.get(line.item_id)
-        if pricing_line is None:
             continue
         positions.append(
             _build_catalog_position(
@@ -113,7 +115,9 @@ def build_offer_snapshot_v2(
         "source_draft_id": source_draft_id,
         "inquiry_id": inquiry_id,
         "snapshot_id": snapshot_id,
-        "snapshot_created_at": (snapshot_created_at or datetime.now(tz=UTC)).isoformat(),
+        "snapshot_created_at": (
+            snapshot_created_at or datetime.now(tz=UTC)
+        ).isoformat(),
         "valid_until": valid_until.isoformat(),
         "currency": CURRENCY,
         "recipient": recipient,
@@ -140,18 +144,12 @@ def build_offer_snapshot_v2(
     return body
 
 
-def _variant_totals(priced: OfferResponse) -> dict[str, int]:
-    net = _cents(priced.subtotal)
-    vat7 = _cents(priced.vat_7_percent_amount)
-    vat19 = _cents(priced.vat_19_percent_amount)
-    base7 = _cents(priced.vat_7_percent_base)
-    base19 = _cents(priced.vat_19_percent_base)
-    gross = _cents(priced.total_incl_vat)
+def _variant_totals(priced: OfferPricingCents) -> dict[str, int]:
     return {
-        "net_cents": net,
-        "vat_7_base_cents": base7,
-        "vat_7_amount_cents": vat7,
-        "vat_19_base_cents": base19,
-        "vat_19_amount_cents": vat19,
-        "gross_cents": gross,
+        "net_cents": priced.subtotal_cents,
+        "vat_7_base_cents": priced.vat_7_base_cents,
+        "vat_7_amount_cents": priced.vat_7_amount_cents,
+        "vat_19_base_cents": priced.vat_19_base_cents,
+        "vat_19_amount_cents": priced.vat_19_amount_cents,
+        "gross_cents": priced.total_incl_vat_cents,
     }

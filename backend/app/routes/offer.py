@@ -48,7 +48,11 @@ def _build_snapshot_payload(body: OfferSnapshotBuildRequest) -> dict[str, object
 def calculate_offer(body: OfferRequest):
     adapter = build_catalog_adapter()
     loaded = adapter.load_items_for_compose()
-    return price_offer(loaded.items, body)
+    return price_offer(
+        loaded.items,
+        body,
+        unit_net_cents_by_item_id=loaded.unit_net_cents_by_item_id,
+    )
 
 
 @router.post("/snapshot")

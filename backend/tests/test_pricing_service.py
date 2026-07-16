@@ -1,6 +1,7 @@
 """Pricing unit tests + golden parity fixtures (shared with frontend vitest)."""
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 from app.core.config import settings
@@ -15,11 +16,14 @@ from app.services.pricing_service import (
     _line_total,
     _line_warnings,
     _surcharge_total,
+    calculate_offer_cents,
     price_offer,
 )
 
 FIXTURES = json.loads(
-    (Path(__file__).resolve().parents[2] / "shared" / "pricing_fixtures.json").read_text()
+    (
+        Path(__file__).resolve().parents[2] / "shared" / "pricing_fixtures.json"
+    ).read_text()
 )
 
 
@@ -46,19 +50,33 @@ def _item(
 
 def test_parity_fixtures_line_totals_and_warnings() -> None:
     for case in FIXTURES["cases"]:
-        item = _item(case["price"], case["price_type"], case["min_order"], case["unit_label"])
-        total = _line_total(item, case["persons"], case["quantity_mode"], case["quantity"])
+        item = _item(
+            case["price"], case["price_type"], case["min_order"], case["unit_label"]
+        )
+        total = _line_total(
+            item, case["persons"], case["quantity_mode"], case["quantity"]
+        )
         assert round(total, 2) == case["expected_total"], case["name"]
-        codes = [w.code for w in _line_warnings(item, case["persons"], case["quantity_mode"], case["quantity"])]
+        codes = [
+            w.code
+            for w in _line_warnings(
+                item, case["persons"], case["quantity_mode"], case["quantity"]
+            )
+        ]
         assert codes == case["expected_warning_codes"], case["name"]
 
 
 def test_price_offer_subtotal_and_per_person() -> None:
-    items = {"a": _item(2.5, "piece", 1, "Stück"), "b": _item(10.0, "person", 1, "Personen")}
+    items = {
+        "a": _item(2.5, "piece", 1, "Stück"),
+        "b": _item(10.0, "person", 1, "Personen"),
+    }
     req = OfferRequest(
         persons=20,
         lines=[
-            OfferLineIn(item_id="a", quantity_mode="per_person", quantity=2),  # 2.5*2*20 = 100
+            OfferLineIn(
+                item_id="a", quantity_mode="per_person", quantity=2
+            ),  # 2.5*2*20 = 100
             OfferLineIn(item_id="b", quantity_mode="total", quantity=20),  # 200
         ],
     )
@@ -69,8 +87,62 @@ def test_price_offer_subtotal_and_per_person() -> None:
     assert resp.warnings == []
 
 
+def test_authoritative_catalog_cents_bypass_legacy_item_float() -> None:
+    item = _item(9.0, "piece", 1, "Stück")
+    req = OfferRequest(
+        persons=10,
+        lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1.5)],
+    )
+
+    priced = calculate_offer_cents(
+        {"a": item},
+        req,
+        unit_net_cents_by_item_id={"a": 230},
+    )
+    response = price_offer(
+        {"a": item},
+        req,
+        unit_net_cents_by_item_id={"a": 230},
+    )
+
+    assert priced.lines[0].quantity == Decimal("1.5")
+    assert priced.lines[0].net_cents == 345
+    assert response.lines[0].line_total == 3.45
+
+
+def test_mixed_vat_cent_result_is_derived_from_priced_lines() -> None:
+    item_7 = _item(100.0, "piece", 1, "Stück").model_copy(
+        update={"vat_rate_percent": 7}
+    )
+    item_19 = _item(50.0, "piece", 1, "Stück").model_copy(
+        update={"vat_rate_percent": 19}
+    )
+    req = OfferRequest(
+        persons=10,
+        lines=[
+            OfferLineIn(item_id="food", quantity_mode="total", quantity=1),
+            OfferLineIn(item_id="service", quantity_mode="total", quantity=1),
+        ],
+    )
+
+    priced = calculate_offer_cents({"food": item_7, "service": item_19}, req)
+
+    assert priced.subtotal_cents == 15_000
+    assert priced.vat_7_base_cents == 10_000
+    assert priced.vat_7_amount_cents == 700
+    assert priced.vat_19_base_cents == 11_000
+    assert priced.vat_19_amount_cents == 2_090
+    assert priced.total_incl_vat_cents == 23_790
+
+
 def test_price_offer_unknown_item_warns_and_skips() -> None:
-    resp = price_offer({}, OfferRequest(persons=20, lines=[OfferLineIn(item_id="ghost", quantity_mode="total", quantity=1)]))
+    resp = price_offer(
+        {},
+        OfferRequest(
+            persons=20,
+            lines=[OfferLineIn(item_id="ghost", quantity_mode="total", quantity=1)],
+        ),
+    )
     assert resp.subtotal == 0.0
     assert [w.code for w in resp.warnings] == ["UNKNOWN_LINE_ITEM"]
     assert resp.lines == []
@@ -85,12 +157,20 @@ def test_price_offer_global_low_person_info() -> None:
 def test_pauschalen_parity_fixtures() -> None:
     for case in FIXTURES["pauschalen_cases"]:
         has_lines = case["has_lines"]
-        buffetpauschale = round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * case["persons"], 2) if has_lines else 0.0
+        buffetpauschale = (
+            round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * case["persons"], 2)
+            if has_lines
+            else 0.0
+        )
         geschirrpauschale = (
-            round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * case["persons"], 2) if has_lines else 0.0
+            round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * case["persons"], 2)
+            if has_lines
+            else 0.0
         )
         anlieferung = round(PAUSCHALE_ANLIEFERUNG_FLAT, 2) if has_lines else 0.0
-        grand_total = round(case["subtotal"] + buffetpauschale + geschirrpauschale + anlieferung, 2)
+        grand_total = round(
+            case["subtotal"] + buffetpauschale + geschirrpauschale + anlieferung, 2
+        )
         assert buffetpauschale == case["expected_buffetpauschale"], case["name"]
         assert geschirrpauschale == case["expected_geschirrpauschale"], case["name"]
         assert anlieferung == case["expected_anlieferung"], case["name"]
@@ -100,7 +180,11 @@ def test_pauschalen_parity_fixtures() -> None:
 def test_price_offer_includes_pauschalen_when_order_has_items() -> None:
     item = _item(1.0, "piece", 1, "Stück")
     resp = price_offer(
-        {"a": item}, OfferRequest(persons=10, lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1)])
+        {"a": item},
+        OfferRequest(
+            persons=10,
+            lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1)],
+        ),
     )
     assert resp.buffetpauschale == 5.0
     assert resp.geschirrpauschale == 20.0
@@ -126,22 +210,34 @@ def test_vat_classification_and_pauschalen_are_19_percent() -> None:
     """An order with items (so Pauschalen apply): Pauschalen carry VAT at 19%."""
     item = _item(1.0, "piece", 1, "Stück")  # vat_rate_percent defaults to 19 on _item()
     resp = price_offer(
-        {"a": item}, OfferRequest(persons=10, lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1)])
+        {"a": item},
+        OfferRequest(
+            persons=10,
+            lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=1)],
+        ),
     )
     assert resp.vat_19_percent_base == 61.0  # 1.0 line + 5 + 20 + 35 Pauschalen
     assert resp.vat_19_percent_amount == round(61.0 * 0.19, 2)
 
 
 def test_vat_splits_lines_by_item_rate() -> None:
-    item_7 = _item(2.0, "piece", 1, "Stück")  # module="food" default via Item(...); vat default 19 unless set
+    item_7 = _item(
+        2.0, "piece", 1, "Stück"
+    )  # module="food" default via Item(...); vat default 19 unless set
     item_7 = item_7.model_copy(update={"vat_rate_percent": 7})
-    item_19 = _item(3.0, "piece", 1, "Stück").model_copy(update={"vat_rate_percent": 19})
+    item_19 = _item(3.0, "piece", 1, "Stück").model_copy(
+        update={"vat_rate_percent": 19}
+    )
     items = {"a": item_7, "b": item_19}
     req = OfferRequest(
         persons=10,
         lines=[
-            OfferLineIn(item_id="a", quantity_mode="total", quantity=10),  # 20.0 net @7%
-            OfferLineIn(item_id="b", quantity_mode="total", quantity=10),  # 30.0 net @19%
+            OfferLineIn(
+                item_id="a", quantity_mode="total", quantity=10
+            ),  # 20.0 net @7%
+            OfferLineIn(
+                item_id="b", quantity_mode="total", quantity=10
+            ),  # 30.0 net @19%
         ],
     )
     resp = price_offer(items, req)
@@ -151,7 +247,7 @@ def test_vat_splits_lines_by_item_rate() -> None:
     # 30.0 line + 60.0 Pauschalen (10 persons) = 90.0 base @19%
     assert resp.vat_19_percent_base == 90.0
     assert resp.vat_19_percent_amount == 17.10
-    line_a = next(l for l in resp.lines if l.item_id == "a")
+    line_a = next(line for line in resp.lines if line.item_id == "a")
     assert line_a.vat_rate_percent == 7
     assert line_a.vat_amount == 1.40
 
@@ -172,12 +268,21 @@ def test_surcharge_parity_fixtures() -> None:
     catalog items (Brötchen Mix 3 2,60€, Sandwiches 3,30€, Bagels 3,45€)."""
     for case in FIXTURES["surcharge_cases"]:
         item = _item(
-            case["price"], case["price_type"], case["min_order"], case["unit_label"],
+            case["price"],
+            case["price_type"],
+            case["min_order"],
+            case["unit_label"],
             surcharge_amount=case["surcharge_amount"],
         )
-        base = _line_total(item, case["persons"], case["quantity_mode"], case["quantity"])
+        base = _line_total(
+            item, case["persons"], case["quantity_mode"], case["quantity"]
+        )
         surcharge = _surcharge_total(
-            item, case["persons"], case["quantity_mode"], case["quantity"], case["surcharge_selected"]
+            item,
+            case["persons"],
+            case["quantity_mode"],
+            case["quantity"],
+            case["surcharge_selected"],
         )
         assert round(base + surcharge, 2) == case["expected_total"], case["name"]
 
@@ -195,7 +300,11 @@ def test_price_offer_surcharge_real_catalog_items() -> None:
         items,
         OfferRequest(
             persons=10,
-            lines=[OfferLineIn(item_id="broetchen-mix-3", quantity_mode="total", quantity=10)],
+            lines=[
+                OfferLineIn(
+                    item_id="broetchen-mix-3", quantity_mode="total", quantity=10
+                )
+            ],
         ),
     )
     assert resp_off.lines[0].line_total == 26.0  # 2.60 * 10, surcharge not selected
@@ -207,7 +316,10 @@ def test_price_offer_surcharge_real_catalog_items() -> None:
             persons=10,
             lines=[
                 OfferLineIn(
-                    item_id="broetchen-mix-3", quantity_mode="total", quantity=10, surcharge_selected=True
+                    item_id="broetchen-mix-3",
+                    quantity_mode="total",
+                    quantity=10,
+                    surcharge_selected=True,
                 )
             ],
         ),
@@ -224,7 +336,14 @@ def test_surcharge_selected_ignored_when_item_has_none() -> None:
         {"a": item},
         OfferRequest(
             persons=10,
-            lines=[OfferLineIn(item_id="a", quantity_mode="total", quantity=10, surcharge_selected=True)],
+            lines=[
+                OfferLineIn(
+                    item_id="a",
+                    quantity_mode="total",
+                    quantity=10,
+                    surcharge_selected=True,
+                )
+            ],
         ),
     )
     assert resp.lines[0].line_total == 23.0

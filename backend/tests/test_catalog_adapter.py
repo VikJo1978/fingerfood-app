@@ -95,7 +95,10 @@ def _mock_transport(
     detail_by_id = detail_by_id or {}
 
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path.endswith("/catalog/dishes") and "dishes/" not in request.url.path:
+        if (
+            request.url.path.endswith("/catalog/dishes")
+            and "dishes/" not in request.url.path
+        ):
             if list_status >= 400:
                 return httpx.Response(list_status, json={"error": "unavailable"})
             return httpx.Response(200, json=list_body or _catalog_list_response())
@@ -134,6 +137,7 @@ def test_catalog_api_maps_to_compose_items_with_catalog_price(tmp_path: Path) ->
 
     assert loaded.source == "catalog"
     assert loaded.items[_SOURCE_ID].price == 10.0
+    assert loaded.unit_net_cents_by_item_id[_SOURCE_ID] == 1000
 
 
 def test_catalog_unavailable_falls_back_to_items_json(tmp_path: Path) -> None:
@@ -144,6 +148,7 @@ def test_catalog_unavailable_falls_back_to_items_json(tmp_path: Path) -> None:
 
     assert loaded.source == "items_json"
     assert loaded.items[_SOURCE_ID].price == 9.0
+    assert loaded.unit_net_cents_by_item_id[_SOURCE_ID] == 900
     assert loaded.warnings
 
 
@@ -163,7 +168,9 @@ def test_inactive_catalog_dish_not_in_compose_list(tmp_path: Path) -> None:
 
 
 def test_resolve_line_builds_v2_snapshot_position_from_catalog(tmp_path: Path) -> None:
-    dish = _dish_payload(dish_id=_DISH_ID, name="Brötchen Mix 1", cents=1000, allergens=["G"])
+    dish = _dish_payload(
+        dish_id=_DISH_ID, name="Brötchen Mix 1", cents=1000, allergens=["G"]
+    )
     transport = _mock_transport(
         list_body=_catalog_list_response(dish),
         detail_by_id={_DISH_ID: _detail_payload(dish)},
