@@ -6,6 +6,7 @@ import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
 
 export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
+export type PrepareStatus = "idle" | "preparing" | "done" | "error";
 
 interface OfferSummaryProps {
   draft: OfferDraft;
@@ -24,6 +25,10 @@ interface OfferSummaryProps {
   draftSaveStatus: DraftSaveStatus;
   draftSaveMessage: string | null;
   onSaveDraft: () => void | Promise<void>;
+  prepareStatus: PrepareStatus;
+  prepareMessage: string | null;
+  canPrepareInCore: boolean;
+  onPrepareInCore: () => void | Promise<void>;
 }
 
 export function OfferSummary({
@@ -43,6 +48,10 @@ export function OfferSummary({
   draftSaveStatus,
   draftSaveMessage,
   onSaveDraft,
+  prepareStatus,
+  prepareMessage,
+  canPrepareInCore,
+  onPrepareInCore,
 }: OfferSummaryProps) {
   const { lines, persons, budgetEnabled, totalBudget } = draft;
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -154,6 +163,34 @@ export function OfferSummary({
           </p>
         ) : null}
       </div>
+
+      {canPrepareInCore ? (
+        <div className="space-y-1.5 border-t border-slate-100 pt-4">
+          <button
+            type="button"
+            disabled={prepareStatus === "preparing" || lines.length === 0}
+            onClick={() => void onPrepareInCore()}
+            className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-accent px-3 text-sm font-semibold text-white transition hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {prepareStatus === "preparing"
+              ? "Bereite Angebot in Core vor…"
+              : "Angebot in Core vorbereiten"}
+          </button>
+          {prepareMessage ? (
+            <p
+              className={`text-center text-xs ${
+                prepareStatus === "error" ? "text-red-700" : "text-slate-600"
+              }`}
+              role="status"
+            >
+              {prepareMessage}
+            </p>
+          ) : null}
+          <p className="text-center text-xs text-slate-400">
+            Erstellt OfferSnapshot V2 und übergibt an Core prepare-offer.
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row">
         <button

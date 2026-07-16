@@ -5,6 +5,7 @@ from __future__ import annotations
 from app.core.config import settings
 from app.services.catalog_adapter import CatalogAdapter
 from app.services.catalog_client import CatalogClient
+from app.services.core_office_client import CoreOfficeClient
 
 
 def build_catalog_client() -> CatalogClient:
@@ -13,3 +14,7 @@ def build_catalog_client() -> CatalogClient:
 
 def build_catalog_adapter() -> CatalogAdapter:
     return CatalogAdapter(build_catalog_client())
+
+
+def build_core_office_client() -> CoreOfficeClient:
+    return CoreOfficeClient(settings.core_office_api_url, settings.core_office_api_token)

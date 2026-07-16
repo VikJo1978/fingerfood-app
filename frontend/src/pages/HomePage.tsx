@@ -19,6 +19,10 @@ import {
   formatCurrency,
   isPieceUnitBasis,
 } from "../utils/pricing";
+import {
+  buildOfferSnapshotRequest,
+  prepareOfferInCore,
+} from "../utils/offerSnapshotRequest";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import {
   consumeCoreInquiryHandoff,
@@ -39,6 +43,7 @@ function downloadText(filename: string, text: string, mime: string) {
 type PageMode = "inquiry" | "configurator";
 
 type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
+type PrepareStatus = "idle" | "preparing" | "done" | "error";
 
 export function HomePage() {
   const [pageMode, setPageMode] = useState<PageMode>("inquiry");
@@ -48,6 +53,8 @@ export function HomePage() {
   const [draftSaveMessage, setDraftSaveMessage] = useState<string | null>(null);
   const [importedInquiryId, setImportedInquiryId] = useState<string | null>(null);
   const [handoffError, setHandoffError] = useState<string | null>(null);
+  const [prepareStatus, setPrepareStatus] = useState<PrepareStatus>("idle");
+  const [prepareMessage, setPrepareMessage] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
@@ -339,6 +346,45 @@ export function HomePage() {
     }
   }, [currentDraftId, offerDraft]);
 
+  const onPrepareInCore = useCallback(async () => {
+    if (!importedInquiryId) {
+      setPrepareStatus("error");
+      setPrepareMessage(
+        "Angebot vorbereiten erfordert eine Core-Anfrage (Handoff aus dem Büro)."
+      );
+      return;
+    }
+    if (!offerDraft.orderContext.eventDate) {
+      setPrepareStatus("error");
+      setPrepareMessage("Bitte zuerst ein Eventdatum im Auftragskontext setzen.");
+      return;
+    }
+    if (offerDraft.lines.length === 0) {
+      setPrepareStatus("error");
+      setPrepareMessage("Bitte mindestens eine Position hinzufügen.");
+      return;
+    }
+    setPrepareStatus("preparing");
+    setPrepareMessage(null);
+    try {
+      const body = buildOfferSnapshotRequest(
+        offerDraft,
+        importedInquiryId,
+        currentDraftId
+      );
+      const result = await prepareOfferInCore(body);
+      setPrepareStatus("done");
+      setPrepareMessage(
+        `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)} · Snapshot V2).`
+      );
+    } catch (e) {
+      setPrepareStatus("error");
+      setPrepareMessage(
+        e instanceof Error ? e.message : "Angebot konnte nicht vorbereitet werden."
+      );
+    }
+  }, [currentDraftId, importedInquiryId, offerDraft]);
+
   const onExportCsv = () => {
     const header =
       "Position;Bezug;Menge;Preisart;Stück-/Personenpreis EUR;Name;Zeilensumme EUR;Änderungswunsch";
@@ -504,6 +550,10 @@ export function HomePage() {
             draftSaveStatus={draftSaveStatus}
             draftSaveMessage={draftSaveMessage}
             onSaveDraft={onSaveDraft}
+            prepareStatus={prepareStatus}
+            prepareMessage={prepareMessage}
+            canPrepareInCore={importedInquiryId !== null}
+            onPrepareInCore={onPrepareInCore}
           />
         </div>
 
