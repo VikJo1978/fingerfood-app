@@ -28,6 +28,8 @@ def _item(
     item_id: str = _SOURCE_ID,
     price: float = 9.0,
     name: str = "Brötchen Mix 1",
+    surcharge_label: str | None = None,
+    surcharge_amount: float | None = None,
 ) -> Item:
     return Item(
         id=item_id,
@@ -40,6 +42,8 @@ def _item(
         unit_label="Stück",
         description="Test description",
         items_included="Composition text",
+        surcharge_label=surcharge_label,
+        surcharge_amount=surcharge_amount,
         diet_type=DietType.omnivore,
         vat_rate_percent=7,
     )
@@ -169,7 +173,7 @@ def test_inactive_catalog_dish_not_in_compose_list(tmp_path: Path) -> None:
 
 def test_resolve_line_builds_v2_snapshot_position_from_catalog(tmp_path: Path) -> None:
     dish = _dish_payload(
-        dish_id=_DISH_ID, name="Brötchen Mix 1", cents=1000, allergens=["G"]
+        dish_id=_DISH_ID, name="Brötchen Mix 1", cents=230, allergens=["G"]
     )
     transport = _mock_transport(
         list_body=_catalog_list_response(dish),
@@ -182,7 +186,7 @@ def test_resolve_line_builds_v2_snapshot_position_from_catalog(tmp_path: Path) -
             OfferLineIn(
                 item_id=_SOURCE_ID,
                 quantity_mode="total",
-                quantity=10,
+                quantity=100,
             )
         ],
     )
@@ -217,12 +221,148 @@ def test_resolve_line_builds_v2_snapshot_position_from_catalog(tmp_path: Path) -
         offer=offer,
     )
 
-    position = snapshot["variants"][0]["positions"][0]  # type: ignore[index]
+    positions = snapshot["variants"][0]["positions"]  # type: ignore[index]
+    totals = snapshot["variants"][0]["totals"]  # type: ignore[index]
+    position = positions[0]
     assert snapshot["schema_version"] == "offer_snapshot_v2"
+    assert [item["kind"] for item in positions] == ["catalog", "fee", "fee", "fee"]
     assert position["catalog_item_id"] == _DISH_ID
-    assert position["unit_net_cents"] == 1000
+    assert position["unit_net_cents"] == 230
     assert position["allergens"] == ["G"]
-    assert position["net_total_cents"] == 10000
+    assert position["net_total_cents"] == 23000
+    assert totals == {
+        "net_cents": 29000,
+        "vat_7_base_cents": 23000,
+        "vat_7_amount_cents": 1610,
+        "vat_19_base_cents": 6000,
+        "vat_19_amount_cents": 1140,
+        "gross_cents": 31750,
+    }
+    assert sum(item["net_total_cents"] for item in positions) == totals["net_cents"]
+    assert sum(item["gross_total_cents"] for item in positions) == totals["gross_cents"]
+
+
+def test_snapshot_emits_surcharge_and_fees_as_explicit_positions(
+    tmp_path: Path,
+) -> None:
+    dish = _dish_payload(
+        dish_id=_DISH_ID,
+        name="Brötchen Mix 3",
+        cents=230,
+        allergens=["D", "G"],
+    )
+    transport = _mock_transport(
+        list_body=_catalog_list_response(dish),
+        detail_by_id={_DISH_ID: _detail_payload(dish)},
+    )
+    adapter = _adapter(
+        tmp_path,
+        transport=transport,
+        items=[
+            _item(
+                price=2.30,
+                name="Brötchen Mix 3",
+                surcharge_label="Lachs oder Rind",
+                surcharge_amount=0.50,
+            )
+        ],
+    )
+    offer = OfferRequest(
+        persons=10,
+        lines=[
+            OfferLineIn(
+                item_id=_SOURCE_ID,
+                quantity_mode="total",
+                quantity=10,
+                surcharge_selected=True,
+            )
+        ],
+    )
+
+    snapshot = build_offer_snapshot_v2(
+        adapter=adapter,
+        inquiry_id="22222222-2222-4222-8222-222222222222",
+        snapshot_id="77777777-7777-4777-8777-777777777771",
+        valid_until=date(2026, 7, 30),
+        recipient={
+            "company_name": "Example",
+            "contact_name": "Contact",
+            "email": "a@example.invalid",
+            "postal_address": "Address",
+        },
+        event={
+            "event_date": "2026-08-20",
+            "time_window_text": "18:00–22:00",
+            "location_text": "Hamburg",
+            "guest_count": 10,
+            "planning_mode": "caterer_suggestion",
+        },
+        customer_text={"title": "T", "introduction": "I", "notes": "N"},
+        payment_terms={"method": "RECHNUNG", "customer_visible_text": "R"},
+        offer=offer,
+    )
+
+    positions = snapshot["variants"][0]["positions"]  # type: ignore[index]
+    totals = snapshot["variants"][0]["totals"]  # type: ignore[index]
+    assert [position["kind"] for position in positions] == [
+        "catalog",
+        "surcharge",
+        "fee",
+        "fee",
+        "fee",
+    ]
+
+    catalog, surcharge, buffet, tableware, delivery = positions
+    assert catalog["unit_net_cents"] == 230
+    assert catalog["net_total_cents"] == 2300
+    assert catalog["vat_amount_cents"] == 161
+
+    assert surcharge["name"] == "Aufpreis: Lachs oder Rind"
+    assert surcharge["related_position_id"] == catalog["position_id"]
+    assert surcharge["unit_net_cents"] == 50
+    assert surcharge["net_total_cents"] == 500
+    assert surcharge["vat_amount_cents"] == 35
+
+    assert (buffet["name"], buffet["quantity"], buffet["net_total_cents"]) == (
+        "Büffetpauschale",
+        "10",
+        500,
+    )
+    assert (buffet["unit_net_cents"], buffet["vat_amount_cents"]) == (50, 95)
+    assert (
+        tableware["name"],
+        tableware["quantity"],
+        tableware["net_total_cents"],
+    ) == ("Geschirrpauschale", "10", 2000)
+    assert (tableware["unit_net_cents"], tableware["vat_amount_cents"]) == (
+        200,
+        380,
+    )
+    assert (
+        delivery["name"],
+        delivery["quantity"],
+        delivery["net_total_cents"],
+    ) == ("Anlieferung", "1", 3500)
+    assert (delivery["unit_net_cents"], delivery["vat_amount_cents"]) == (
+        3500,
+        665,
+    )
+    assert all(position["vat_rate_percent"] == 19 for position in positions[2:])
+    assert all(position["related_position_id"] is None for position in positions[2:])
+    assert totals == {
+        "net_cents": 8800,
+        "vat_7_base_cents": 2800,
+        "vat_7_amount_cents": 196,
+        "vat_19_base_cents": 6000,
+        "vat_19_amount_cents": 1140,
+        "gross_cents": 10136,
+    }
+    assert sum(item["net_total_cents"] for item in positions) == totals["net_cents"]
+    assert (
+        sum(item["vat_amount_cents"] for item in positions)
+        == totals["vat_7_amount_cents"] + totals["vat_19_amount_cents"]
+    )
+    assert sum(item["gross_total_cents"] for item in positions) == totals["gross_cents"]
 
 
 def test_fallback_snapshot_uses_items_json_price(tmp_path: Path) -> None:

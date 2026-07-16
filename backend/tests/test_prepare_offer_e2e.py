@@ -47,6 +47,8 @@ def _item() -> Item:
         min_order=1,
         unit_label="Portion",
         description="Test",
+        surcharge_label="Lachs oder Rind",
+        surcharge_amount=1.0,
         diet_type=DietType.omnivore,
         vat_rate_percent=7,
     )
@@ -92,7 +94,10 @@ def _catalog_detail_response() -> dict[str, object]:
 
 def _mock_transport() -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path.endswith("/catalog/dishes") and "/dishes/" not in request.url.path:
+        if (
+            request.url.path.endswith("/catalog/dishes")
+            and "/dishes/" not in request.url.path
+        ):
             return httpx.Response(200, json=_catalog_list_response())
         if "/catalog/dishes/" in request.url.path:
             return httpx.Response(200, json=_catalog_detail_response())
@@ -154,7 +159,14 @@ def test_catalog_to_core_prepare_offer_preserves_allergens(
     adapter = CatalogAdapter(catalog_client, items_path=items_path)
     offer = OfferRequest(
         persons=10,
-        lines=[OfferLineIn(item_id=_SOURCE_ID, quantity_mode="total", quantity=10)],
+        lines=[
+            OfferLineIn(
+                item_id=_SOURCE_ID,
+                quantity_mode="total",
+                quantity=10,
+                surcharge_selected=True,
+            )
+        ],
     )
     snapshot = build_offer_snapshot_v2(
         adapter=adapter,
@@ -183,7 +195,9 @@ def test_catalog_to_core_prepare_offer_preserves_allergens(
     result = core.prepare_offer(inquiry_id, snapshot)
     assert result["offer_id"]
 
-    from catering_system.repositories.sqlite_offer_repository import SQLiteOfferRepository
+    from catering_system.repositories.sqlite_offer_repository import (
+        SQLiteOfferRepository,
+    )
 
     repo = SQLiteOfferRepository(db)
     try:
@@ -192,6 +206,19 @@ def test_catalog_to_core_prepare_offer_preserves_allergens(
         position = stored.versions[0].variants[0].positions[0]
         assert position.unit_net_cents == 1200
         assert position.allergens == ("A", "G")
+        assert [item.kind for item in stored.versions[0].variants[0].positions] == [
+            "catalog",
+            "surcharge",
+            "fee",
+            "fee",
+            "fee",
+        ]
+        surcharge = stored.versions[0].variants[0].positions[1]
+        assert surcharge.related_position_id == position.position_id
+        positions = stored.versions[0].variants[0].positions
+        assert sum(item.net_total_cents for item in positions) == 19000
+        assert sum(item.vat_amount_cents for item in positions) == 2050
+        assert sum(item.gross_total_cents for item in positions) == 21050
     finally:
         repo.close()
 
