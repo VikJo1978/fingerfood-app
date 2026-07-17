@@ -57,7 +57,7 @@ fi
 
 ssh viktor@100.109.6.74 \
   'mkdir -p /home/viktor/fingerfood-runtime/frontend-dist'
-rsync -az --delete dist/ \
+scp -r dist/. \
   viktor@100.109.6.74:/home/viktor/fingerfood-runtime/frontend-dist/
 ```
 

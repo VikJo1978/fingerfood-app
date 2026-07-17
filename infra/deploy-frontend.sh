@@ -26,7 +26,7 @@ if grep -RIl "100.109.6.74:8091" dist >/dev/null; then
 fi
 
 ssh "$REMOTE" "mkdir -p '$REMOTE_DIST'"
-rsync -az --delete dist/ "$REMOTE:$REMOTE_DIST/"
+scp -r dist/. "$REMOTE:$REMOTE_DIST/"
 
 echo "Frontend deployed to $REMOTE:$REMOTE_DIST"
 echo "Static file replacement does not require a backend restart."
