@@ -45,6 +45,28 @@ def _build_snapshot_payload(body: OfferSnapshotBuildRequest) -> dict[str, object
     )
 
 
+def execute_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
+    core = build_core_office_client()
+    if not core.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="CORE_OFFICE_API_URL and CORE_OFFICE_API_TOKEN required",
+        )
+    try:
+        snapshot = _build_snapshot_payload(body)
+        result = core.prepare_offer(body.inquiry_id, snapshot)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except CoreOfficeClientError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return {
+        "offer_id": result["offer_id"],
+        "offer_version_id": result["offer_version_id"],
+        "snapshot_id": result.get("snapshot_id", body.snapshot_id),
+        "schema_version": snapshot["schema_version"],
+    }
+
+
 @router.post("/calculate")
 def calculate_offer(body: OfferRequest):
     adapter = build_catalog_adapter()
@@ -67,22 +89,4 @@ def build_snapshot(body: OfferSnapshotBuildRequest) -> dict[str, object]:
 
 @router.post("/prepare", dependencies=[Depends(require_fingerfood_api_token)])
 def prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
-    core = build_core_office_client()
-    if not core.is_configured():
-        raise HTTPException(
-            status_code=503,
-            detail="CORE_OFFICE_API_URL and CORE_OFFICE_API_TOKEN required",
-        )
-    try:
-        snapshot = _build_snapshot_payload(body)
-        result = core.prepare_offer(body.inquiry_id, snapshot)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except CoreOfficeClientError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return {
-        "offer_id": result["offer_id"],
-        "offer_version_id": result["offer_version_id"],
-        "snapshot_id": result.get("snapshot_id", body.snapshot_id),
-        "schema_version": snapshot["schema_version"],
-    }
+    return execute_prepare_offer(body)

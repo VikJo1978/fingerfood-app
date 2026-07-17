@@ -1,7 +1,7 @@
-"""Map frontend OfferDraft to backend snapshot/prepare payloads."""
+/** Map frontend OfferDraft to backend snapshot/prepare payloads. */
 
 import type { OfferDraft } from "../types";
-import { offerDraftToCalculateBody } from "./api";
+import { offerDraftToCalculateBody } from "../services/api";
 
 export interface OfferSnapshotRequestBody {
   inquiry_id: string;
@@ -98,7 +98,7 @@ export async function prepareOfferInCore(
   body: OfferSnapshotRequestBody
 ): Promise<OfferPrepareResponse> {
   const baseUrl = import.meta.env.VITE_API_URL ?? "";
-  const res = await fetch(`${baseUrl}/api/offer/prepare`, {
+  const res = await fetch(`${baseUrl}/api/ui/offer/prepare`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

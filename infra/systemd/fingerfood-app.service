@@ -1,0 +1,22 @@
+# Fingerfood configurator backend — Lenovo deployment template.
+# Secrets live ONLY in /etc/fingerfood-app.env (root:root, mode 600).
+#
+# SECURITY: bind Tailscale only — see infra/systemd/BFF_ACCESS_BOUNDARY.md
+# Do NOT use --host 0.0.0.0 (exposes /api/ui/offer/prepare BFF to LAN).
+
+[Unit]
+Description=Fingerfood Offer Service
+After=network-online.target tailscaled.service catering-office-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=viktor
+WorkingDirectory=/home/viktor/projects/fingerfood-app/backend
+EnvironmentFile=/etc/fingerfood-app.env
+ExecStart=/home/viktor/projects/fingerfood-app/backend/.venv/bin/uvicorn app.main:app --host 100.109.6.74 --port 8091
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

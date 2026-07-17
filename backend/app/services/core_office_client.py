@@ -29,6 +29,32 @@ class CoreOfficeClient:
     def is_configured(self) -> bool:
         return bool(self._base_url and self._token)
 
+    def _auth_headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self._token}",
+            "Content-Type": "application/json",
+        }
+
+    def get_inquiry(self, inquiry_id: str) -> dict[str, Any] | None:
+        if not self.is_configured():
+            raise CoreOfficeClientError("core office client not configured")
+        url = f"{self._base_url}/office/v1/inquiries/{inquiry_id}"
+        try:
+            with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
+                response = client.get(url, headers=self._auth_headers())
+        except httpx.HTTPError as exc:
+            raise CoreOfficeClientError(f"inquiry lookup failed: {exc}") from exc
+        if response.status_code == 404:
+            return None
+        if response.status_code == 200:
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise CoreOfficeClientError("inquiry response invalid")
+            return payload
+        raise CoreOfficeClientError(
+            f"inquiry lookup HTTP {response.status_code}: {response.text}"
+        )
+
     def prepare_offer(
         self,
         inquiry_id: str,
@@ -44,10 +70,7 @@ class CoreOfficeClient:
             "expect": {},
             "args": {"snapshot": snapshot},
         }
-        headers = {
-            "Authorization": f"Bearer {self._token}",
-            "Content-Type": "application/json",
-        }
+        headers = self._auth_headers()
         try:
             with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
                 response = client.post(url, json=body, headers=headers)
