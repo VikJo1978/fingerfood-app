@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routes import drafts, items, offer, ui_offer
+from app.routes import drafts, frontend, items, offer, ui_offer
 
 app = FastAPI(title="Fingerfood Angebote API", version="0.1.0")
 
@@ -23,3 +23,7 @@ app.include_router(drafts.router)
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# Keep this catch-all last so it can never shadow API routes.
+app.include_router(frontend.router)

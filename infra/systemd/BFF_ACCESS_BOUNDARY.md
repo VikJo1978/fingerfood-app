@@ -29,7 +29,8 @@ Browser-facing BFF that calls `execute_prepare_offer()` server-side.
 **Actual access control for MVP:**
 
 - Restricted **Tailnet** clients only (Tailscale ACL + bind address)
-- Operators must set frontend `VITE_API_URL=http://100.109.6.74:8091` (Tailscale)
+- Production frontend is served from the same listener and calls relative
+  `/api/*` paths. `VITE_API_URL` is optional for development only.
 
 ## Forbidden deployments
 

@@ -52,7 +52,7 @@ describe("prepareOfferInCore", () => {
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toContain("/api/ui/offer/prepare");
+    expect(url).toBe("/api/ui/offer/prepare");
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
     expect(JSON.stringify(init)).not.toContain("FINGERFOOD_API_TOKEN");
   });
