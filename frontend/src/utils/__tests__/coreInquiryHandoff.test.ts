@@ -51,6 +51,34 @@ describe("Core Inquiry handoff", () => {
     expect(parsed?.transfer.orderContextPrefill.contactPerson).toBe("Jörg Weiß");
   });
 
+  it.each([
+    ["without missing padding", "x", 0],
+    ["with one missing padding character", "", 3],
+    ["with two missing padding characters", "xx", 2],
+  ])("decodes unpadded base64url %s", (_case, remarks, expectedRemainder) => {
+    const envelope = validEnvelope();
+    envelope.transfer.orderContextPrefill.remarks = remarks;
+    const encoded = encode(envelope);
+    expect(encoded.length % 4).toBe(expectedRemainder);
+
+    const parsed = parseCoreInquiryHandoff(`${CORE_INQUIRY_FRAGMENT_PREFIX}${encoded}`);
+    expect(parsed?.inquiry_id).toBe(envelope.inquiry_id);
+    expect(parsed?.transfer.orderContextPrefill.remarks).toBe(remarks);
+  });
+
+  it("decodes the URL-safe alphabet", () => {
+    const envelope = validEnvelope();
+    envelope.transfer.orderContextPrefill.remarks = "¾ ";
+    const encoded = encode(envelope);
+    expect(encoded).toContain("-");
+    expect(encoded).toContain("_");
+
+    expect(
+      parseCoreInquiryHandoff(`${CORE_INQUIRY_FRAGMENT_PREFIX}${encoded}`)?.transfer
+        .orderContextPrefill.remarks
+    ).toBe("¾ ");
+  });
+
   it("rejects a wrong schema, bad types and malformed base64url", () => {
     expect(
       parseCoreInquiryHandoff(
@@ -71,6 +99,7 @@ describe("Core Inquiry handoff", () => {
       parseCoreInquiryHandoff(`${CORE_INQUIRY_FRAGMENT_PREFIX}${encode(invalidDate)}`)
     ).toBeNull();
     expect(parseCoreInquiryHandoff(`${CORE_INQUIRY_FRAGMENT_PREFIX}***`)).toBeNull();
+    expect(parseCoreInquiryHandoff(`${CORE_INQUIRY_FRAGMENT_PREFIX}A`)).toBeNull();
   });
 
   it("rejects oversized fragments before decoding", () => {

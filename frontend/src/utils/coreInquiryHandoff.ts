@@ -74,7 +74,8 @@ function isTransfer(value: unknown): value is InquiryToConfiguratorTransferV1 {
 
 function decodeBase64Url(encoded: string): string {
   if (!/^[A-Za-z0-9_-]+$/.test(encoded)) throw new Error("invalid base64url");
-  const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((-encoded.length) % 4);
+  const paddingLength = (4 - (encoded.length % 4)) % 4;
+  const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(paddingLength);
   const binary = atob(base64);
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
   return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
