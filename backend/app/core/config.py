@@ -19,6 +19,7 @@ class Settings:
     items_json_path: Path = Path(__file__).resolve().parent.parent / "data" / "items.json"
     core_office_api_url: str | None = _optional_env("CORE_OFFICE_API_URL")
     core_office_api_token: str | None = _optional_env("CORE_OFFICE_API_TOKEN")
+    fingerfood_api_token: str | None = _optional_env("FINGERFOOD_API_TOKEN")
     catalog_adapter_strict: bool = os.getenv("CATALOG_ADAPTER_STRICT", "").strip() == "1"
 
 

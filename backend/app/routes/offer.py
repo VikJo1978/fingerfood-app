@@ -1,8 +1,9 @@
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.core.auth import require_fingerfood_api_token
 from app.models.offer import OfferRequest
 from app.services.catalog_factory import (
     build_catalog_adapter,
@@ -55,15 +56,16 @@ def calculate_offer(body: OfferRequest):
     )
 
 
-@router.post("/snapshot")
+@router.post("/snapshot", dependencies=[Depends(require_fingerfood_api_token)])
 def build_snapshot(body: OfferSnapshotBuildRequest) -> dict[str, object]:
+    """Protected: materializes a commercial OfferSnapshot V2 payload."""
     try:
         return _build_snapshot_payload(body)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.post("/prepare")
+@router.post("/prepare", dependencies=[Depends(require_fingerfood_api_token)])
 def prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
     core = build_core_office_client()
     if not core.is_configured():
