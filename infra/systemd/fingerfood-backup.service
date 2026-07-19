@@ -1,0 +1,19 @@
+[Unit]
+Description=Fingerfood local and off-site backup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+TimeoutStartSec=20min
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+Environment=HOME=/home/viktor
+Environment=PATH=/home/viktor/fingerfood-runtime/bin:/usr/local/bin:/usr/bin:/bin
+Environment=FINGERFOOD_OFFSITE_BACKUP_CONFIG=/home/viktor/.config/fingerfood-offsite-backup.env
+Environment=CATERING_BACKUP_CONFIG=/home/viktor/.config/catering-offsite-backup.env
+ExecStart=/bin/sh -c '/home/viktor/fingerfood-runtime/bin/fingerfood-backup.sh && /home/viktor/fingerfood-runtime/bin/fingerfood-offsite-backup.sh'
+
+[Install]
+WantedBy=default.target

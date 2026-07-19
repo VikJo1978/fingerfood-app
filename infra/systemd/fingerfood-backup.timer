@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Fingerfood backup after Courier backup window
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 Europe/Berlin
+Persistent=true
+RandomizedDelaySec=300
+Unit=fingerfood-backup.service
+
+[Install]
+WantedBy=timers.target
