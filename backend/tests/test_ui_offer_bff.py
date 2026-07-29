@@ -22,7 +22,12 @@ _INQUIRY_ID = "11111111-1111-4111-8111-111111111111"
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
+    monkeypatch.setattr(
+        settings,
+        "core_office_panel_url",
+        "https://office.example.test",
+    )
     return TestClient(app)
 
 
@@ -47,6 +52,15 @@ def test_ui_prepare_does_not_require_browser_bearer_token(
 
     response = client.post(_UI_PREPARE_URL, json=_prepare_body())
     assert response.status_code == 200
+    assert response.json() == {
+        "offer_id": "33333333-3333-4333-8333-333333333333",
+        "redirect_url": (
+            "https://office.example.test/offer/"
+            "33333333-3333-4333-8333-333333333333"
+        ),
+    }
+    assert "core-secret-token" not in response.text
+    assert "snapshot_id" not in response.text
     core.get_inquiry.assert_called_once_with(_INQUIRY_ID)
 
 
@@ -80,6 +94,116 @@ def test_ui_prepare_core_not_configured_returns_503(
 
     response = client.post(_UI_PREPARE_URL, json=_prepare_body())
     assert response.status_code == 503
+
+
+def test_ui_prepare_panel_not_configured_returns_503(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "core_office_panel_url", None)
+
+    response = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == (
+        "CORE_OFFICE_PANEL_URL required and must be a safe origin"
+    )
+
+
+def test_ui_prepare_unsafe_panel_configuration_fails_before_core_write(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        settings,
+        "core_office_panel_url",
+        "https://office.example.test?next=https://attacker.example",
+    )
+    execute = MagicMock()
+    monkeypatch.setattr(ui_offer_routes, "execute_prepare_offer", execute)
+
+    response = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert response.status_code == 503
+    assert execute.call_count == 0
+
+
+def test_ui_prepare_ignores_user_controlled_redirect(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    core = MagicMock()
+    core.is_configured.return_value = True
+    core.get_inquiry.return_value = {"inquiry_id": _INQUIRY_ID}
+    monkeypatch.setattr(ui_offer_routes, "build_core_office_client", lambda: core)
+    monkeypatch.setattr(
+        ui_offer_routes,
+        "execute_prepare_offer",
+        lambda body: {
+            "offer_id": "33333333-3333-4333-8333-333333333333",
+        },
+    )
+    body = _prepare_body()
+    body["redirect_url"] = "https://attacker.example/steal"
+
+    response = client.post(_UI_PREPARE_URL, json=body)
+
+    assert response.status_code == 200
+    assert response.json()["redirect_url"].startswith(
+        "https://office.example.test/offer/"
+    )
+    assert "attacker.example" not in response.text
+
+
+def test_ui_prepare_replay_returns_same_canonical_destination(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    core = MagicMock()
+    core.is_configured.return_value = True
+    core.get_inquiry.return_value = {"inquiry_id": _INQUIRY_ID}
+    monkeypatch.setattr(ui_offer_routes, "build_core_office_client", lambda: core)
+    monkeypatch.setattr(
+        ui_offer_routes,
+        "execute_prepare_offer",
+        lambda body: {
+            "offer_id": "33333333-3333-4333-8333-333333333333",
+            "existing_offer": True,
+        },
+    )
+
+    first = client.post(_UI_PREPARE_URL, json=_prepare_body())
+    replay = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert first.status_code == replay.status_code == 200
+    assert first.json() == replay.json()
+    assert first.json()["redirect_url"].endswith(
+        "/offer/33333333-3333-4333-8333-333333333333"
+    )
+
+
+def test_redirect_handling_does_not_log_snapshot_or_customer_data(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    core = MagicMock()
+    core.is_configured.return_value = True
+    core.get_inquiry.return_value = {"inquiry_id": _INQUIRY_ID}
+    monkeypatch.setattr(ui_offer_routes, "build_core_office_client", lambda: core)
+    monkeypatch.setattr(
+        ui_offer_routes,
+        "execute_prepare_offer",
+        lambda body: {
+            "offer_id": "33333333-3333-4333-8333-333333333333",
+        },
+    )
+
+    response = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert response.status_code == 200
+    assert "a@example.invalid" not in caplog.text
+    assert "22222222-2222-4222-8222-222222222222" not in caplog.text
 
 
 def test_core_client_get_inquiry_sends_bearer_header(

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { buildOfferSnapshotRequest, prepareOfferInCore } from "../offerSnapshotRequest";
+import {
+  buildOfferSnapshotRequest,
+  navigateToPreparedCoreOffer,
+  prepareOfferInCore,
+} from "../offerSnapshotRequest";
 import {
   CORE_INQUIRY_FRAGMENT_PREFIX,
   parseCoreInquiryHandoff,
@@ -39,10 +43,11 @@ describe("prepareOfferInCore", () => {
   it("calls the UI BFF route without Authorization header", async () => {
     const fetchMock = vi.fn(async (_url: string, _init: RequestInit) =>
       Response.json({
-        offer_id: "offer-1",
-        offer_version_id: "ver-1",
-        snapshot_id: "snap-1",
-        schema_version: "offer_snapshot_v2",
+        offer_id: "33333333-3333-4333-8333-333333333333",
+        redirect_url: (
+          "https://office.example.test/offer/"
+          + "33333333-3333-4333-8333-333333333333"
+        ),
       })
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -55,6 +60,42 @@ describe("prepareOfferInCore", () => {
     expect(url).toBe("/api/ui/offer/prepare");
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
     expect(JSON.stringify(init)).not.toContain("FINGERFOOD_API_TOKEN");
+  });
+
+  it("navigates to the server-approved Core Offer Detail URL", () => {
+    const assign = vi.fn();
+    const result = {
+      offer_id: "33333333-3333-4333-8333-333333333333",
+      redirect_url: (
+        "https://office.example.test/offer/"
+        + "33333333-3333-4333-8333-333333333333"
+      ),
+    };
+
+    navigateToPreparedCoreOffer(result, { assign });
+
+    expect(assign).toHaveBeenCalledOnce();
+    expect(assign).toHaveBeenCalledWith(result.redirect_url);
+  });
+
+  it("shows a stable error without echoing Core response details", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response("snapshot customer@example.test secret-token", { status: 502 })
+      )
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    await expect(prepareOfferInCore(body)).rejects.toThrow(
+      "Angebot konnte nicht vorbereitet werden (502)."
+    );
+    try {
+      await prepareOfferInCore(body);
+    } catch (error) {
+      expect(String(error)).not.toContain("customer@example.test");
+      expect(String(error)).not.toContain("secret-token");
+    }
   });
 
   it("uses the inquiry_id decoded from the Core handoff", () => {

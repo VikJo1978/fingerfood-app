@@ -21,6 +21,7 @@ import {
 } from "../utils/pricing";
 import {
   buildOfferSnapshotRequest,
+  navigateToPreparedCoreOffer,
   prepareOfferInCore,
 } from "../utils/offerSnapshotRequest";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
@@ -374,9 +375,8 @@ export function HomePage() {
       );
       const result = await prepareOfferInCore(body);
       setPrepareStatus("done");
-      setPrepareMessage(
-        `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)} · Snapshot V2).`
-      );
+      setPrepareMessage(`Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`);
+      navigateToPreparedCoreOffer(result);
     } catch (e) {
       setPrepareStatus("error");
       setPrepareMessage(

@@ -8,6 +8,19 @@ or an additional port.
 Browser -> http://100.109.6.74:8091/ -> FastAPI static SPA -> relative /api/*
 ```
 
+The return to Core Offer Detail is server-configured. Before deploying this
+workflow, add the trusted Core Office Panel origin to the root-owned runtime
+environment without a path, query, fragment, or credentials:
+
+```text
+CORE_OFFICE_PANEL_URL=<trusted Core Office Panel HTTP(S) origin>
+```
+
+Keep `/etc/fingerfood-app.env` mode `600`. A backend restart is required after
+adding or changing this variable. The value is never embedded in the frontend
+bundle; the BFF returns the approved `/offer/{offer_id}` URL after Core has
+returned a validated canonical UUID.
+
 ## One-time Lenovo setup
 
 Create the runtime directory without touching application secrets:

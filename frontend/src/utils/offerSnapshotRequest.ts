@@ -89,9 +89,7 @@ export function buildOfferSnapshotRequest(
 
 export interface OfferPrepareResponse {
   offer_id: string;
-  offer_version_id: string;
-  snapshot_id: string;
-  schema_version: string;
+  redirect_url: string;
 }
 
 export async function prepareOfferInCore(
@@ -104,8 +102,18 @@ export async function prepareOfferInCore(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Angebot konnte nicht vorbereitet werden (${res.status}): ${detail}`);
+    throw new Error(`Angebot konnte nicht vorbereitet werden (${res.status}).`);
   }
   return res.json() as Promise<OfferPrepareResponse>;
+}
+
+export interface OfferNavigation {
+  assign(url: string): void;
+}
+
+export function navigateToPreparedCoreOffer(
+  result: OfferPrepareResponse,
+  navigation: OfferNavigation = window.location
+): void {
+  navigation.assign(result.redirect_url);
 }

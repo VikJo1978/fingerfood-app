@@ -24,11 +24,23 @@ if [[ -z "$token_line" ]]; then
   exit 1
 fi
 
+panel_url_line=""
+if [[ -n "${CORE_OFFICE_PANEL_URL:-}" ]]; then
+  panel_url_line="CORE_OFFICE_PANEL_URL=$CORE_OFFICE_PANEL_URL"
+elif sudo test -f "$ENV_TARGET"; then
+  panel_url_line="$(sudo grep -E '^CORE_OFFICE_PANEL_URL=' "$ENV_TARGET" || true)"
+fi
+if [[ -z "$panel_url_line" ]]; then
+  echo "CORE_OFFICE_PANEL_URL required in the shell or existing $ENV_TARGET" >&2
+  exit 1
+fi
+
 tmp="$(mktemp)"
 chmod 600 "$tmp"
 {
   echo "CORE_OFFICE_API_URL=http://100.109.6.74:8084"
   echo "${token_line/OFFICE_API_TOKEN/CORE_OFFICE_API_TOKEN}"
+  echo "$panel_url_line"
   echo "CATALOG_ADAPTER_STRICT=1"
 } > "$tmp"
 

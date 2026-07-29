@@ -15,6 +15,12 @@ not be exposed on untrusted networks.
 
 Browser-facing BFF that calls `execute_prepare_offer()` server-side.
 
+On success it returns only the canonical `offer_id` and a `redirect_url`
+derived server-side from `CORE_OFFICE_PANEL_URL`. The request body has no
+redirect field, and user-controlled values are never used as a destination.
+`CORE_OFFICE_PANEL_URL` must be an HTTP(S) origin without credentials, path,
+query, or fragment.
+
 **What it is NOT:**
 
 - Not user authentication
@@ -39,6 +45,7 @@ Browser-facing BFF that calls `execute_prepare_offer()` server-side.
 - Putting `FINGERFOOD_API_TOKEN` in frontend, HTML, localStorage, or build env
 - nginx `Authorization` header injection as a substitute for real auth
 - Treating inquiry existence check as authorization
+- Copying a browser-supplied redirect destination into the response
 
 ## Future external access
 

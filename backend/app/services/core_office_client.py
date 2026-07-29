@@ -12,6 +12,37 @@ class CoreOfficeClientError(Exception):
     """Core Office API request failed."""
 
 
+def _uuid4(value: object, *, field: str) -> str:
+    if not isinstance(value, str):
+        raise CoreOfficeClientError(f"prepare-offer response invalid {field}")
+    try:
+        parsed = uuid.UUID(value)
+    except ValueError as exc:
+        raise CoreOfficeClientError(
+            f"prepare-offer response invalid {field}"
+        ) from exc
+    canonical = str(parsed)
+    if parsed.version != 4 or canonical != value:
+        raise CoreOfficeClientError(f"prepare-offer response invalid {field}")
+    return canonical
+
+
+def _response_payload(response: httpx.Response) -> dict[str, Any] | None:
+    try:
+        payload = response.json()
+    except ValueError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _error_code(response: httpx.Response) -> str:
+    payload = _response_payload(response)
+    if payload is None:
+        return "unexpected_response"
+    code = payload.get("error")
+    return code if isinstance(code, str) else "unexpected_response"
+
+
 class CoreOfficeClient:
     def __init__(
         self,
@@ -77,11 +108,24 @@ class CoreOfficeClient:
         except httpx.HTTPError as exc:
             raise CoreOfficeClientError(f"prepare-offer request failed: {exc}") from exc
         if response.status_code == 201:
-            payload = response.json()
-            if not isinstance(payload, dict):
+            payload = _response_payload(response)
+            if payload is None:
                 raise CoreOfficeClientError("prepare-offer response invalid")
+            payload["offer_id"] = _uuid4(payload.get("offer_id"), field="offer_id")
             return payload
-        detail = response.text
+        if response.status_code == 409:
+            payload = _response_payload(response)
+            if (
+                isinstance(payload, dict)
+                and payload.get("error") == "offer_already_exists"
+            ):
+                return {
+                    "offer_id": _uuid4(
+                        payload.get("offer_id"),
+                        field="offer_id",
+                    ),
+                    "existing_offer": True,
+                }
         raise CoreOfficeClientError(
-            f"prepare-offer HTTP {response.status_code}: {detail}"
+            f"prepare-offer HTTP {response.status_code}: {_error_code(response)}"
         )

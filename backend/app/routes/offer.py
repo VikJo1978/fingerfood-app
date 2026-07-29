@@ -59,12 +59,16 @@ def execute_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except CoreOfficeClientError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return {
+    response: dict[str, object] = {
         "offer_id": result["offer_id"],
-        "offer_version_id": result["offer_version_id"],
-        "snapshot_id": result.get("snapshot_id", body.snapshot_id),
         "schema_version": snapshot["schema_version"],
+        "existing_offer": result.get("existing_offer", False),
     }
+    if "offer_version_id" in result:
+        response["offer_version_id"] = result["offer_version_id"]
+    if "snapshot_id" in result:
+        response["snapshot_id"] = result["snapshot_id"]
+    return response
 
 
 @router.post("/calculate")
