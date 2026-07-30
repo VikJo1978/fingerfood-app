@@ -3,9 +3,9 @@ import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings }
 
 function warningLineClasses(severity: WarningSeverity): string {
   if (severity === "blocking") {
-    return "rounded-lg border border-red-200 bg-red-50/90 px-2 py-1.5 text-red-900";
+    return "rounded-control border border-danger-border bg-danger-soft px-2 py-1.5 text-danger";
   }
-  return "rounded-lg border border-amber-100 bg-amber-50/80 px-2 py-1.5 text-amber-900";
+  return "rounded-control border border-warning-border bg-warning-soft px-2 py-1.5 text-warning";
 }
 
 interface OfferLineItemProps {
@@ -36,31 +36,36 @@ export function OfferLineItem({
     catalogItem?.item_kind === "composite" || line.snapshot.item_kind === "composite";
 
   return (
-    <li className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
+    <li className="rounded-control border border-line bg-canvas/60 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium text-slate-900">{line.snapshot.title}</p>
+            <p className="font-semibold text-ink">{line.snapshot.title}</p>
             {isComposite ? (
-              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              <span className="inline-flex items-center rounded-full border border-line bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 Paket
               </span>
             ) : null}
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted">
             {isPieceUnitBasis(line.snapshot.price_type) ? "Preis pro Stück" : "Preis pro Person"} ·{" "}
             {formatCurrency(line.snapshot.chosen_price)}
           </p>
           {line.snapshot.surchargeSelected ? (
-            <p className="text-xs font-medium text-slate-700">
+            <p className="text-xs font-medium text-ink">
               + {line.snapshot.surchargeLabel} ({formatCurrency(line.snapshot.surchargeAmount ?? 0)} Aufpreis)
             </p>
           ) : null}
         </div>
+        {/* Subdued by default (a plain outline button, not red) so it
+            doesn't compete with the primary action elsewhere on the page —
+            but still clearly a destructive action once noticed, via the
+            danger-tinted hover state. */}
         <button
           type="button"
           onClick={() => onRemove(line.lineId)}
-          className="shrink-0 self-start rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+          aria-label={`${line.snapshot.title} entfernen`}
+          className="shrink-0 self-start rounded-control border border-line bg-white px-3 py-1.5 text-xs font-medium text-muted transition hover:border-danger-border hover:bg-danger-soft hover:text-danger"
         >
           Entfernen
         </button>
@@ -78,36 +83,38 @@ export function OfferLineItem({
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-medium uppercase text-slate-400">Bezug</span>
+          <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Bezug</span>
           <select
             value={line.quantityMode}
             onChange={(e) => onModeChange(line.lineId, e.target.value as QuantityMode)}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+            className="rounded-control border border-line bg-white px-2 py-1.5 text-sm focus:border-accent"
           >
             <option value="total">Gesamt</option>
             <option value="per_person">Pro Person</option>
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[11px] font-medium uppercase text-slate-400">Menge</span>
+          <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Menge</span>
           <input
             type="number"
             min={0.5}
             step={0.5}
             value={line.quantity}
             onChange={(e) => onQuantityChange(line.lineId, Number(e.target.value))}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+            className="rounded-control border border-line bg-white px-2 py-1.5 text-sm focus:border-accent"
           />
         </label>
         <div className="flex flex-col justify-end">
-          <span className="text-[11px] font-medium uppercase text-slate-400">Zeilensumme</span>
-          <span className="text-sm font-semibold text-slate-900">{formatCurrency(total)}</span>
+          <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">
+            Zeilensumme
+          </span>
+          <span className="text-sm font-bold text-ink">{formatCurrency(total)}</span>
         </div>
       </div>
 
       {isComposite ? (
         <label className="mt-3 flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-slate-700">Änderungswunsch am Paket</span>
+          <span className="text-xs font-medium text-ink">Änderungswunsch am Paket</span>
           <textarea
             rows={2}
             value={line.customizationNote ?? ""}
@@ -115,9 +122,9 @@ export function OfferLineItem({
             placeholder={
               "Dessert tauschen:\nSalat entfernen:\nStarter hinzufügen:\nSonstiges:"
             }
-            className="min-h-[4rem] resize-y rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+            className="min-h-[4rem] resize-y rounded-control border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-accent"
           />
-          <span className="text-xs leading-relaxed text-slate-500">
+          <span className="text-xs leading-relaxed text-muted">
             Änderungen am Paket müssen intern geprüft werden. Preis bleibt vorläufig.
           </span>
         </label>

@@ -3,16 +3,33 @@
 @tailwind utilities;
 
 :root {
-  font-family: "DM Sans", system-ui, sans-serif;
-  color: #0f172a;
+  /* Same font stack as the Office Panel (OFFICE_PANEL_STYLE) — one
+     sans-serif voice across both apps, no separate "display" font. */
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: #1a1f1c;
   /* Warm off-white with a hint of the logo's sage — must match AppShell's
-     bg-[#f6f7f6] so overscroll doesn't flash a different color. */
+     bg-canvas so overscroll doesn't flash a different color. Identical to
+     the Office Panel's --canvas. */
   background-color: #f6f7f6;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+}
+
+/* Matches the Office Panel's focus-visible treatment exactly (a warm accent
+   ring distinct from the sage brand color, so keyboard focus stays visible
+   against both light surfaces and accent-colored buttons). */
+:focus-visible {
+  outline: 3px solid #c79262;
+  outline-offset: 3px;
 }
 
 /* Angebotsvorschau print/PDF (browser "Print to PDF"): everything outside

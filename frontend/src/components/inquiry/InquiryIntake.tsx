@@ -178,25 +178,25 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
     onPrepareOffer(transfer);
   }
 
-  const blockClass = "space-y-4 rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm";
-  const labelClass = "text-xs font-medium uppercase tracking-wide text-slate-500";
+  const blockClass = "space-y-4 rounded-card border border-line bg-white p-5 shadow-card";
+  const labelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted">
         Erfassen Sie die Anfrage in Ruhe. Die Eingaben bleiben nur in diesem Fenster — es wird nichts
         zentral bei Kunden- oder Auftragsdaten abgelegt.
       </p>
 
       <section className={blockClass}>
-        <h2 className="text-base font-semibold text-slate-900">Kontakt</h2>
+        <h2 className="text-[17px] font-bold text-ink">Kontakt</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className={labelClass}>Firma / Veranstalter</span>
             <input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -204,7 +204,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
             <input
               value={contactPerson}
               onChange={(e) => setContactPerson(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -213,7 +213,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -221,14 +221,14 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
         </div>
       </section>
 
       <section className={blockClass}>
-        <h2 className="text-base font-semibold text-slate-900">Veranstaltung</h2>
+        <h2 className="text-[17px] font-bold text-ink">Veranstaltung</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className={labelClass}>Datum</span>
@@ -236,7 +236,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -245,7 +245,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               value={eventTime}
               onChange={(e) => setEventTime(e.target.value)}
               placeholder="z. B. 18:30"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
@@ -253,7 +253,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="inline-flex items-center gap-2 sm:col-span-2 text-sm">
@@ -261,7 +261,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               type="checkbox"
               checked={billingAddressDifferent}
               onChange={(e) => setBillingAddressDifferent(e.target.checked)}
-              className="rounded border-slate-300"
+              className="rounded border-line text-accent focus:ring-accent"
             />
             Rechnungsadresse abweichend?
           </label>
@@ -274,7 +274,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
                   onChange={(e) => setBillingAddress(e.target.value)}
                   rows={3}
                   placeholder="Name, Straße, PLZ Ort …"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
@@ -283,7 +283,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
                   type="email"
                   value={billingEmailDifferent}
                   onChange={(e) => setBillingEmailDifferent(e.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
                 />
               </label>
             </>
@@ -295,14 +295,14 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               min={1}
               value={guestCount}
               onChange={(e) => setGuestCount(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
         </div>
       </section>
 
       <section className={blockClass}>
-        <h2 className="text-base font-semibold text-slate-900">Wunsch / Bedarf</h2>
+        <h2 className="text-[17px] font-bold text-ink">Wunsch / Bedarf</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className={labelClass}>Art der Veranstaltung</span>
@@ -310,7 +310,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               value={eventType}
               onChange={(e) => setEventType(e.target.value)}
               placeholder="z. B. Firmenfeier, Hochzeit"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -319,7 +319,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               value={serviceStyle}
               onChange={(e) => setServiceStyle(e.target.value)}
               placeholder="z. B. Flying Dinner, Buffet"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
             />
           </label>
         </div>
@@ -332,7 +332,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
                   type="checkbox"
                   checked={desiredModules.includes(value)}
                   onChange={() => toggleModule(value)}
-                  className="rounded border-slate-300"
+                  className="rounded border-line text-accent focus:ring-accent"
                 />
                 {label}
               </label>
@@ -346,7 +346,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
             onChange={(e) => setDietaryRequirements(e.target.value)}
             rows={3}
             placeholder="Vegetarisch-Anteil, Allergien, keine Schweinefleisch-Gerichte …"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
           />
         </label>
         <div className="flex flex-wrap items-end gap-4">
@@ -355,7 +355,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
               type="checkbox"
               checked={budgetEnabled}
               onChange={(e) => setBudgetEnabled(e.target.checked)}
-              className="rounded border-slate-300"
+              className="rounded border-line text-accent focus:ring-accent"
             />
             Budgetrahmen angeben
           </label>
@@ -367,7 +367,7 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
                 min={0}
                 value={budgetAmount}
                 onChange={(e) => setBudgetAmount(Number(e.target.value))}
-                className="w-36 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="w-36 rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
               />
             </label>
           ) : null}
@@ -375,8 +375,8 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
       </section>
 
       <section className={blockClass}>
-        <h2 className="text-base font-semibold text-slate-900">Zeit &amp; Ablauf / Aufwand vor Ort</h2>
-        <p className="text-xs text-slate-500">
+        <h2 className="text-[17px] font-bold text-ink">Zeit &amp; Ablauf / Aufwand vor Ort</h2>
+        <p className="text-xs text-muted">
           Keine exakte Aufbauzeit erfassen — nur Komplexitäts-Hinweise für die spätere Planung.
         </p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -386,24 +386,24 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
                 type="checkbox"
                 checked={aufwandFlags[key]}
                 onChange={() => toggleAufwand(key)}
-                className="rounded border-slate-300"
+                className="rounded border-line text-accent focus:ring-accent"
               />
               {label}
             </label>
           ))}
         </div>
-        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700">
+        <div className="rounded-control border border-dashed border-line bg-canvas/60 px-3 py-2 text-sm text-ink">
           <span className="font-medium">Geschätzter Vorlauf vor Essensbeginn: </span>
           <span>{vorlaufLabel}</span>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted">
             Interne Schätzung. Finale Planung durch Küche / Disposition.
           </p>
         </div>
       </section>
 
       <section className={blockClass}>
-        <h2 className="text-base font-semibold text-slate-900">Kritische Punkte</h2>
-        <p className="text-xs text-slate-500">
+        <h2 className="text-[17px] font-bold text-ink">Kritische Punkte</h2>
+        <p className="text-xs text-muted">
           Nur zur Orientierung im Büro — ohne Anspruch auf Vollständigkeit für die spätere
           Auftragsbearbeitung.
         </p>
@@ -411,13 +411,13 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
           {CRITICAL_ROWS.map((row) => (
             <div
               key={row.id}
-              className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-2 rounded-control border border-line bg-canvas/60 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
             >
-              <span className="text-sm text-slate-800">{row.label}</span>
+              <span className="text-sm text-ink">{row.label}</span>
               <select
                 value={critical[row.id] ?? "offen"}
                 onChange={(e) => setCriticalStatus(row.id, e.target.value as CriticalStatus)}
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                className="rounded-control border border-line bg-white px-2 py-1.5 text-sm focus:border-accent"
               >
                 <option value="offen">offen</option>
                 <option value="geklärt">geklärt</option>
@@ -429,29 +429,29 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
       </section>
 
       <section className={blockClass}>
-        <h2 className="text-base font-semibold text-slate-900">Nächster Schritt</h2>
-        <p className="text-sm text-slate-600">
+        <h2 className="text-[17px] font-bold text-ink">Nächster Schritt</h2>
+        <p className="text-sm text-muted">
           Mit „Angebot vorbereiten“ wechseln Sie in den Konfigurator. Übernommen werden Firma,
           Ansprechpartner, Datum, Uhrzeit, Liefer-/Veranstaltungsort, Bemerkungen zu Veranstaltung und
           Ernährung (ohne Rechnungsdaten — diese bleiben hier im Formular), Personenzahl, Budget (falls
           aktiv) und ggf. ein einzelnes Katalog-Modul — nicht das gesamte Anfrage-Protokoll.
         </p>
-        <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-3 text-sm text-slate-800">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/90">Noch offen</p>
+        <div className="rounded-control border border-warning-border bg-warning-soft px-3 py-3 text-sm text-warning">
+          <p className="text-xs font-bold uppercase tracking-wide text-warning">Noch offen</p>
           {openCriticalRows.length > 0 ? (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-700">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-warning">
               {openCriticalRows.map((row) => (
                 <li key={row.id}>{row.label}</li>
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-slate-600">Alle kritischen Punkte sind markiert.</p>
+            <p className="mt-2 text-warning">Alle kritischen Punkte sind markiert.</p>
           )}
         </div>
         <button
           type="button"
           onClick={handlePrepare}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-deep"
+          className="inline-flex h-11 items-center justify-center rounded-control bg-accent px-6 text-sm font-bold text-white shadow-sm transition hover:bg-accent-deep"
         >
           Angebot vorbereiten
         </button>

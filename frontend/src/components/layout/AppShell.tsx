@@ -7,19 +7,19 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[#f6f7f6]">
+    <div className="min-h-screen bg-canvas">
       {/* White brand band: the logo is an opaque JPEG, so it must sit on a
           white surface — never directly on the tinted page background. */}
-      <div className="border-b border-slate-200/70 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
+      <div className="border-b border-line bg-white">
+        <div className="mx-auto flex max-w-content items-center px-4 py-4 sm:px-6 lg:px-8">
           <img
             src={logo}
             alt="Silberlöffel Event Catering Service"
-            className="h-20 w-auto sm:h-28"
+            className="h-16 w-auto sm:h-20"
           />
         </div>
       </div>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">{children}</div>
+      <div className="mx-auto max-w-content px-4 py-8 sm:px-6 lg:px-8 lg:py-10">{children}</div>
     </div>
   );
 }

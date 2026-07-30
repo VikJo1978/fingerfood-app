@@ -62,7 +62,7 @@ export function OfferPreview({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/45 p-4 sm:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/50 p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Angebotsvorschau"
@@ -70,23 +70,23 @@ export function OfferPreview({
     >
       <div
         data-print-root
-        className="max-h-[min(90vh,52rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xl print:max-h-none print:w-auto print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none"
+        className="max-h-[min(90vh,52rem)] w-full min-w-0 max-w-3xl overflow-x-hidden overflow-y-auto rounded-card border border-line bg-white shadow-2xl print:max-h-none print:w-auto print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-sm print:hidden">
-          <h2 className="text-base font-semibold text-slate-900">Angebotsvorschau</h2>
+        <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white/95 px-4 py-3 backdrop-blur-sm sm:gap-3 sm:px-5 sm:py-4 print:hidden">
+          <h2 className="text-[15px] font-bold text-ink">Angebotsvorschau</h2>
           <div className="flex shrink-0 gap-2">
             <button
               type="button"
               onClick={() => window.print()}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              className="rounded-control border border-accent bg-white px-3 py-1.5 text-sm font-bold text-accent-deep transition hover:bg-accent-soft"
             >
               Drucken / PDF
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              className="rounded-control border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink transition hover:border-accent hover:bg-accent-soft"
             >
               Schließen
             </button>
@@ -150,8 +150,8 @@ export function OfferPreview({
           </section>
 
           {/* Itemized table */}
-          <section>
-            <table className="w-full border-collapse text-sm">
+          <section className="-mx-6 overflow-x-auto px-6 sm:-mx-8 sm:px-8">
+            <table className="w-full min-w-[32rem] border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-slate-800 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="py-1.5 pr-2 font-medium">Anzahl</th>
