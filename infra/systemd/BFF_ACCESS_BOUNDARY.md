@@ -21,6 +21,10 @@ redirect field, and user-controlled values are never used as a destination.
 `CORE_OFFICE_PANEL_URL` must be an HTTP(S) origin without credentials, path,
 query, or fragment.
 
+On failure it returns only a stable application error code and fixed safe
+message. Core response bodies, transport diagnostics, snapshot contents,
+credentials, and customer data never cross this browser boundary.
+
 **What it is NOT:**
 
 - Not user authentication

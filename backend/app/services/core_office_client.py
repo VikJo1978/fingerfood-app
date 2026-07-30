@@ -11,19 +11,36 @@ import httpx
 class CoreOfficeClientError(Exception):
     """Core Office API request failed."""
 
+    def __init__(
+        self,
+        *,
+        code: str,
+        status_code: int | None = None,
+    ) -> None:
+        self.code = code
+        self.status_code = status_code
+        super().__init__(code)
 
-def _uuid4(value: object, *, field: str) -> str:
+
+def _uuid4(value: object, *, status_code: int) -> str:
     if not isinstance(value, str):
-        raise CoreOfficeClientError(f"prepare-offer response invalid {field}")
+        raise CoreOfficeClientError(
+            code="prepare_offer_invalid_response",
+            status_code=status_code,
+        )
     try:
         parsed = uuid.UUID(value)
     except ValueError as exc:
         raise CoreOfficeClientError(
-            f"prepare-offer response invalid {field}"
+            code="prepare_offer_invalid_response",
+            status_code=status_code,
         ) from exc
     canonical = str(parsed)
     if parsed.version != 4 or canonical != value:
-        raise CoreOfficeClientError(f"prepare-offer response invalid {field}")
+        raise CoreOfficeClientError(
+            code="prepare_offer_invalid_response",
+            status_code=status_code,
+        )
     return canonical
 
 
@@ -33,14 +50,6 @@ def _response_payload(response: httpx.Response) -> dict[str, Any] | None:
     except ValueError:
         return None
     return payload if isinstance(payload, dict) else None
-
-
-def _error_code(response: httpx.Response) -> str:
-    payload = _response_payload(response)
-    if payload is None:
-        return "unexpected_response"
-    code = payload.get("error")
-    return code if isinstance(code, str) else "unexpected_response"
 
 
 class CoreOfficeClient:
@@ -68,22 +77,26 @@ class CoreOfficeClient:
 
     def get_inquiry(self, inquiry_id: str) -> dict[str, Any] | None:
         if not self.is_configured():
-            raise CoreOfficeClientError("core office client not configured")
+            raise CoreOfficeClientError(code="core_office_not_configured")
         url = f"{self._base_url}/office/v1/inquiries/{inquiry_id}"
         try:
             with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
                 response = client.get(url, headers=self._auth_headers())
         except httpx.HTTPError as exc:
-            raise CoreOfficeClientError(f"inquiry lookup failed: {exc}") from exc
+            raise CoreOfficeClientError(code="inquiry_lookup_transport_error") from exc
         if response.status_code == 404:
             return None
         if response.status_code == 200:
-            payload = response.json()
-            if not isinstance(payload, dict):
-                raise CoreOfficeClientError("inquiry response invalid")
+            payload = _response_payload(response)
+            if payload is None:
+                raise CoreOfficeClientError(
+                    code="inquiry_lookup_invalid_response",
+                    status_code=response.status_code,
+                )
             return payload
         raise CoreOfficeClientError(
-            f"inquiry lookup HTTP {response.status_code}: {response.text}"
+            code="inquiry_lookup_failed",
+            status_code=response.status_code,
         )
 
     def prepare_offer(
@@ -94,7 +107,7 @@ class CoreOfficeClient:
         command_id: str | None = None,
     ) -> dict[str, Any]:
         if not self.is_configured():
-            raise CoreOfficeClientError("core office client not configured")
+            raise CoreOfficeClientError(code="core_office_not_configured")
         url = f"{self._base_url}/office/v1/inquiries/{inquiry_id}/prepare-offer"
         body = {
             "command_id": command_id or str(uuid.uuid4()),
@@ -106,12 +119,18 @@ class CoreOfficeClient:
             with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
                 response = client.post(url, json=body, headers=headers)
         except httpx.HTTPError as exc:
-            raise CoreOfficeClientError(f"prepare-offer request failed: {exc}") from exc
+            raise CoreOfficeClientError(code="prepare_offer_transport_error") from exc
         if response.status_code == 201:
             payload = _response_payload(response)
             if payload is None:
-                raise CoreOfficeClientError("prepare-offer response invalid")
-            payload["offer_id"] = _uuid4(payload.get("offer_id"), field="offer_id")
+                raise CoreOfficeClientError(
+                    code="prepare_offer_invalid_response",
+                    status_code=response.status_code,
+                )
+            payload["offer_id"] = _uuid4(
+                payload.get("offer_id"),
+                status_code=response.status_code,
+            )
             return payload
         if response.status_code == 409:
             payload = _response_payload(response)
@@ -122,10 +141,11 @@ class CoreOfficeClient:
                 return {
                     "offer_id": _uuid4(
                         payload.get("offer_id"),
-                        field="offer_id",
+                        status_code=response.status_code,
                     ),
                     "existing_offer": True,
                 }
         raise CoreOfficeClientError(
-            f"prepare-offer HTTP {response.status_code}: {_error_code(response)}"
+            code="prepare_offer_failed",
+            status_code=response.status_code,
         )

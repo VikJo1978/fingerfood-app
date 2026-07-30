@@ -16,6 +16,10 @@ from app.services.pricing_service import price_offer
 router = APIRouter(prefix="/api/offer", tags=["offer"])
 
 
+def safe_error_detail(code: str, message: str) -> dict[str, str]:
+    return {"code": code, "message": message}
+
+
 class OfferSnapshotBuildRequest(BaseModel):
     inquiry_id: str
     snapshot_id: str
@@ -50,15 +54,30 @@ def execute_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
     if not core.is_configured():
         raise HTTPException(
             status_code=503,
-            detail="CORE_OFFICE_API_URL and CORE_OFFICE_API_TOKEN required",
+            detail=safe_error_detail(
+                "core_office_not_configured",
+                "Core Office API is not configured.",
+            ),
         )
     try:
         snapshot = _build_snapshot_payload(body)
         result = core.prepare_offer(body.inquiry_id, snapshot)
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=422,
+            detail=safe_error_detail(
+                "invalid_offer_snapshot",
+                "Offer snapshot is invalid.",
+            ),
+        ) from exc
     except CoreOfficeClientError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=502,
+            detail=safe_error_detail(
+                "core_offer_prepare_failed",
+                "Core offer preparation failed.",
+            ),
+        ) from exc
     response: dict[str, object] = {
         "offer_id": result["offer_id"],
         "schema_version": snapshot["schema_version"],

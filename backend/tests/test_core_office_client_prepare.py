@@ -51,8 +51,10 @@ def test_invalid_offer_id_fails_closed(status: int) -> None:
     payload = {"offer_id": "not-a-uuid"}
     if status == 409:
         payload["error"] = "offer_already_exists"
-    with pytest.raises(CoreOfficeClientError, match="invalid offer_id"):
+    with pytest.raises(CoreOfficeClientError) as exc_info:
         _client(httpx.Response(status, json=payload)).prepare_offer(_INQUIRY_ID, {})
+    assert exc_info.value.code == "prepare_offer_invalid_response"
+    assert exc_info.value.status_code == status
 
 
 def test_other_core_error_is_stable_and_does_not_echo_response_body() -> None:
@@ -62,7 +64,63 @@ def test_other_core_error_is_stable_and_does_not_echo_response_body() -> None:
     )
     with pytest.raises(CoreOfficeClientError) as exc_info:
         _client(response).prepare_offer(_INQUIRY_ID, {})
-    message = str(exc_info.value)
-    assert message == "prepare-offer HTTP 502: unexpected_response"
-    assert "customer@example.test" not in message
-    assert "secret-token" not in message
+    error = exc_info.value
+    assert error.code == "prepare_offer_failed"
+    assert error.status_code == 502
+    assert str(error) == "prepare_offer_failed"
+    assert "customer@example.test" not in str(error)
+    assert "secret-token" not in str(error)
+
+
+@pytest.mark.parametrize("status", [400, 500, 502])
+def test_inquiry_lookup_error_never_echoes_core_response_body(status: int) -> None:
+    response = httpx.Response(
+        status,
+        text="snapshot customer@example.test secret-token proxy diagnostics",
+    )
+
+    with pytest.raises(CoreOfficeClientError) as exc_info:
+        _client(response).get_inquiry(_INQUIRY_ID)
+
+    error = exc_info.value
+    assert error.code == "inquiry_lookup_failed"
+    assert error.status_code == status
+    assert str(error) == "inquiry_lookup_failed"
+    assert "customer@example.test" not in str(error)
+    assert "secret-token" not in str(error)
+    assert "proxy diagnostics" not in str(error)
+
+
+def test_inquiry_lookup_transport_error_never_echoes_exception_text() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError(
+            "customer@example.test secret-token transport diagnostics",
+            request=request,
+        )
+
+    client = CoreOfficeClient(
+        "https://core.example.test",
+        "core-secret",
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(CoreOfficeClientError) as exc_info:
+        client.get_inquiry(_INQUIRY_ID)
+
+    assert exc_info.value.code == "inquiry_lookup_transport_error"
+    assert exc_info.value.status_code is None
+    assert str(exc_info.value) == "inquiry_lookup_transport_error"
+
+
+def test_inquiry_lookup_invalid_success_body_is_structured() -> None:
+    response = httpx.Response(
+        200,
+        text="snapshot customer@example.test secret-token invalid JSON",
+    )
+
+    with pytest.raises(CoreOfficeClientError) as exc_info:
+        _client(response).get_inquiry(_INQUIRY_ID)
+
+    assert exc_info.value.code == "inquiry_lookup_invalid_response"
+    assert exc_info.value.status_code == 200
+    assert str(exc_info.value) == "inquiry_lookup_invalid_response"

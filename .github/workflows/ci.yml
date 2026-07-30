@@ -46,3 +46,12 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+      - name: Verify production bundle boundary
+        working-directory: frontend
+        run: |
+          if grep -RInE \
+            'FINGERFOOD_API_TOKEN|CORE_OFFICE_API_TOKEN|CORE_OFFICE_PANEL_URL|100\.109\.6\.74|localhost' \
+            dist; then
+            echo "server-only configuration found in production bundle" >&2
+            exit 1
+          fi

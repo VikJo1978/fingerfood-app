@@ -21,8 +21,7 @@ import {
 } from "../utils/pricing";
 import {
   buildOfferSnapshotRequest,
-  navigateToPreparedCoreOffer,
-  prepareOfferInCore,
+  prepareAndNavigateToCoreOffer,
 } from "../utils/offerSnapshotRequest";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import {
@@ -373,10 +372,14 @@ export function HomePage() {
         importedInquiryId,
         currentDraftId
       );
-      const result = await prepareOfferInCore(body);
-      setPrepareStatus("done");
-      setPrepareMessage(`Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`);
-      navigateToPreparedCoreOffer(result);
+      await prepareAndNavigateToCoreOffer(body, {
+        onPrepared: (result) => {
+          setPrepareStatus("done");
+          setPrepareMessage(
+            `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`
+          );
+        },
+      });
     } catch (e) {
       setPrepareStatus("error");
       setPrepareMessage(

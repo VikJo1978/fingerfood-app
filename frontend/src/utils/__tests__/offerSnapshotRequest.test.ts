@@ -2,6 +2,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import {
   buildOfferSnapshotRequest,
   navigateToPreparedCoreOffer,
+  prepareAndNavigateToCoreOffer,
   prepareOfferInCore,
 } from "../offerSnapshotRequest";
 import {
@@ -96,6 +97,28 @@ describe("prepareOfferInCore", () => {
       expect(String(error)).not.toContain("customer@example.test");
       expect(String(error)).not.toContain("secret-token");
     }
+  });
+
+  it("does not navigate or announce success when preparation fails", async () => {
+    const assign = vi.fn();
+    const onPrepared = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response("snapshot customer@example.test secret-token", { status: 502 })
+      )
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    await expect(
+      prepareAndNavigateToCoreOffer(body, {
+        navigation: { assign },
+        onPrepared,
+      })
+    ).rejects.toThrow("Angebot konnte nicht vorbereitet werden (502).");
+
+    expect(assign).not.toHaveBeenCalled();
+    expect(onPrepared).not.toHaveBeenCalled();
   });
 
   it("uses the inquiry_id decoded from the Core handoff", () => {

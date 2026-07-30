@@ -117,3 +117,18 @@ export function navigateToPreparedCoreOffer(
 ): void {
   navigation.assign(result.redirect_url);
 }
+
+export interface PrepareAndNavigateOptions {
+  navigation?: OfferNavigation;
+  onPrepared?: (result: OfferPrepareResponse) => void;
+}
+
+export async function prepareAndNavigateToCoreOffer(
+  body: OfferSnapshotRequestBody,
+  options: PrepareAndNavigateOptions = {}
+): Promise<OfferPrepareResponse> {
+  const result = await prepareOfferInCore(body);
+  options.onPrepared?.(result);
+  navigateToPreparedCoreOffer(result, options.navigation);
+  return result;
+}

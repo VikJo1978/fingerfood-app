@@ -8,13 +8,16 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
 from app.main import app
+from app.routes import offer as offer_routes
 from app.routes import ui_offer as ui_offer_routes
 from app.services import core_office_client as core_client_module
+from app.services.core_office_client import CoreOfficeClient, CoreOfficeClientError
 from tests.test_offer_api_auth import _PREPARE_URL, _prepare_body, _TOKEN
 
 _UI_PREPARE_URL = "/api/ui/offer/prepare"
@@ -82,7 +85,10 @@ def test_ui_prepare_unknown_inquiry_returns_404(
 
     response = client.post(_UI_PREPARE_URL, json=_prepare_body())
     assert response.status_code == 404
-    assert response.json()["detail"] == "Inquiry not found"
+    assert response.json()["detail"] == {
+        "code": "inquiry_not_found",
+        "message": "Inquiry was not found.",
+    }
 
 
 def test_ui_prepare_core_not_configured_returns_503(
@@ -105,9 +111,10 @@ def test_ui_prepare_panel_not_configured_returns_503(
     response = client.post(_UI_PREPARE_URL, json=_prepare_body())
 
     assert response.status_code == 503
-    assert response.json()["detail"] == (
-        "CORE_OFFICE_PANEL_URL required and must be a safe origin"
-    )
+    assert response.json()["detail"] == {
+        "code": "core_office_panel_not_configured",
+        "message": "Core Office Panel return URL is not configured.",
+    }
 
 
 def test_ui_prepare_unsafe_panel_configuration_fails_before_core_write(
@@ -204,6 +211,132 @@ def test_redirect_handling_does_not_log_snapshot_or_customer_data(
     assert response.status_code == 200
     assert "a@example.invalid" not in caplog.text
     assert "22222222-2222-4222-8222-222222222222" not in caplog.text
+
+
+@pytest.mark.parametrize("status", [400, 500, 502])
+def test_ui_prepare_lookup_failure_returns_only_stable_safe_error(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    status: int,
+) -> None:
+    private_marker = "snapshot customer@example.test secret-token proxy diagnostics"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, text=private_marker, request=request)
+
+    core = CoreOfficeClient(
+        "https://core.example.test",
+        "core-secret-token",
+        transport=httpx.MockTransport(handler),
+    )
+    execute = MagicMock()
+    monkeypatch.setattr(ui_offer_routes, "build_core_office_client", lambda: core)
+    monkeypatch.setattr(ui_offer_routes, "execute_prepare_offer", execute)
+
+    response = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": {
+            "code": "core_inquiry_lookup_failed",
+            "message": "Core inquiry lookup failed.",
+        }
+    }
+    assert private_marker not in response.text
+    assert private_marker not in caplog.text
+    assert "core-secret-token" not in response.text
+    assert "core-secret-token" not in caplog.text
+    execute.assert_not_called()
+
+
+def test_ui_prepare_write_failure_returns_only_stable_safe_error(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    lookup_core = MagicMock()
+    lookup_core.is_configured.return_value = True
+    lookup_core.get_inquiry.return_value = {"inquiry_id": _INQUIRY_ID}
+    prepare_core = MagicMock()
+    prepare_core.is_configured.return_value = True
+    prepare_core.prepare_offer.side_effect = CoreOfficeClientError(
+        code="prepare_offer_failed",
+        status_code=500,
+    )
+    monkeypatch.setattr(
+        ui_offer_routes,
+        "build_core_office_client",
+        lambda: lookup_core,
+    )
+    monkeypatch.setattr(
+        offer_routes,
+        "build_core_office_client",
+        lambda: prepare_core,
+    )
+    monkeypatch.setattr(
+        offer_routes,
+        "_build_snapshot_payload",
+        lambda body: {
+            "schema_version": "offer_snapshot_v2",
+            "snapshot_id": body.snapshot_id,
+        },
+    )
+
+    response = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": {
+            "code": "core_offer_prepare_failed",
+            "message": "Core offer preparation failed.",
+        }
+    }
+    assert "a@example.invalid" not in response.text
+    assert "a@example.invalid" not in caplog.text
+    assert "core-secret" not in response.text
+    assert "core-secret" not in caplog.text
+
+
+def test_ui_prepare_snapshot_failure_returns_only_stable_safe_error(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    private_marker = "snapshot customer@example.test secret-token diagnostics"
+    lookup_core = MagicMock()
+    lookup_core.is_configured.return_value = True
+    lookup_core.get_inquiry.return_value = {"inquiry_id": _INQUIRY_ID}
+    prepare_core = MagicMock()
+    prepare_core.is_configured.return_value = True
+    monkeypatch.setattr(
+        ui_offer_routes,
+        "build_core_office_client",
+        lambda: lookup_core,
+    )
+    monkeypatch.setattr(
+        offer_routes,
+        "build_core_office_client",
+        lambda: prepare_core,
+    )
+    monkeypatch.setattr(
+        offer_routes,
+        "_build_snapshot_payload",
+        MagicMock(side_effect=ValueError(private_marker)),
+    )
+
+    response = client.post(_UI_PREPARE_URL, json=_prepare_body())
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": {
+            "code": "invalid_offer_snapshot",
+            "message": "Offer snapshot is invalid.",
+        }
+    }
+    assert private_marker not in response.text
+    assert private_marker not in caplog.text
+    prepare_core.prepare_offer.assert_not_called()
 
 
 def test_core_client_get_inquiry_sends_bearer_header(
