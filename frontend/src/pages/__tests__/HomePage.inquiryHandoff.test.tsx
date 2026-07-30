@@ -51,6 +51,7 @@ const testItem: CatalogItem = {
 };
 
 const INQUIRY_ID = "99999999-9999-4999-8999-999999999999";
+const INQUIRY_B_ID = "88888888-8888-4888-8888-888888888888";
 
 const handoffTransfer: InquiryToConfiguratorTransferV1 = {
   planning: {
@@ -75,6 +76,29 @@ const handoffTransfer: InquiryToConfiguratorTransferV1 = {
   },
 };
 
+const handoffTransferB: InquiryToConfiguratorTransferV1 = {
+  planning: {
+    persons: 12,
+    budget: null,
+    budgetEnabled: false,
+    desiredModules: [],
+    dietaryRequirements: "",
+    eventType: "",
+    serviceStyle: "",
+  },
+  orderContextPrefill: {
+    companyName: "Zweitfirma AG",
+    contactPerson: "Bernd Zweitfrau",
+    email: "bernd@example.invalid",
+    phone: "+49309876543",
+    eventDate: "2026-09-15",
+    eventTime: "19:00",
+    location: "Zweitweg 2, 20095 Hamburg",
+    billingAddress: "",
+    remarks: "",
+  },
+};
+
 function encodeFragment(payload: unknown): string {
   const json = JSON.stringify(payload);
   const bytes = new TextEncoder().encode(json);
@@ -86,12 +110,15 @@ function encodeFragment(payload: unknown): string {
   );
 }
 
-function handoffFragment(): string {
+function handoffFragment(
+  inquiryId: string = INQUIRY_ID,
+  transfer: InquiryToConfiguratorTransferV1 = handoffTransfer
+): string {
   return encodeFragment({
     schema_version: "core_inquiry_offer_prefill_v1",
     source: "silberloeffel-core",
-    inquiry_id: INQUIRY_ID,
-    transfer: handoffTransfer,
+    inquiry_id: inquiryId,
+    transfer,
   });
 }
 
@@ -229,5 +256,92 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     // No handoff at all: page stays on the inquiry-intake landing screen,
     // exactly as before this fix — nothing to restore, nothing fabricated.
     expect(screen.queryByRole("button", { name: "Angebotsvorschau anzeigen" })).toBeNull();
+  });
+
+  it("does NOT restore a stale Inquiry when the tab is reused for a direct, non-handoff visit", async () => {
+    // Consume Inquiry A's handoff and let it persist to sessionStorage.
+    window.location.hash = handoffFragment();
+    const first = render(<HomePage />);
+    await act(async () => {});
+    first.unmount();
+
+    // A brand-new, direct navigation to the base URL in the same tab (no
+    // fragment) creates a fresh history entry with no state of its own —
+    // exactly like typing the URL, a bookmark, or opening a new tab that
+    // happens to share sessionStorage. sessionStorage still has Inquiry A's
+    // data, but nothing marks *this* entry as having consumed a handoff.
+    window.history.replaceState(null, "", window.location.pathname);
+    render(<HomePage />);
+    await act(async () => {});
+
+    // Must stay on the plain inquiry-intake landing screen, not silently
+    // resume Inquiry A's company/contact/address for an unrelated visit.
+    expect(screen.queryByRole("button", { name: "Angebotsvorschau anzeigen" })).toBeNull();
+    expect(screen.queryByDisplayValue("Musterfirma GmbH")).toBeNull();
+  });
+
+  it("a fresh handoff for Inquiry B fully replaces Inquiry A, with no leftover fields", async () => {
+    window.location.hash = handoffFragment(INQUIRY_ID, handoffTransfer);
+    const first = render(<HomePage />);
+    await act(async () => {});
+    first.unmount();
+
+    window.location.hash = handoffFragment(INQUIRY_B_ID, handoffTransferB);
+    const second = render(<HomePage />);
+    await act(async () => {});
+
+    expect(screen.getByDisplayValue("Zweitfirma AG")).toBeTruthy();
+    expect(screen.getByDisplayValue("Bernd Zweitfrau")).toBeTruthy();
+    expect(screen.getByDisplayValue("2026-09-15")).toBeTruthy();
+    expect(screen.queryByDisplayValue("Musterfirma GmbH")).toBeNull();
+    expect(screen.queryByDisplayValue("Erika Musterfrau")).toBeNull();
+    expect(screen.queryByDisplayValue("2026-07-31")).toBeNull();
+    second.unmount();
+
+    // A subsequent reload (fragment gone again) restores B, never A.
+    render(<HomePage />);
+    await act(async () => {});
+    expect(screen.getByDisplayValue("Zweitfirma AG")).toBeTruthy();
+    expect(screen.queryByDisplayValue("Musterfirma GmbH")).toBeNull();
+  });
+
+  it("discards a corrupted stored handoff on reload instead of partially populating the form", async () => {
+    window.location.hash = handoffFragment();
+    const first = render(<HomePage />);
+    await act(async () => {});
+    first.unmount();
+
+    // Simulate storage corruption/tampering between page loads.
+    window.sessionStorage.setItem(
+      "fingerfood.core-inquiry-handoff.v1",
+      '{"schema_version":"core_inquiry_offer_prefill_v1","source":"silberloeffel-core"'
+    );
+
+    render(<HomePage />);
+    await act(async () => {});
+
+    // No crash, and no partial data (e.g. from a half-parsed object) leaks
+    // into the form — falls back to the plain intake landing screen.
+    expect(screen.queryByRole("button", { name: "Angebotsvorschau anzeigen" })).toBeNull();
+    expect(screen.queryByDisplayValue("Musterfirma GmbH")).toBeNull();
+    // The corrupted entry is removed, not left to confuse a later reload.
+    expect(window.sessionStorage.getItem("fingerfood.core-inquiry-handoff.v1")).toBeNull();
+  });
+
+  it("clears the stored handoff after a successful Offer preparation", async () => {
+    await renderAfterHandoff();
+    fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ offer_id: "11111111-1111-4111-8111-111111111111" }, { status: 201 })
+      )
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Angebot in Core vorbereiten" }));
+    });
+
+    expect(window.sessionStorage.getItem("fingerfood.core-inquiry-handoff.v1")).toBeNull();
   });
 });

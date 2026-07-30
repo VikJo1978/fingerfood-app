@@ -2,6 +2,10 @@ import type { InquiryToConfiguratorTransferV1 } from "../types";
 
 export const CORE_INQUIRY_HANDOFF_SCHEMA = "core_inquiry_offer_prefill_v1";
 export const CORE_INQUIRY_FRAGMENT_PREFIX = "#core-inquiry=";
+/** Namespaced and versioned: bumping the suffix makes any handoff persisted
+ * by a previous app version invisible to readStoredCoreInquiryHandoff (it
+ * simply won't be found under the new key), rather than being misread. */
+export const CORE_INQUIRY_SESSION_KEY = "fingerfood.core-inquiry-handoff.v1";
 const MAX_FRAGMENT_CHARS = 16_000;
 
 export interface CoreInquiryOfferPrefillV1 {
@@ -9,6 +13,18 @@ export interface CoreInquiryOfferPrefillV1 {
   source: "silberloeffel-core";
   inquiry_id: string;
   transfer: InquiryToConfiguratorTransferV1;
+}
+
+/** Minimal marker written into this specific history entry's `state` when a
+ * handoff is consumed — evidence that *this* entry (not just "the tab" via
+ * sessionStorage) originated from a Core handoff. A reload re-uses the same
+ * history entry and its state; a genuinely fresh/direct navigation (typed
+ * URL, bookmark, new tab) does not carry it over. Deliberately holds only
+ * the inquiry id, not contact details — history.state is not a place for
+ * customer data. */
+export interface CoreInquiryHandoffHistoryMarker {
+  schema_version: typeof CORE_INQUIRY_HANDOFF_SCHEMA;
+  inquiry_id: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -114,7 +130,7 @@ function validateHandoffPayload(parsed: unknown): CoreInquiryOfferPrefillV1 | nu
 
 /**
  * Re-validates a handoff object round-tripped through sessionStorage (see
- * HomePage's reload-survival persistence). The URL fragment is one-shot —
+ * readStoredCoreInquiryHandoff). The URL fragment is one-shot —
  * consumeCoreInquiryHandoff strips it from the address bar as soon as it's
  * read — so a reload of the same tab after that point has nothing left in
  * the URL to parse. This applies the exact same trust/validation as a fresh
@@ -130,6 +146,24 @@ export function validateStoredCoreInquiryHandoff(
   }
 }
 
+function isHistoryMarker(value: unknown): value is CoreInquiryHandoffHistoryMarker {
+  return (
+    isRecord(value) &&
+    value.schema_version === CORE_INQUIRY_HANDOFF_SCHEMA &&
+    isText(value.inquiry_id, 100) &&
+    !!value.inquiry_id
+  );
+}
+
+/** Reads this history entry's own handoff marker, if any — see
+ * CoreInquiryHandoffHistoryMarker for why this (not sessionStorage alone)
+ * is the trust boundary for reload-restoration. */
+export function readCoreInquiryHandoffHistoryMarker(
+  history: Pick<History, "state">
+): CoreInquiryHandoffHistoryMarker | null {
+  return isHistoryMarker(history.state) ? history.state : null;
+}
+
 export function consumeCoreInquiryHandoff(
   location: Pick<Location, "hash" | "pathname" | "search">,
   history: Pick<History, "replaceState">
@@ -138,6 +172,70 @@ export function consumeCoreInquiryHandoff(
     return { present: false, handoff: null };
   }
   const handoff = parseCoreInquiryHandoff(location.hash);
-  history.replaceState(null, "", `${location.pathname}${location.search}`);
+  const marker: CoreInquiryHandoffHistoryMarker | null =
+    handoff !== null
+      ? { schema_version: CORE_INQUIRY_HANDOFF_SCHEMA, inquiry_id: handoff.inquiry_id }
+      : null;
+  history.replaceState(marker, "", `${location.pathname}${location.search}`);
   return { present: true, handoff };
+}
+
+/**
+ * Persists the consumed handoff so a reload of the same history entry can
+ * restore it (see readStoredCoreInquiryHandoff). Contains only the approved
+ * Inquiry prefill fields — the same shape as the URL fragment itself: no
+ * bearer token, no Core API credentials, no priced/line-item Offer data.
+ * Best-effort: failures (private browsing, quota) are swallowed since the
+ * handoff still applies for this page's current life either way.
+ */
+export function storeCoreInquiryHandoff(
+  handoff: CoreInquiryOfferPrefillV1,
+  storage: Pick<Storage, "setItem"> = window.sessionStorage
+): void {
+  try {
+    storage.setItem(CORE_INQUIRY_SESSION_KEY, JSON.stringify(handoff));
+  } catch {
+    // sessionStorage unavailable — not reload-safe, but non-fatal.
+  }
+}
+
+/**
+ * Reads and re-validates a previously-stored handoff, requiring it to match
+ * `expectedInquiryId` — the *current history entry's own* marker (see
+ * readCoreInquiryHandoffHistoryMarker). Never trust sessionStorage by its
+ * mere presence: it persists across unrelated direct navigations in the
+ * same tab, and would otherwise leak a previous customer's Inquiry into a
+ * fresh, non-handoff Configurator visit. Anything missing, malformed, or
+ * mismatched is removed so it cannot resurface on a later reload either.
+ */
+export function readStoredCoreInquiryHandoff(
+  expectedInquiryId: string,
+  storage: Pick<Storage, "getItem" | "removeItem"> = window.sessionStorage
+): CoreInquiryOfferPrefillV1 | null {
+  try {
+    const raw = storage.getItem(CORE_INQUIRY_SESSION_KEY);
+    if (!raw) return null;
+    const restored = validateStoredCoreInquiryHandoff(raw);
+    if (restored !== null && restored.inquiry_id === expectedInquiryId) {
+      return restored;
+    }
+    storage.removeItem(CORE_INQUIRY_SESSION_KEY);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Clears the stored handoff. Call at lifecycle boundaries where it must
+ * not resurface: after a successful Offer preparation (before navigating to
+ * Core) and when explicitly starting a new standalone draft (the
+ * InquiryIntake manual-entry path). */
+export function clearStoredCoreInquiryHandoff(
+  storage: Pick<Storage, "removeItem"> = window.sessionStorage
+): void {
+  try {
+    storage.removeItem(CORE_INQUIRY_SESSION_KEY);
+  } catch {
+    // sessionStorage unavailable — nothing to clear.
+  }
 }

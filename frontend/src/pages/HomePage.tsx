@@ -27,19 +27,14 @@ import {
 } from "../utils/offerSnapshotRequest";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import {
+  clearStoredCoreInquiryHandoff,
   consumeCoreInquiryHandoff,
-  validateStoredCoreInquiryHandoff,
+  readCoreInquiryHandoffHistoryMarker,
+  readStoredCoreInquiryHandoff,
+  storeCoreInquiryHandoff,
 } from "../utils/coreInquiryHandoff";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
-
-/** sessionStorage key for the last successfully-consumed Core Inquiry
- * handoff. The URL fragment is one-shot — consumeCoreInquiryHandoff strips
- * it from the address bar as soon as it's read — so without this, a reload
- * of the same tab after that point silently loses the entire Inquiry
- * context (contact, address, event date/time) and offerDraft reverts to
- * blank defaults, even though catalog items can still be added normally. */
-const CORE_INQUIRY_SESSION_KEY = "fingerfood.core-inquiry-handoff.v1";
 
 function downloadText(filename: string, text: string, mime: string) {
   const blob = new Blob([text], { type: mime });
@@ -193,6 +188,19 @@ export function HomePage() {
     setPageMode("configurator");
   }, []);
 
+  /** InquiryIntake's own manual "weak protocol" form — an explicit,
+   * standalone new draft, not a Core handoff. Clears any handoff still
+   * cached in sessionStorage from a previous customer's Inquiry in this
+   * tab before applying the manually-entered data, so it can never bleed
+   * into (or later resurface for) this unrelated draft. */
+  const onManualPrepareOffer = useCallback(
+    (transfer: InquiryToConfiguratorTransferV1) => {
+      clearStoredCoreInquiryHandoff();
+      handlePrepareOffer(transfer);
+    },
+    [handlePrepareOffer]
+  );
+
   useEffect(() => {
     const result = consumeCoreInquiryHandoff(window.location, window.history);
     if (result.present) {
@@ -202,33 +210,23 @@ export function HomePage() {
       }
       handlePrepareOffer(result.handoff.transfer);
       setImportedInquiryId(result.handoff.inquiry_id);
-      try {
-        window.sessionStorage.setItem(
-          CORE_INQUIRY_SESSION_KEY,
-          JSON.stringify(result.handoff)
-        );
-      } catch {
-        // sessionStorage unavailable (private browsing, quota) — the
-        // handoff still applies for this page life, just not reload-safe.
-      }
+      storeCoreInquiryHandoff(result.handoff);
       return;
     }
-    // No fragment in this load's URL — either a first visit with no
-    // handoff, or a reload of the same tab after the fragment was already
-    // consumed once (it's stripped from the address bar on first use).
-    // Restore the last-consumed handoff rather than silently reverting to
-    // blank defaults.
-    try {
-      const stored = window.sessionStorage.getItem(CORE_INQUIRY_SESSION_KEY);
-      if (stored) {
-        const restored = validateStoredCoreInquiryHandoff(stored);
-        if (restored) {
-          handlePrepareOffer(restored.transfer);
-          setImportedInquiryId(restored.inquiry_id);
-        }
-      }
-    } catch {
-      // sessionStorage unavailable or corrupted — nothing to restore.
+    // No fragment in this load's URL. Only restore a stored handoff if
+    // *this exact history entry* itself carries evidence of having
+    // consumed one before (a reload re-uses the same entry and its
+    // history.state) — never merely because sessionStorage still holds
+    // data from an earlier, unrelated direct visit in the same tab. That
+    // distinction matters: without it, opening the Configurator fresh in a
+    // tab that previously handled a different customer's Inquiry would
+    // silently reuse that customer's contact/address/event data.
+    const marker = readCoreInquiryHandoffHistoryMarker(window.history);
+    if (marker === null) return;
+    const restored = readStoredCoreInquiryHandoff(marker.inquiry_id);
+    if (restored !== null) {
+      handlePrepareOffer(restored.transfer);
+      setImportedInquiryId(restored.inquiry_id);
     }
   }, [handlePrepareOffer]);
 
@@ -426,6 +424,10 @@ export function HomePage() {
       );
       await prepareAndNavigateToCoreOffer(body, {
         onPrepared: (result) => {
+          // Prepared successfully and about to navigate away to Core — the
+          // handoff has done its job; clear it so it can't resurface for a
+          // later, unrelated Configurator visit in this tab.
+          clearStoredCoreInquiryHandoff();
           setPrepareStatus("done");
           setPrepareMessage(
             `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`
@@ -472,7 +474,7 @@ export function HomePage() {
             subtitle="Weiches Anfrage-Protokoll für die Akquise — ohne Speicherung. Anschließend starten Sie den Konfigurator mit den wichtigsten Standardwerten."
           />
           {handoffError ? <WarningBanner message={handoffError} /> : null}
-          <InquiryIntake onPrepareOffer={handlePrepareOffer} />
+          <InquiryIntake onPrepareOffer={onManualPrepareOffer} />
         </div>
       </AppShell>
     );
