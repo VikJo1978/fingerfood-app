@@ -28,9 +28,18 @@ import {
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import {
   consumeCoreInquiryHandoff,
+  validateStoredCoreInquiryHandoff,
 } from "../utils/coreInquiryHandoff";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
+
+/** sessionStorage key for the last successfully-consumed Core Inquiry
+ * handoff. The URL fragment is one-shot — consumeCoreInquiryHandoff strips
+ * it from the address bar as soon as it's read — so without this, a reload
+ * of the same tab after that point silently loses the entire Inquiry
+ * context (contact, address, event date/time) and offerDraft reverts to
+ * blank defaults, even though catalog items can still be added normally. */
+const CORE_INQUIRY_SESSION_KEY = "fingerfood.core-inquiry-handoff.v1";
 
 function downloadText(filename: string, text: string, mime: string) {
   const blob = new Blob([text], { type: mime });
@@ -186,13 +195,41 @@ export function HomePage() {
 
   useEffect(() => {
     const result = consumeCoreInquiryHandoff(window.location, window.history);
-    if (!result.present) return;
-    if (result.handoff === null) {
-      setHandoffError("Anfragedaten konnten nicht sicher übernommen werden.");
+    if (result.present) {
+      if (result.handoff === null) {
+        setHandoffError("Anfragedaten konnten nicht sicher übernommen werden.");
+        return;
+      }
+      handlePrepareOffer(result.handoff.transfer);
+      setImportedInquiryId(result.handoff.inquiry_id);
+      try {
+        window.sessionStorage.setItem(
+          CORE_INQUIRY_SESSION_KEY,
+          JSON.stringify(result.handoff)
+        );
+      } catch {
+        // sessionStorage unavailable (private browsing, quota) — the
+        // handoff still applies for this page life, just not reload-safe.
+      }
       return;
     }
-    handlePrepareOffer(result.handoff.transfer);
-    setImportedInquiryId(result.handoff.inquiry_id);
+    // No fragment in this load's URL — either a first visit with no
+    // handoff, or a reload of the same tab after the fragment was already
+    // consumed once (it's stripped from the address bar on first use).
+    // Restore the last-consumed handoff rather than silently reverting to
+    // blank defaults.
+    try {
+      const stored = window.sessionStorage.getItem(CORE_INQUIRY_SESSION_KEY);
+      if (stored) {
+        const restored = validateStoredCoreInquiryHandoff(stored);
+        if (restored) {
+          handlePrepareOffer(restored.transfer);
+          setImportedInquiryId(restored.inquiry_id);
+        }
+      }
+    } catch {
+      // sessionStorage unavailable or corrupted — nothing to restore.
+    }
   }, [handlePrepareOffer]);
 
   const onAddLine = (

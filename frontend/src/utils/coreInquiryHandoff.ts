@@ -92,17 +92,39 @@ export function parseCoreInquiryHandoff(fragment: string): CoreInquiryOfferPrefi
     const parsed: unknown = JSON.parse(
       decodeBase64Url(fragment.slice(CORE_INQUIRY_FRAGMENT_PREFIX.length))
     );
-    if (!isRecord(parsed)) return null;
-    if (
-      parsed.schema_version !== CORE_INQUIRY_HANDOFF_SCHEMA ||
-      parsed.source !== "silberloeffel-core" ||
-      !isText(parsed.inquiry_id, 100) ||
-      !parsed.inquiry_id ||
-      !isTransfer(parsed.transfer)
-    ) {
-      return null;
-    }
-    return parsed as unknown as CoreInquiryOfferPrefillV1;
+    return validateHandoffPayload(parsed);
+  } catch {
+    return null;
+  }
+}
+
+function validateHandoffPayload(parsed: unknown): CoreInquiryOfferPrefillV1 | null {
+  if (!isRecord(parsed)) return null;
+  if (
+    parsed.schema_version !== CORE_INQUIRY_HANDOFF_SCHEMA ||
+    parsed.source !== "silberloeffel-core" ||
+    !isText(parsed.inquiry_id, 100) ||
+    !parsed.inquiry_id ||
+    !isTransfer(parsed.transfer)
+  ) {
+    return null;
+  }
+  return parsed as unknown as CoreInquiryOfferPrefillV1;
+}
+
+/**
+ * Re-validates a handoff object round-tripped through sessionStorage (see
+ * HomePage's reload-survival persistence). The URL fragment is one-shot —
+ * consumeCoreInquiryHandoff strips it from the address bar as soon as it's
+ * read — so a reload of the same tab after that point has nothing left in
+ * the URL to parse. This applies the exact same trust/validation as a fresh
+ * fragment to whatever was cached, never assuming stored data is safe.
+ */
+export function validateStoredCoreInquiryHandoff(
+  raw: string
+): CoreInquiryOfferPrefillV1 | null {
+  try {
+    return validateHandoffPayload(JSON.parse(raw));
   } catch {
     return null;
   }
