@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/layout/AppShell";
+import { ConfiguratorShell } from "../components/layout/ConfiguratorShell";
 import { HeaderBar } from "../components/layout/HeaderBar";
+import { InquiryHeroCard } from "../components/InquiryHeroCard";
 import { InquiryIntake } from "../components/inquiry/InquiryIntake";
 import { OrderContextCard } from "../components/OrderContextCard";
 import { TopControls } from "../components/TopControls";
@@ -33,6 +35,7 @@ import {
   readStoredCoreInquiryHandoff,
   storeCoreInquiryHandoff,
 } from "../utils/coreInquiryHandoff";
+import { formatDateDe } from "../utils/formatDate";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -58,6 +61,9 @@ export function HomePage() {
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSaveMessage, setDraftSaveMessage] = useState<string | null>(null);
   const [importedInquiryId, setImportedInquiryId] = useState<string | null>(null);
+  // Hero-card display only (see InquiryHeroCard) — not part of OrderContextV1
+  // / OfferDraft, so it never reaches the Core prepare-offer payload.
+  const [inquiryEventType, setInquiryEventType] = useState("");
   const [handoffError, setHandoffError] = useState<string | null>(null);
   const [prepareStatus, setPrepareStatus] = useState<PrepareStatus>("idle");
   const [prepareMessage, setPrepareMessage] = useState<string | null>(null);
@@ -185,6 +191,7 @@ export function HomePage() {
     if (planning.desiredModules.length === 1) {
       setCatalogModule(planning.desiredModules[0]);
     }
+    setInquiryEventType(planning.eventType.trim());
     setPageMode("configurator");
   }, []);
 
@@ -465,6 +472,14 @@ export function HomePage() {
 
   const showPersonWarning = offerDraft.persons < 10;
 
+  const heroTitle =
+    inquiryEventType || offerDraft.orderContext.companyName.trim() || "Catering-Anfrage";
+  const heroFacts = [
+    offerDraft.orderContext.eventDate ? formatDateDe(offerDraft.orderContext.eventDate) : "",
+    offerDraft.orderContext.location.trim(),
+    `ca. ${offerDraft.persons} Gäste`,
+  ].filter(Boolean);
+
   if (pageMode === "inquiry") {
     return (
       <AppShell>
@@ -481,52 +496,20 @@ export function HomePage() {
   }
 
   return (
-    <AppShell>
-      <div className="space-y-8">
-        <HeaderBar
-          title="Catering-Angebot zusammenstellen"
-          subtitle="Stellen Sie Ihr Catering-Angebot in wenigen Schritten zusammen — mit klarer Kalkulation und ohne Fachjargon."
-        />
-
+    <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
+      <div className="space-y-5">
         {importedInquiryId ? (
           <WarningBanner
             message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
           />
         ) : null}
 
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => setPageMode("inquiry")}
-            className="inline-flex items-center gap-1 font-bold text-muted transition hover:text-accent-deep"
-          >
-            <span aria-hidden="true">←</span> Zurück zur Anfrage
-          </button>
-          <span className="text-line">·</span>
-          <span className="font-bold text-accent-deep">Konfigurator</span>
-        </nav>
-
-        <OrderContextCard
-          orderContext={offerDraft.orderContext}
-          onOrderContextChange={(patch) =>
-            setOfferDraft((d) => ({
-              ...d,
-              orderContext: { ...d.orderContext, ...patch },
-            }))
-          }
-        />
-
-        <TopControls
-          persons={offerDraft.persons}
-          onPersonsChange={(n) =>
-            setOfferDraft((d) => ({ ...d, persons: clampPersons(n) }))
-          }
-          budgetEnabled={offerDraft.budgetEnabled}
-          onBudgetEnabledChange={(v) => setOfferDraft((d) => ({ ...d, budgetEnabled: v }))}
-          totalBudget={offerDraft.totalBudget}
-          onTotalBudgetChange={(n) =>
-            setOfferDraft((d) => ({ ...d, totalBudget: Math.max(0, n) }))
-          }
+        <InquiryHeroCard
+          eyebrow="Angebot vorbereiten"
+          title={heroTitle}
+          facts={heroFacts}
+          stateTitle="Angebot zusammenstellen"
+          stateDescription="Entwurf — noch kein Auftrag, keine Kundenbenachrichtigung."
         />
 
         {showPersonWarning ? (
@@ -537,17 +520,36 @@ export function HomePage() {
 
         {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
-          <div className="space-y-5">
-            <div className="space-y-1 border-b border-line pb-4">
+        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,.72fr)]">
+          <div className="grid content-start gap-[22px]">
+            <OrderContextCard
+              orderContext={offerDraft.orderContext}
+              onOrderContextChange={(patch) =>
+                setOfferDraft((d) => ({
+                  ...d,
+                  orderContext: { ...d.orderContext, ...patch },
+                }))
+              }
+            />
+
+            <TopControls
+              persons={offerDraft.persons}
+              onPersonsChange={(n) =>
+                setOfferDraft((d) => ({ ...d, persons: clampPersons(n) }))
+              }
+              budgetEnabled={offerDraft.budgetEnabled}
+              onBudgetEnabledChange={(v) => setOfferDraft((d) => ({ ...d, budgetEnabled: v }))}
+              totalBudget={offerDraft.totalBudget}
+              onTotalBudgetChange={(n) =>
+                setOfferDraft((d) => ({ ...d, totalBudget: Math.max(0, n) }))
+              }
+            />
+
+            <div className="space-y-0.5">
               <p className="text-[11px] font-extrabold uppercase tracking-[.08em] text-accent">
                 Katalog
               </p>
-              <h2 className="text-[17px] font-bold text-ink">Angebotsbausteine auswählen</h2>
-              <p className="max-w-3xl text-sm leading-relaxed text-muted">
-                Wählen Sie Speisen, Getränke, Personal oder weitere Bausteine für das Angebot. Details
-                und Mengen können pro Position angepasst werden.
-              </p>
+              <h2 className="text-[15px] font-bold text-ink">Angebotsbausteine auswählen</h2>
             </div>
             <SearchFilters
               catalogModule={catalogModule}
@@ -589,28 +591,30 @@ export function HomePage() {
             )}
           </div>
 
-          <OfferSummary
-            draft={offerDraft}
-            itemsById={itemsById}
-            subtotal={subtotal}
-            pricePerPerson={pricePerPerson}
-            pauschalen={pauschalen}
-            vat={vat}
-            onQuantityChange={onLineQty}
-            onModeChange={onLineMode}
-            onCustomizationNoteChange={onLineCustomizationNote}
-            onRemove={onRemoveLine}
-            onExportJson={onExportJson}
-            onExportCsv={onExportCsv}
-            onExportProposalJson={onExportProposalJson}
-            draftSaveStatus={draftSaveStatus}
-            draftSaveMessage={draftSaveMessage}
-            onSaveDraft={onSaveDraft}
-            prepareStatus={prepareStatus}
-            prepareMessage={prepareMessage}
-            canPrepareInCore={importedInquiryId !== null}
-            onPrepareInCore={onPrepareInCore}
-          />
+          <div className="grid content-start gap-[22px]">
+            <OfferSummary
+              draft={offerDraft}
+              itemsById={itemsById}
+              subtotal={subtotal}
+              pricePerPerson={pricePerPerson}
+              pauschalen={pauschalen}
+              vat={vat}
+              onQuantityChange={onLineQty}
+              onModeChange={onLineMode}
+              onCustomizationNoteChange={onLineCustomizationNote}
+              onRemove={onRemoveLine}
+              onExportJson={onExportJson}
+              onExportCsv={onExportCsv}
+              onExportProposalJson={onExportProposalJson}
+              draftSaveStatus={draftSaveStatus}
+              draftSaveMessage={draftSaveMessage}
+              onSaveDraft={onSaveDraft}
+              prepareStatus={prepareStatus}
+              prepareMessage={prepareMessage}
+              canPrepareInCore={importedInquiryId !== null}
+              onPrepareInCore={onPrepareInCore}
+            />
+          </div>
         </div>
 
         <footer className="border-t border-line pt-6 text-center text-xs text-muted">
@@ -618,6 +622,6 @@ export function HomePage() {
           Entwurf
         </footer>
       </div>
-    </AppShell>
+    </ConfiguratorShell>
   );
 }
