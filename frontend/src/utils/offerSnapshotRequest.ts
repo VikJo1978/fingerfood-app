@@ -2,6 +2,7 @@
 
 import type { OfferDraft } from "../types";
 import { offerDraftToCalculateBody } from "../services/api";
+import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
 export interface OfferSnapshotRequestBody {
   inquiry_id: string;
@@ -58,7 +59,7 @@ export function buildOfferSnapshotRequest(
   const remarks = ctx.remarks?.trim() ?? "";
   return {
     inquiry_id: inquiryId,
-    snapshot_id: crypto.randomUUID(),
+    snapshot_id: generateUuidV4(),
     valid_until: defaultValidUntil(ctx.eventDate),
     ...(draftId ? { source_draft_id: draftId } : {}),
     recipient: {
@@ -106,9 +107,6 @@ export class PrepareOfferError extends Error {
     this.status = status;
   }
 }
-
-const CANONICAL_UUID_V4 =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
