@@ -21,7 +21,8 @@ import {
 } from "../utils/pricing";
 import {
   buildOfferSnapshotRequest,
-  prepareOfferInCore,
+  prepareAndNavigateToCoreOffer,
+  prepareOfferErrorMessage,
 } from "../utils/offerSnapshotRequest";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import {
@@ -372,16 +373,17 @@ export function HomePage() {
         importedInquiryId,
         currentDraftId
       );
-      const result = await prepareOfferInCore(body);
-      setPrepareStatus("done");
-      setPrepareMessage(
-        `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)} · Snapshot V2).`
-      );
-    } catch (e) {
+      await prepareAndNavigateToCoreOffer(body, {
+        onPrepared: (result) => {
+          setPrepareStatus("done");
+          setPrepareMessage(
+            `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`
+          );
+        },
+      });
+    } catch (error) {
       setPrepareStatus("error");
-      setPrepareMessage(
-        e instanceof Error ? e.message : "Angebot konnte nicht vorbereitet werden."
-      );
+      setPrepareMessage(prepareOfferErrorMessage(error));
     }
   }, [currentDraftId, importedInquiryId, offerDraft]);
 

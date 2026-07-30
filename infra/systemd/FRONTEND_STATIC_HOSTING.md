@@ -8,6 +8,19 @@ or an additional port.
 Browser -> http://100.109.6.74:8091/ -> FastAPI static SPA -> relative /api/*
 ```
 
+The return to Core Offer Detail is server-configured. Before deploying this
+workflow, add the trusted Core Office Panel origin to the root-owned runtime
+environment without a path, query, fragment, or credentials:
+
+```text
+CORE_OFFICE_PANEL_URL=<trusted Core Office Panel HTTP(S) origin>
+```
+
+Keep `/etc/fingerfood-app.env` mode `600`. A backend restart is required after
+adding or changing this variable. The value is never embedded in the frontend
+bundle; the BFF returns the approved `/offer/{offer_id}` URL after Core has
+returned a validated canonical UUID.
+
 ## One-time Lenovo setup
 
 Create the runtime directory without touching application secrets:
@@ -47,10 +60,14 @@ Equivalent explicit commands:
 ```bash
 cd ~/fingerfood-app/frontend
 npm ci
+npm run lint
+npm run typecheck
 npm test -- --run
 env -u VITE_API_URL npm run build
 
-if grep -RIn 'FINGERFOOD_API_TOKEN\|localhost:5173\|100.109.6.74:8091' dist; then
+if grep -RInE \
+  'FINGERFOOD_API_TOKEN|CORE_OFFICE_API_URL|CORE_OFFICE_API_TOKEN|CORE_OFFICE_PANEL_URL|Authorization.{0,80}Bearer|localhost|100\.109\.6\.74' \
+  dist; then
   echo 'ERROR: production bundle is not deployment-neutral'
   exit 1
 fi

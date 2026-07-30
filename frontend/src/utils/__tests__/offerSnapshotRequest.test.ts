@@ -1,5 +1,12 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { buildOfferSnapshotRequest, prepareOfferInCore } from "../offerSnapshotRequest";
+import {
+  buildOfferSnapshotRequest,
+  navigateToPreparedCoreOffer,
+  parseOfferPrepareResponse,
+  prepareAndNavigateToCoreOffer,
+  prepareOfferErrorMessage,
+  prepareOfferInCore,
+} from "../offerSnapshotRequest";
 import {
   CORE_INQUIRY_FRAGMENT_PREFIX,
   parseCoreInquiryHandoff,
@@ -24,6 +31,12 @@ const draft = {
   },
 } satisfies OfferDraft;
 
+const offerId = "33333333-3333-4333-8333-333333333333";
+const validPrepareResponse = {
+  offer_id: offerId,
+};
+const bffOpenPath = `/api/ui/offer/open/${offerId}`;
+
 function encode(value: unknown): string {
   const bytes = new TextEncoder().encode(JSON.stringify(value));
   let binary = "";
@@ -38,12 +51,7 @@ describe("prepareOfferInCore", () => {
 
   it("calls the UI BFF route without Authorization header", async () => {
     const fetchMock = vi.fn(async (_url: string, _init: RequestInit) =>
-      Response.json({
-        offer_id: "offer-1",
-        offer_version_id: "ver-1",
-        snapshot_id: "snap-1",
-        schema_version: "offer_snapshot_v2",
-      })
+      Response.json(validPrepareResponse)
     );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -55,6 +63,162 @@ describe("prepareOfferInCore", () => {
     expect(url).toBe("/api/ui/offer/prepare");
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
     expect(JSON.stringify(init)).not.toContain("FINGERFOOD_API_TOKEN");
+  });
+
+  it("accepts only a canonical offer id from the successful response", () => {
+    expect(
+      parseOfferPrepareResponse({
+        ...validPrepareResponse,
+        redirect_url: `https://attacker.example/offer/${offerId}`,
+      })
+    ).toEqual(validPrepareResponse);
+  });
+
+  it.each([
+    ["null", null],
+    ["array", []],
+    ["missing offer_id", {}],
+    ["non-string offer_id", { ...validPrepareResponse, offer_id: 123 }],
+    ["non-v4 UUID", { ...validPrepareResponse, offer_id: "not-a-uuid" }],
+    [
+      "UUIDv1",
+      {
+        ...validPrepareResponse,
+        offer_id: "33333333-3333-1333-8333-333333333333",
+      },
+    ],
+    [
+      "non-canonical UUID",
+      {
+        ...validPrepareResponse,
+        offer_id: "33333333-3333-4333-8333-33333333333A",
+      },
+    ],
+  ])("rejects malformed successful payload: %s", (_case, payload) => {
+    expect(() => parseOfferPrepareResponse(payload)).toThrow(
+      "invalid_prepare_response"
+    );
+  });
+
+  it("navigates only to the same-origin BFF open route", () => {
+    const assign = vi.fn();
+    const result = validPrepareResponse;
+
+    navigateToPreparedCoreOffer(result, { assign });
+
+    expect(assign).toHaveBeenCalledOnce();
+    expect(assign).toHaveBeenCalledWith(bffOpenPath);
+  });
+
+  it("shows a stable error without echoing Core response details", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response("snapshot customer@example.test secret-token", { status: 502 })
+      )
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    await expect(prepareOfferInCore(body)).rejects.toMatchObject({
+      code: "prepare_offer_failed",
+      status: 502,
+    });
+    try {
+      await prepareOfferInCore(body);
+    } catch (error) {
+      expect(String(error)).not.toContain("customer@example.test");
+      expect(String(error)).not.toContain("secret-token");
+    }
+  });
+
+  it("does not navigate or announce success when preparation fails", async () => {
+    const assign = vi.fn();
+    const onPrepared = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response("snapshot customer@example.test secret-token", { status: 502 })
+      )
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    await expect(
+      prepareAndNavigateToCoreOffer(body, {
+        navigation: { assign },
+        onPrepared,
+      })
+    ).rejects.toThrow("prepare_offer_failed");
+
+    expect(assign).not.toHaveBeenCalled();
+    expect(onPrepared).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["invalid JSON", () => new Response("<html>proxy error</html>")],
+    ["missing field", () => Response.json({})],
+    [
+      "malformed UUID",
+      () => Response.json({ ...validPrepareResponse, offer_id: "bad-id" }),
+    ],
+  ])(
+    "does not navigate or announce success for a malformed 200 response: %s",
+    async (_case, responseFactory) => {
+      const assign = vi.fn();
+      const onPrepared = vi.fn();
+      vi.stubGlobal("fetch", vi.fn(async () => responseFactory()));
+
+      const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+      await expect(
+        prepareAndNavigateToCoreOffer(body, {
+          navigation: { assign },
+          onPrepared,
+        })
+      ).rejects.toThrow("invalid_prepare_response");
+
+      expect(assign).not.toHaveBeenCalled();
+      expect(onPrepared).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(["first creation", "idempotent replay", "canonical duplicate"])(
+    "navigates after a validated %s response",
+    async () => {
+      const assign = vi.fn();
+      const onPrepared = vi.fn();
+      vi.stubGlobal("fetch", vi.fn(async () => Response.json(validPrepareResponse)));
+
+      const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+      await prepareAndNavigateToCoreOffer(body, {
+        navigation: { assign },
+        onPrepared,
+      });
+
+      expect(onPrepared).toHaveBeenCalledWith(validPrepareResponse);
+      expect(assign).toHaveBeenCalledWith(bffOpenPath);
+    }
+  );
+
+  it("maps parser, JSON, schema, and arbitrary errors to fixed safe messages", () => {
+    const privateMessage = "snapshot customer@example.test Bearer private-token";
+
+    expect(
+      prepareOfferErrorMessage(
+        Object.assign(new Error("invalid_prepare_response"), {
+          code: "invalid_prepare_response",
+        })
+      )
+    ).toBe("Angebot konnte nicht vorbereitet werden.");
+    expect(prepareOfferErrorMessage(new Error(privateMessage))).toBe(
+      "Angebot konnte nicht vorbereitet werden."
+    );
+    expect(prepareOfferErrorMessage(privateMessage)).not.toContain(privateMessage);
+    try {
+      parseOfferPrepareResponse({ offer_id: "bad-id" });
+    } catch (error) {
+      expect(prepareOfferErrorMessage(error)).toBe(
+        "Core hat eine ungültige Antwort zurückgegeben."
+      );
+    }
   });
 
   it("uses the inquiry_id decoded from the Core handoff", () => {

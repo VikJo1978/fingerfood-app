@@ -108,6 +108,7 @@ def _mock_transport() -> httpx.MockTransport:
 
 @pytest.fixture()
 def core_api(tmp_path: Path):
+    from catering_system.domain.offer_pdf import OfferPdfStaticContent
     from catering_system.repositories.sqlite_inquiry_repository import (
         SQLiteInquiryRepository,
     )
@@ -128,13 +129,25 @@ def core_api(tmp_path: Path):
         planning_mode="caterer_suggestion",
         call_verification_required=False,
         call_verification_status="not_required",
+        contact_email="kunde@example.test",
+        contact_phone="+49401234567",
     )
     inquiries.close()
 
     ready: queue.Queue = queue.Queue()
 
     def run() -> None:
-        server = create_office_api_server(str(db), _TOKEN, "127.0.0.1", 0)
+        server = create_office_api_server(
+            str(db),
+            _TOKEN,
+            "127.0.0.1",
+            0,
+            offer_pdf_static_content=OfferPdfStaticContent(
+                company_legal_name="Test Catering GmbH",
+                company_address_lines=("Teststraße 1", "20095 Hamburg"),
+                acceptance_statement="Annahme durch schriftliche Bestätigung.",
+            ),
+        )
         ready.put(server)
         server.serve_forever()
 

@@ -26,6 +26,7 @@ class Settings:
     )
     core_office_api_url: str | None = _optional_env("CORE_OFFICE_API_URL")
     core_office_api_token: str | None = _optional_env("CORE_OFFICE_API_TOKEN")
+    core_office_panel_url: str | None = _optional_env("CORE_OFFICE_PANEL_URL")
     fingerfood_api_token: str | None = _optional_env("FINGERFOOD_API_TOKEN")
     frontend_dist_path: Path | None = _optional_path_env("FINGERFOOD_FRONTEND_DIST")
     catalog_adapter_strict: bool = (

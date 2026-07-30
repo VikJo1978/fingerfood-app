@@ -89,9 +89,61 @@ export function buildOfferSnapshotRequest(
 
 export interface OfferPrepareResponse {
   offer_id: string;
-  offer_version_id: string;
-  snapshot_id: string;
-  schema_version: string;
+}
+
+export type PrepareOfferErrorCode =
+  | "prepare_offer_failed"
+  | "invalid_prepare_response";
+
+export class PrepareOfferError extends Error {
+  readonly code: PrepareOfferErrorCode;
+  readonly status?: number;
+
+  constructor(code: PrepareOfferErrorCode, status?: number) {
+    super(code);
+    this.name = "PrepareOfferError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
+const CANONICAL_UUID_V4 =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+export function parseOfferPrepareResponse(
+  value: unknown
+): OfferPrepareResponse {
+  if (!isPlainObject(value)) {
+    throw new PrepareOfferError("invalid_prepare_response");
+  }
+
+  const offerId = value.offer_id;
+  if (
+    typeof offerId !== "string"
+    || !CANONICAL_UUID_V4.test(offerId)
+  ) {
+    throw new PrepareOfferError("invalid_prepare_response");
+  }
+
+  return { offer_id: offerId };
+}
+
+export function prepareOfferErrorMessage(error: unknown): string {
+  if (
+    error instanceof PrepareOfferError
+    && error.code === "invalid_prepare_response"
+  ) {
+    return "Core hat eine ungültige Antwort zurückgegeben.";
+  }
+  return "Angebot konnte nicht vorbereitet werden.";
 }
 
 export async function prepareOfferInCore(
@@ -104,8 +156,41 @@ export async function prepareOfferInCore(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Angebot konnte nicht vorbereitet werden (${res.status}): ${detail}`);
+    throw new PrepareOfferError("prepare_offer_failed", res.status);
   }
-  return res.json() as Promise<OfferPrepareResponse>;
+  let payload: unknown;
+  try {
+    payload = await res.json();
+  } catch {
+    throw new PrepareOfferError("invalid_prepare_response");
+  }
+  return parseOfferPrepareResponse(payload);
+}
+
+export interface OfferNavigation {
+  assign(url: string): void;
+}
+
+export function navigateToPreparedCoreOffer(
+  result: OfferPrepareResponse,
+  navigation: OfferNavigation = window.location
+): void {
+  navigation.assign(
+    `/api/ui/offer/open/${encodeURIComponent(result.offer_id)}`
+  );
+}
+
+export interface PrepareAndNavigateOptions {
+  navigation?: OfferNavigation;
+  onPrepared?: (result: OfferPrepareResponse) => void;
+}
+
+export async function prepareAndNavigateToCoreOffer(
+  body: OfferSnapshotRequestBody,
+  options: PrepareAndNavigateOptions = {}
+): Promise<OfferPrepareResponse> {
+  const result = await prepareOfferInCore(body);
+  options.onPrepared?.(result);
+  navigateToPreparedCoreOffer(result, options.navigation);
+  return result;
 }

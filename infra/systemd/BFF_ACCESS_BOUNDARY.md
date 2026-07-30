@@ -15,6 +15,17 @@ not be exposed on untrusted networks.
 
 Browser-facing BFF that calls `execute_prepare_offer()` server-side.
 
+On success it returns only the canonical `offer_id`. The browser navigates to
+the same-origin `/api/ui/offer/open/{offer_id}` route. That route validates the
+canonical UUIDv4 and returns an HTTP redirect derived server-side from
+`CORE_OFFICE_PANEL_URL`. The browser-facing prepare response and request body
+have no redirect destination. `CORE_OFFICE_PANEL_URL` must be an HTTP(S) origin
+without credentials, path, query, or fragment.
+
+On failure it returns only a stable application error code and fixed safe
+message. Core response bodies, transport diagnostics, snapshot contents,
+credentials, and customer data never cross this browser boundary.
+
 **What it is NOT:**
 
 - Not user authentication
@@ -39,6 +50,7 @@ Browser-facing BFF that calls `execute_prepare_offer()` server-side.
 - Putting `FINGERFOOD_API_TOKEN` in frontend, HTML, localStorage, or build env
 - nginx `Authorization` header injection as a substitute for real auth
 - Treating inquiry existence check as authorization
+- Copying a browser-supplied redirect destination into the response
 
 ## Future external access
 
