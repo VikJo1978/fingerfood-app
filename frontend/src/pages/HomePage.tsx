@@ -12,6 +12,7 @@ import { createDraft, fetchItems, updateDraft } from "../services/api";
 import type { CatalogItem, InquiryToConfiguratorTransferV1, OfferLine, QuantityMode } from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
+import { UuidGenerationError, generateUuidV4 } from "../utils/uuid";
 import {
   computeOfferLineTotal,
   computePauschalen,
@@ -68,6 +69,7 @@ export function HomePage() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [addItemError, setAddItemError] = useState<string | null>(null);
 
   const bootstrap = useCallback(async () => {
     setLoading(true);
@@ -199,7 +201,19 @@ export function HomePage() {
     quantity: number,
     surchargeSelected: boolean
   ) => {
-    const lineId = crypto.randomUUID();
+    let lineId: string;
+    try {
+      lineId = generateUuidV4();
+    } catch (error) {
+      if (error instanceof UuidGenerationError) {
+        setAddItemError(
+          "Position konnte nicht hinzugefügt werden: kein sicherer Zufallsgenerator verfügbar."
+        );
+        return;
+      }
+      throw error;
+    }
+    setAddItemError(null);
     const hasSurcharge = item.surcharge_amount != null && !!item.surcharge_label;
     const line: OfferLine = {
       lineId,
@@ -483,6 +497,12 @@ export function HomePage() {
         {loadError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
             {loadError}
+          </div>
+        ) : null}
+
+        {addItemError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+            {addItemError}
           </div>
         ) : null}
 
