@@ -4,9 +4,30 @@ import { describe, expect, it } from "vitest";
 import { OrderContextCard } from "../../components/OrderContextCard";
 import {
   CORE_INQUIRY_FRAGMENT_PREFIX,
+  CORE_INQUIRY_SESSION_KEY,
+  clearStoredCoreInquiryHandoff,
   consumeCoreInquiryHandoff,
   parseCoreInquiryHandoff,
+  readCoreInquiryHandoffHistoryMarker,
+  readStoredCoreInquiryHandoff,
+  storeCoreInquiryHandoff,
 } from "../coreInquiryHandoff";
+
+/** In-memory Storage stand-in so these lifecycle tests don't depend on
+ * jsdom's sessionStorage or any HomePage rendering. */
+function fakeStorage(): Storage {
+  const data = new Map<string, string>();
+  return {
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => void data.set(key, value),
+    removeItem: (key: string) => void data.delete(key),
+    clear: () => data.clear(),
+    key: () => null,
+    get length() {
+      return data.size;
+    },
+  };
+}
 
 function encode(value: unknown): string {
   const bytes = new TextEncoder().encode(JSON.stringify(value));
@@ -145,5 +166,111 @@ describe("Core Inquiry handoff", () => {
     );
     expect(result).toEqual({ present: true, handoff: null });
     expect(calls).toEqual([[null, "", "/angebot?lang=de"]]);
+  });
+
+  it("writes a history.state marker containing only the schema and inquiry id — no contact data", () => {
+    const calls: unknown[][] = [];
+    const envelope = validEnvelope();
+    consumeCoreInquiryHandoff(
+      { hash: `${CORE_INQUIRY_FRAGMENT_PREFIX}${encode(envelope)}`, pathname: "/angebot", search: "" },
+      { replaceState: (...args: unknown[]) => calls.push(args) } as Pick<History, "replaceState">
+    );
+    expect(calls).toEqual([
+      [
+        { schema_version: "core_inquiry_offer_prefill_v1", inquiry_id: envelope.inquiry_id },
+        "",
+        "/angebot",
+      ],
+    ]);
+  });
+});
+
+describe("Core Inquiry handoff — sessionStorage lifecycle", () => {
+  const handoff = {
+    schema_version: "core_inquiry_offer_prefill_v1" as const,
+    source: "silberloeffel-core" as const,
+    inquiry_id: "11111111-1111-1111-1111-111111111111",
+    transfer: validEnvelope().transfer,
+  };
+
+  it("reads back exactly what was stored when the marker's inquiry id matches", () => {
+    const storage = fakeStorage();
+    storeCoreInquiryHandoff(handoff, storage);
+    expect(readStoredCoreInquiryHandoff(handoff.inquiry_id, storage)).toEqual(handoff);
+  });
+
+  it("stores only the approved prefill shape — no token, credential, or priced Offer fields", () => {
+    const storage = fakeStorage();
+    storeCoreInquiryHandoff(handoff, storage);
+    const raw = storage.getItem(CORE_INQUIRY_SESSION_KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(Object.keys(parsed).sort()).toEqual(
+      ["inquiry_id", "schema_version", "source", "transfer"].sort()
+    );
+    expect(raw).not.toMatch(/bearer/i);
+    expect(raw).not.toMatch(/token/i);
+    expect(raw).not.toMatch(/api[_-]?key/i);
+    expect(raw).not.toMatch(/offer_id/i);
+    expect(raw).not.toMatch(/net_total_cents|unit_net_cents|vat_/i);
+  });
+
+  it("ignores and removes a stored handoff for a different inquiry id than the marker", () => {
+    const storage = fakeStorage();
+    storeCoreInquiryHandoff(handoff, storage);
+    expect(readStoredCoreInquiryHandoff("22222222-2222-2222-2222-222222222222", storage)).toBeNull();
+    expect(storage.getItem(CORE_INQUIRY_SESSION_KEY)).toBeNull();
+  });
+
+  it("ignores and removes malformed JSON", () => {
+    const storage = fakeStorage();
+    storage.setItem(CORE_INQUIRY_SESSION_KEY, "{not json");
+    expect(readStoredCoreInquiryHandoff(handoff.inquiry_id, storage)).toBeNull();
+    expect(storage.getItem(CORE_INQUIRY_SESSION_KEY)).toBeNull();
+  });
+
+  it("ignores and removes a well-formed but schema-invalid payload", () => {
+    const storage = fakeStorage();
+    storage.setItem(
+      CORE_INQUIRY_SESSION_KEY,
+      JSON.stringify({ ...handoff, schema_version: "obsolete-v0" })
+    );
+    expect(readStoredCoreInquiryHandoff(handoff.inquiry_id, storage)).toBeNull();
+    expect(storage.getItem(CORE_INQUIRY_SESSION_KEY)).toBeNull();
+  });
+
+  it("returns null without touching storage when nothing is stored", () => {
+    const storage = fakeStorage();
+    expect(readStoredCoreInquiryHandoff(handoff.inquiry_id, storage)).toBeNull();
+  });
+
+  it("clearStoredCoreInquiryHandoff removes the entry outright", () => {
+    const storage = fakeStorage();
+    storeCoreInquiryHandoff(handoff, storage);
+    clearStoredCoreInquiryHandoff(storage);
+    expect(storage.getItem(CORE_INQUIRY_SESSION_KEY)).toBeNull();
+  });
+
+  it("a fresh handoff for a different inquiry fully overwrites the previous one", () => {
+    const storage = fakeStorage();
+    storeCoreInquiryHandoff(handoff, storage);
+    const handoffB = { ...handoff, inquiry_id: "33333333-3333-3333-3333-333333333333" };
+    storeCoreInquiryHandoff(handoffB, storage);
+    expect(readStoredCoreInquiryHandoff(handoffB.inquiry_id, storage)).toEqual(handoffB);
+    // The old inquiry id is no longer readable at all — not merely shadowed.
+    expect(readStoredCoreInquiryHandoff(handoff.inquiry_id, storage)).toBeNull();
+  });
+
+  it("readCoreInquiryHandoffHistoryMarker only recognizes a well-formed marker", () => {
+    expect(
+      readCoreInquiryHandoffHistoryMarker({
+        state: { schema_version: "core_inquiry_offer_prefill_v1", inquiry_id: "x" },
+      })
+    ).toEqual({ schema_version: "core_inquiry_offer_prefill_v1", inquiry_id: "x" });
+    expect(readCoreInquiryHandoffHistoryMarker({ state: null })).toBeNull();
+    expect(readCoreInquiryHandoffHistoryMarker({ state: {} })).toBeNull();
+    expect(
+      readCoreInquiryHandoffHistoryMarker({ state: { schema_version: "wrong", inquiry_id: "x" } })
+    ).toBeNull();
   });
 });
