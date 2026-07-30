@@ -239,8 +239,27 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     await act(async () => {});
     await screen.findByText("Fingerfood Paket");
 
+    // Same Inquiry id (shown truncated in the imported-from-Core banner).
+    expect(
+      screen.getByText(`Aus Core-Anfrage ${INQUIRY_ID.slice(0, 8)} vorbefüllt.`, {
+        exact: false,
+      })
+    ).toBeTruthy();
+    // Company/contact/email/phone.
     expect(screen.getByDisplayValue("Musterfirma GmbH")).toBeTruthy();
+    expect(screen.getByDisplayValue("Erika Musterfrau")).toBeTruthy();
+    expect(screen.getByDisplayValue("erika@example.invalid")).toBeTruthy();
+    expect(screen.getByDisplayValue("+49301234567")).toBeTruthy();
+    // Address.
+    expect(screen.getByDisplayValue("Musterstraße 1, 22549 Hamburg")).toBeTruthy();
+    // Event date/time.
     expect(screen.getByDisplayValue("2026-07-31")).toBeTruthy();
+    expect(screen.getByDisplayValue("12:25")).toBeTruthy();
+    // Guest count — must be the real 30 from the handoff, not the static
+    // default of 10 a lost/reset offerDraft would fall back to.
+    expect(screen.getByDisplayValue("30")).toBeTruthy();
+    // Remarks.
+    expect(screen.getByDisplayValue("Betreff: Hochzeit")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Angebotsvorschau anzeigen" }));
     const dialog = screen.getByRole("dialog", { name: "Angebotsvorschau" });
