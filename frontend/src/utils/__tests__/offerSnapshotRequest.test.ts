@@ -34,8 +34,8 @@ const draft = {
 const offerId = "33333333-3333-4333-8333-333333333333";
 const validPrepareResponse = {
   offer_id: offerId,
-  redirect_url: `https://office.example.test/offer/${offerId}`,
 };
+const bffOpenPath = `/api/ui/offer/open/${offerId}`;
 
 function encode(value: unknown): string {
   const bytes = new TextEncoder().encode(JSON.stringify(value));
@@ -65,11 +65,11 @@ describe("prepareOfferInCore", () => {
     expect(JSON.stringify(init)).not.toContain("FINGERFOOD_API_TOKEN");
   });
 
-  it("parses a successful response into a validated navigation value", () => {
+  it("accepts only a canonical offer id from the successful response", () => {
     expect(
       parseOfferPrepareResponse({
         ...validPrepareResponse,
-        ignored_server_field: "not-forwarded",
+        redirect_url: `https://attacker.example/offer/${offerId}`,
       })
     ).toEqual(validPrepareResponse);
   });
@@ -77,51 +77,21 @@ describe("prepareOfferInCore", () => {
   it.each([
     ["null", null],
     ["array", []],
-    ["missing offer_id", { redirect_url: validPrepareResponse.redirect_url }],
+    ["missing offer_id", {}],
     ["non-string offer_id", { ...validPrepareResponse, offer_id: 123 }],
     ["non-v4 UUID", { ...validPrepareResponse, offer_id: "not-a-uuid" }],
+    [
+      "UUIDv1",
+      {
+        ...validPrepareResponse,
+        offer_id: "33333333-3333-1333-8333-333333333333",
+      },
+    ],
     [
       "non-canonical UUID",
       {
         ...validPrepareResponse,
         offer_id: "33333333-3333-4333-8333-33333333333A",
-      },
-    ],
-    ["missing redirect_url", { offer_id: offerId }],
-    ["relative redirect", { ...validPrepareResponse, redirect_url: `/offer/${offerId}` }],
-    [
-      "unsafe redirect scheme",
-      { ...validPrepareResponse, redirect_url: `javascript:/offer/${offerId}` },
-    ],
-    [
-      "redirect credentials",
-      {
-        ...validPrepareResponse,
-        redirect_url: `https://user:secret@office.example.test/offer/${offerId}`,
-      },
-    ],
-    [
-      "redirect query",
-      {
-        ...validPrepareResponse,
-        redirect_url: `${validPrepareResponse.redirect_url}?next=attacker`,
-      },
-    ],
-    [
-      "redirect fragment",
-      {
-        ...validPrepareResponse,
-        redirect_url: `${validPrepareResponse.redirect_url}#snapshot`,
-      },
-    ],
-    [
-      "redirect for another offer",
-      {
-        ...validPrepareResponse,
-        redirect_url: (
-          "https://office.example.test/offer/"
-          + "44444444-4444-4444-8444-444444444444"
-        ),
       },
     ],
   ])("rejects malformed successful payload: %s", (_case, payload) => {
@@ -130,14 +100,14 @@ describe("prepareOfferInCore", () => {
     );
   });
 
-  it("navigates to the server-approved Core Offer Detail URL", () => {
+  it("navigates only to the same-origin BFF open route", () => {
     const assign = vi.fn();
     const result = validPrepareResponse;
 
     navigateToPreparedCoreOffer(result, { assign });
 
     expect(assign).toHaveBeenCalledOnce();
-    expect(assign).toHaveBeenCalledWith(result.redirect_url);
+    expect(assign).toHaveBeenCalledWith(bffOpenPath);
   });
 
   it("shows a stable error without echoing Core response details", async () => {
@@ -185,17 +155,10 @@ describe("prepareOfferInCore", () => {
 
   it.each([
     ["invalid JSON", () => new Response("<html>proxy error</html>")],
-    ["missing field", () => Response.json({ offer_id: offerId })],
+    ["missing field", () => Response.json({})],
     [
       "malformed UUID",
       () => Response.json({ ...validPrepareResponse, offer_id: "bad-id" }),
-    ],
-    [
-      "unsafe redirect",
-      () => Response.json({
-        ...validPrepareResponse,
-        redirect_url: "javascript:alert(document.cookie)",
-      }),
     ],
   ])(
     "does not navigate or announce success for a malformed 200 response: %s",
@@ -231,7 +194,7 @@ describe("prepareOfferInCore", () => {
       });
 
       expect(onPrepared).toHaveBeenCalledWith(validPrepareResponse);
-      expect(assign).toHaveBeenCalledWith(validPrepareResponse.redirect_url);
+      expect(assign).toHaveBeenCalledWith(bffOpenPath);
     }
   );
 

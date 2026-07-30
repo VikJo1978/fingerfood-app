@@ -89,7 +89,6 @@ export function buildOfferSnapshotRequest(
 
 export interface OfferPrepareResponse {
   offer_id: string;
-  redirect_url: string;
 }
 
 export type PrepareOfferErrorCode =
@@ -127,36 +126,14 @@ export function parseOfferPrepareResponse(
   }
 
   const offerId = value.offer_id;
-  const redirectValue = value.redirect_url;
   if (
     typeof offerId !== "string"
     || !CANONICAL_UUID_V4.test(offerId)
-    || typeof redirectValue !== "string"
   ) {
     throw new PrepareOfferError("invalid_prepare_response");
   }
 
-  let redirect: URL;
-  try {
-    redirect = new URL(redirectValue);
-  } catch {
-    throw new PrepareOfferError("invalid_prepare_response");
-  }
-  if (
-    (redirect.protocol !== "https:" && redirect.protocol !== "http:")
-    || redirect.username !== ""
-    || redirect.password !== ""
-    || redirect.search !== ""
-    || redirect.hash !== ""
-    || redirect.pathname !== `/offer/${offerId}`
-  ) {
-    throw new PrepareOfferError("invalid_prepare_response");
-  }
-
-  return {
-    offer_id: offerId,
-    redirect_url: redirect.toString(),
-  };
+  return { offer_id: offerId };
 }
 
 export function prepareOfferErrorMessage(error: unknown): string {
@@ -198,7 +175,9 @@ export function navigateToPreparedCoreOffer(
   result: OfferPrepareResponse,
   navigation: OfferNavigation = window.location
 ): void {
-  navigation.assign(result.redirect_url);
+  navigation.assign(
+    `/api/ui/offer/open/${encodeURIComponent(result.offer_id)}`
+  );
 }
 
 export interface PrepareAndNavigateOptions {

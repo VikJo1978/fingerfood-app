@@ -14,6 +14,7 @@ the prepare targets a real Core inquiry, not that the caller is authorized.
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse
 
 from app.routes.offer import (
     OfferSnapshotBuildRequest,
@@ -26,6 +27,7 @@ from app.services.core_office_client import CoreOfficeClientError
 from app.services.core_offer_redirect import (
     build_core_offer_redirect_url,
     normalize_core_office_panel_url,
+    validate_offer_id,
 )
 
 router = APIRouter(prefix="/api/ui/offer", tags=["ui-offer"])
@@ -35,9 +37,7 @@ router = APIRouter(prefix="/api/ui/offer", tags=["ui-offer"])
 def ui_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
     """Network-authenticated BFF: prepare offer in Core without browser token."""
     try:
-        panel_origin = normalize_core_office_panel_url(
-            settings.core_office_panel_url
-        )
+        normalize_core_office_panel_url(settings.core_office_panel_url)
     except ValueError as exc:
         raise HTTPException(
             status_code=503,
@@ -75,10 +75,7 @@ def ui_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
         )
     result = execute_prepare_offer(body)
     try:
-        redirect_url = build_core_offer_redirect_url(
-            panel_origin,
-            result["offer_id"],
-        )
+        offer_id = validate_offer_id(result["offer_id"])
     except ValueError as exc:
         raise HTTPException(
             status_code=502,
@@ -87,7 +84,33 @@ def ui_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
                 "Core offer preparation returned an invalid response.",
             ),
         ) from exc
-    return {
-        "offer_id": result["offer_id"],
-        "redirect_url": redirect_url,
-    }
+    return {"offer_id": offer_id}
+
+
+@router.get("/open/{offer_id}")
+def ui_open_offer(offer_id: str) -> RedirectResponse:
+    """Redirect a canonical offer id through trusted server configuration."""
+    try:
+        canonical_offer_id = validate_offer_id(offer_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=safe_error_detail(
+                "invalid_offer_id",
+                "Offer id is invalid.",
+            ),
+        ) from exc
+    try:
+        redirect_url = build_core_offer_redirect_url(
+            settings.core_office_panel_url,
+            canonical_offer_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=safe_error_detail(
+                "core_office_panel_not_configured",
+                "Core Office Panel return URL is not configured.",
+            ),
+        ) from exc
+    return RedirectResponse(url=redirect_url, status_code=302)

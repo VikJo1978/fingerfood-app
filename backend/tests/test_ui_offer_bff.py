@@ -22,6 +22,7 @@ from tests.test_offer_api_auth import _PREPARE_URL, _prepare_body, _TOKEN
 
 _UI_PREPARE_URL = "/api/ui/offer/prepare"
 _INQUIRY_ID = "11111111-1111-4111-8111-111111111111"
+_OFFER_ID = "33333333-3333-4333-8333-333333333333"
 
 
 @pytest.fixture
@@ -55,15 +56,10 @@ def test_ui_prepare_does_not_require_browser_bearer_token(
 
     response = client.post(_UI_PREPARE_URL, json=_prepare_body())
     assert response.status_code == 200
-    assert response.json() == {
-        "offer_id": "33333333-3333-4333-8333-333333333333",
-        "redirect_url": (
-            "https://office.example.test/offer/"
-            "33333333-3333-4333-8333-333333333333"
-        ),
-    }
+    assert response.json() == {"offer_id": _OFFER_ID}
     assert "core-secret-token" not in response.text
     assert "snapshot_id" not in response.text
+    assert "office.example.test" not in response.text
     core.get_inquiry.assert_called_once_with(_INQUIRY_ID)
 
 
@@ -156,9 +152,7 @@ def test_ui_prepare_ignores_user_controlled_redirect(
     response = client.post(_UI_PREPARE_URL, json=body)
 
     assert response.status_code == 200
-    assert response.json()["redirect_url"].startswith(
-        "https://office.example.test/offer/"
-    )
+    assert response.json() == {"offer_id": _OFFER_ID}
     assert "attacker.example" not in response.text
 
 
@@ -184,9 +178,73 @@ def test_ui_prepare_replay_returns_same_canonical_destination(
 
     assert first.status_code == replay.status_code == 200
     assert first.json() == replay.json()
-    assert first.json()["redirect_url"].endswith(
-        "/offer/33333333-3333-4333-8333-333333333333"
+    assert first.json() == {"offer_id": _OFFER_ID}
+
+
+def test_ui_open_offer_redirects_using_server_configuration(
+    client: TestClient,
+) -> None:
+    response = client.get(
+        f"/api/ui/offer/open/{_OFFER_ID}",
+        follow_redirects=False,
     )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == (
+        f"https://office.example.test/offer/{_OFFER_ID}"
+    )
+
+
+@pytest.mark.parametrize(
+    "offer_id",
+    [
+        "not-a-uuid",
+        "33333333-3333-1333-8333-333333333333",
+        "33333333-3333-4333-8333-33333333333A",
+    ],
+)
+def test_ui_open_offer_rejects_noncanonical_uuid4(
+    client: TestClient,
+    offer_id: str,
+) -> None:
+    response = client.get(
+        f"/api/ui/offer/open/{offer_id}",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": {
+            "code": "invalid_offer_id",
+            "message": "Offer id is invalid.",
+        }
+    }
+    assert "location" not in response.headers
+
+
+def test_ui_open_offer_rejects_unsafe_server_configuration(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        settings,
+        "core_office_panel_url",
+        "https://attacker.example@office.example.test/offer",
+    )
+
+    response = client.get(
+        f"/api/ui/offer/open/{_OFFER_ID}",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": {
+            "code": "core_office_panel_not_configured",
+            "message": "Core Office Panel return URL is not configured.",
+        }
+    }
+    assert "location" not in response.headers
 
 
 def test_redirect_handling_does_not_log_snapshot_or_customer_data(
