@@ -24,6 +24,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r backend/requirements-dev.txt
+      - name: Lint backend
+        working-directory: backend
+        run: ruff check app tests
+      - name: Type-check backend
+        working-directory: backend
+        run: mypy app
       - name: Test backend
         working-directory: backend
         run: pytest -q
@@ -40,6 +46,12 @@ jobs:
       - name: Install frontend
         working-directory: frontend
         run: npm ci
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+      - name: Type-check frontend
+        working-directory: frontend
+        run: npm run typecheck
       - name: Test frontend
         working-directory: frontend
         run: npm test
@@ -49,9 +61,13 @@ jobs:
       - name: Verify production bundle boundary
         working-directory: frontend
         run: |
-          if grep -RInE \
-            'FINGERFOOD_API_TOKEN|CORE_OFFICE_API_TOKEN|CORE_OFFICE_PANEL_URL|100\.109\.6\.74|localhost' \
-            dist; then
+          forbidden_bundle_pattern='FINGERFOOD_API_TOKEN|CORE_OFFICE_API_URL|CORE_OFFICE_API_TOKEN|CORE_OFFICE_PANEL_URL|Authorization.{0,80}Bearer|100\.109\.6\.74|localhost'
+          if ! grep -Eq "$forbidden_bundle_pattern" \
+            <<< 'Authorization: Bearer bundle-audit-sentinel'; then
+            echo "bundle boundary sentinel was not detected" >&2
+            exit 1
+          fi
+          if grep -RInE "$forbidden_bundle_pattern" dist; then
             echo "server-only configuration found in production bundle" >&2
             exit 1
           fi

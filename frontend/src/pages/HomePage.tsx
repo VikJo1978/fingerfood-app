@@ -22,6 +22,7 @@ import {
 import {
   buildOfferSnapshotRequest,
   prepareAndNavigateToCoreOffer,
+  prepareOfferErrorMessage,
 } from "../utils/offerSnapshotRequest";
 import { buildProposalPayloadV1 } from "../utils/proposalExport";
 import {
@@ -380,11 +381,9 @@ export function HomePage() {
           );
         },
       });
-    } catch (e) {
+    } catch (error) {
       setPrepareStatus("error");
-      setPrepareMessage(
-        e instanceof Error ? e.message : "Angebot konnte nicht vorbereitet werden."
-      );
+      setPrepareMessage(prepareOfferErrorMessage(error));
     }
   }, [currentDraftId, importedInquiryId, offerDraft]);
 

@@ -107,7 +107,13 @@ def build_snapshot(body: OfferSnapshotBuildRequest) -> dict[str, object]:
     try:
         return _build_snapshot_payload(body)
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=422,
+            detail=safe_error_detail(
+                "invalid_offer_snapshot",
+                "Offer snapshot is invalid.",
+            ),
+        ) from exc
 
 
 @router.post("/prepare", dependencies=[Depends(require_fingerfood_api_token)])

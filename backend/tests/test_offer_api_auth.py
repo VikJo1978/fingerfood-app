@@ -108,6 +108,35 @@ def test_snapshot_without_token_returns_401(auth_client: TestClient) -> None:
     assert response.status_code == 401
 
 
+def test_snapshot_validation_failure_returns_only_safe_fixed_detail(
+    auth_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    private_marker = "customer@example.test snapshot Bearer private-token"
+    monkeypatch.setattr(
+        offer_routes,
+        "_build_snapshot_payload",
+        MagicMock(side_effect=ValueError(private_marker)),
+    )
+
+    response = auth_client.post(
+        "/api/offer/snapshot",
+        json=_prepare_body(),
+        headers={"Authorization": f"Bearer {_TOKEN}"},
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": {
+            "code": "invalid_offer_snapshot",
+            "message": "Offer snapshot is invalid.",
+        }
+    }
+    assert private_marker not in response.text
+    assert private_marker not in caplog.text
+
+
 def test_health_stays_public(auth_client: TestClient) -> None:
     assert auth_client.get("/api/health").status_code == 200
 

@@ -17,7 +17,7 @@ from app.main import app
 from app.routes import offer as offer_routes
 from app.routes import ui_offer as ui_offer_routes
 from app.services import core_office_client as core_client_module
-from app.services.core_office_client import CoreOfficeClient, CoreOfficeClientError
+from app.services.core_office_client import CoreOfficeClient
 from tests.test_offer_api_auth import _PREPARE_URL, _prepare_body, _TOKEN
 
 _UI_PREPARE_URL = "/api/ui/offer/prepare"
@@ -220,10 +220,18 @@ def test_ui_prepare_lookup_failure_returns_only_stable_safe_error(
     caplog: pytest.LogCaptureFixture,
     status: int,
 ) -> None:
-    private_marker = "snapshot customer@example.test secret-token proxy diagnostics"
+    private_markers = (
+        "<html>private proxy diagnostics</html>",
+        "snapshot-customer@example.test",
+        "Bearer fake-lookup-credential",
+    )
 
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(status, text=private_marker, request=request)
+        return httpx.Response(
+            status,
+            text=" ".join(private_markers),
+            request=request,
+        )
 
     core = CoreOfficeClient(
         "https://core.example.test",
@@ -243,8 +251,9 @@ def test_ui_prepare_lookup_failure_returns_only_stable_safe_error(
             "message": "Core inquiry lookup failed.",
         }
     }
-    assert private_marker not in response.text
-    assert private_marker not in caplog.text
+    for marker in private_markers:
+        assert marker not in response.text
+        assert marker not in caplog.text
     assert "core-secret-token" not in response.text
     assert "core-secret-token" not in caplog.text
     execute.assert_not_called()
@@ -255,24 +264,40 @@ def test_ui_prepare_write_failure_returns_only_stable_safe_error(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    lookup_core = MagicMock()
-    lookup_core.is_configured.return_value = True
-    lookup_core.get_inquiry.return_value = {"inquiry_id": _INQUIRY_ID}
-    prepare_core = MagicMock()
-    prepare_core.is_configured.return_value = True
-    prepare_core.prepare_offer.side_effect = CoreOfficeClientError(
-        code="prepare_offer_failed",
-        status_code=500,
+    private_markers = (
+        "<html>private reverse-proxy failure</html>",
+        "customer@example.test",
+        "snapshot-private-payload",
+        "Bearer fake-write-credential",
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET":
+            return httpx.Response(
+                200,
+                json={"inquiry_id": _INQUIRY_ID},
+                request=request,
+            )
+        return httpx.Response(
+            500,
+            text=" ".join(private_markers),
+            request=request,
+        )
+
+    core = CoreOfficeClient(
+        "https://core.example.test",
+        "core-bff-private-token",
+        transport=httpx.MockTransport(handler),
     )
     monkeypatch.setattr(
         ui_offer_routes,
         "build_core_office_client",
-        lambda: lookup_core,
+        lambda: core,
     )
     monkeypatch.setattr(
         offer_routes,
         "build_core_office_client",
-        lambda: prepare_core,
+        lambda: core,
     )
     monkeypatch.setattr(
         offer_routes,
@@ -292,10 +317,13 @@ def test_ui_prepare_write_failure_returns_only_stable_safe_error(
             "message": "Core offer preparation failed.",
         }
     }
+    for marker in private_markers:
+        assert marker not in response.text
+        assert marker not in caplog.text
     assert "a@example.invalid" not in response.text
     assert "a@example.invalid" not in caplog.text
-    assert "core-secret" not in response.text
-    assert "core-secret" not in caplog.text
+    assert "core-bff-private-token" not in response.text
+    assert "core-bff-private-token" not in caplog.text
 
 
 def test_ui_prepare_snapshot_failure_returns_only_stable_safe_error(

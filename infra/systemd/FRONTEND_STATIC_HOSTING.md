@@ -60,11 +60,13 @@ Equivalent explicit commands:
 ```bash
 cd ~/fingerfood-app/frontend
 npm ci
+npm run lint
+npm run typecheck
 npm test -- --run
 env -u VITE_API_URL npm run build
 
-if grep -RIn \
-  'FINGERFOOD_API_TOKEN\|CORE_OFFICE_API_TOKEN\|CORE_OFFICE_PANEL_URL\|localhost\|100.109.6.74' \
+if grep -RInE \
+  'FINGERFOOD_API_TOKEN|CORE_OFFICE_API_URL|CORE_OFFICE_API_TOKEN|CORE_OFFICE_PANEL_URL|Authorization.{0,80}Bearer|localhost|100\.109\.6\.74' \
   dist; then
   echo 'ERROR: production bundle is not deployment-neutral'
   exit 1
