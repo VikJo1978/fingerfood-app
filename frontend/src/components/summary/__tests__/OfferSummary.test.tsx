@@ -95,3 +95,102 @@ describe("OfferSummary — primary action visibility", () => {
     expect(screen.getByRole("dialog", { name: "Angebotsvorschau" })).toBeTruthy();
   });
 });
+
+/** Regression coverage for the scrolling UX fix: with several lines
+ * selected, totals/Pauschalen and the two final action buttons
+ * ("Angebotsvorschau anzeigen", "Angebot in Core vorbereiten") used to end
+ * up far below the fold inside a single tall panel with no way to reach
+ * them short of scrolling the whole page past a pinned sticky column.
+ * jsdom doesn't evaluate real CSS/media queries, so these assert the
+ * structural contract (DOM containment + the `lg:`-scoped class tokens
+ * that drive it) rather than pixel layout — the actual pixel behavior was
+ * verified manually in a real browser at 1440x900 and at 768/390px. */
+describe("OfferSummary — scroll/fixed-footer structure", () => {
+  function draftWithLines(count: number): OfferDraft {
+    const base = createInitialOfferDraft();
+    return {
+      ...base,
+      lines: Array.from({ length: count }, (_, i) => ({
+        lineId: `line-${i}`,
+        itemId: `item-${i}`,
+        quantityMode: "total" as const,
+        quantity: 10,
+        snapshot: {
+          title: `Artikel ${i}`,
+          source_type: "internal" as const,
+          pricing_mode: "per_piece" as const,
+          price_type: "piece" as const,
+          chosen_price: 2.3,
+          item_kind: "simple" as const,
+        },
+      })),
+    };
+  }
+
+  it("scopes the line-items scroll region to lg: only — no unprefixed overflow/height constraint for mobile", () => {
+    renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    expect(region.className).toMatch(/lg:overflow-y-auto/);
+    expect(region.className).toMatch(/lg:min-h-0/);
+    expect(region.className).toMatch(/lg:flex-1/);
+    // No bare (unprefixed) overflow-y-auto or max-h-* — those would force a
+    // cramped fixed-height scroller on mobile/tablet too.
+    expect(region.className).not.toMatch(/(?:^|\s)overflow-y-auto/);
+    expect(region.className).not.toMatch(/(?:^|\s)max-h-/);
+  });
+
+  it("keeps totals, Pauschalen and both final action buttons outside the scrollable region", () => {
+    renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+
+    const positionenLabel = screen.getByText("Positionen");
+    const pauschaleLabel = screen.getByText("Büffetpauschale");
+    const previewButton = screen.getByRole("button", { name: "Angebotsvorschau anzeigen" });
+    const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+
+    expect(region.contains(positionenLabel)).toBe(false);
+    expect(region.contains(pauschaleLabel)).toBe(false);
+    expect(region.contains(previewButton)).toBe(false);
+    expect(region.contains(prepareButton)).toBe(false);
+  });
+
+  it("keeps the primary action (Angebot in Core vorbereiten) specifically outside the scrollable region regardless of line count", () => {
+    renderSummary({ draft: draftWithLines(12), canPrepareInCore: true });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(region.contains(prepareButton)).toBe(false);
+    // It's still enabled/reachable, not just present.
+    expect(prepareButton.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("puts the line items themselves inside the scrollable region", () => {
+    renderSummary({ draft: draftWithLines(3) });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    const firstItem = screen.getByText("Artikel 0");
+    expect(region.contains(firstItem)).toBe(true);
+  });
+
+  it("only applies the scroll-affordance shadow/divider at lg:, and keeps the outer card's own max-height desktop-only", () => {
+    renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
+    const positionenLabel = screen.getByText("Positionen");
+    const footer = positionenLabel.closest(".shrink-0");
+    expect(footer?.className).toMatch(/lg:shadow-/);
+
+    const aside = footer?.closest("aside");
+    expect(aside?.className).toMatch(/lg:max-h-\[calc\(100vh-4rem\)\]/);
+    expect(aside?.className).not.toMatch(/(?:^|\s)max-h-\[/);
+  });
+
+  it("mobile/tablet: nothing forces a cramped fixed-height inner scroller — summary flows naturally", () => {
+    renderSummary({ draft: draftWithLines(6), canPrepareInCore: true });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    const aside = region.closest("aside");
+
+    for (const el of [region, aside]) {
+      const cls = el?.className ?? "";
+      expect(cls).not.toMatch(/(?:^|\s)overflow-y-auto(?:\s|$)/);
+      expect(cls).not.toMatch(/(?:^|\s)max-h-\[/);
+      expect(cls).not.toMatch(/(?:^|\s)h-\[/);
+    }
+  });
+});
