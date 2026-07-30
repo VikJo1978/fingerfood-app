@@ -1,4 +1,7 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { OrderContextCard } from "../../components/OrderContextCard";
 import {
   CORE_INQUIRY_FRAGMENT_PREFIX,
   consumeCoreInquiryHandoff,
@@ -43,12 +46,38 @@ function validEnvelope() {
 }
 
 describe("Core Inquiry handoff", () => {
-  it("round-trips strict UTF-8 data and preserves an unknown guest count", () => {
+  it("preserves every contact and event field through parsing and visible form state", () => {
     const parsed = parseCoreInquiryHandoff(
       `${CORE_INQUIRY_FRAGMENT_PREFIX}${encode(validEnvelope())}`
     );
+
     expect(parsed?.transfer.planning.persons).toBeNull();
-    expect(parsed?.transfer.orderContextPrefill.contactPerson).toBe("Jörg Weiß");
+    expect(parsed?.transfer.orderContextPrefill).toEqual({
+      companyName: "Möbel & Mehr GmbH",
+      contactPerson: "Jörg Weiß",
+      email: "joerg@example.test",
+      phone: "040 12345",
+      eventDate: "2026-10-03",
+      eventTime: "18:30–23:00",
+      location: "Große Bleichen 1, Hamburg",
+      billingAddress: "",
+      remarks: "Wunsch: vegetarisch",
+    });
+
+    const visibleForm = renderToStaticMarkup(
+      createElement(OrderContextCard, {
+        orderContext: parsed!.transfer.orderContextPrefill,
+        onOrderContextChange: () => undefined,
+      })
+    );
+    expect(visibleForm).toContain('value="Möbel &amp; Mehr GmbH"');
+    expect(visibleForm).toContain('value="Jörg Weiß"');
+    expect(visibleForm).toContain('value="joerg@example.test"');
+    expect(visibleForm).toContain('value="040 12345"');
+    expect(visibleForm).toContain('value="2026-10-03"');
+    expect(visibleForm).toContain('value="18:30–23:00"');
+    expect(visibleForm).toContain('value="Große Bleichen 1, Hamburg"');
+    expect(visibleForm).toContain("Wunsch: vegetarisch");
   });
 
   it.each([
