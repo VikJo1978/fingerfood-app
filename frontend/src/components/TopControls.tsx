@@ -18,9 +18,9 @@ export function TopControls({
   const perPersonBudget = persons > 0 ? totalBudget / persons : 0;
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
+    <div className="flex flex-col gap-4 rounded-card border border-line bg-white p-5 shadow-card sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
       <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
           Anzahl Personen
         </span>
         <input
@@ -29,12 +29,12 @@ export function TopControls({
           max={5000}
           value={persons}
           onChange={(e) => onPersonsChange(Number(e.target.value))}
-          className="w-full min-w-[8rem] rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-slate-900 outline-none ring-accent/30 transition focus:border-accent focus:bg-white focus:ring-2 sm:w-36"
+          className="w-full min-w-[8rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-36"
         />
       </label>
 
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
           Budget
         </span>
         <button
@@ -43,13 +43,13 @@ export function TopControls({
           className={`inline-flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition ${
             budgetEnabled
               ? "border-accent bg-accent-soft text-accent"
-              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+              : "border-line bg-white text-ink hover:border-accent hover:bg-accent-soft"
           }`}
           aria-pressed={budgetEnabled}
         >
           <span
             className={`relative inline-flex h-5 w-9 rounded-full transition ${
-              budgetEnabled ? "bg-accent" : "bg-slate-300"
+              budgetEnabled ? "bg-accent" : "bg-line"
             }`}
           >
             <span
@@ -65,7 +65,7 @@ export function TopControls({
       {budgetEnabled ? (
         <>
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
               Gesamtbudget
             </span>
             <input
@@ -74,14 +74,14 @@ export function TopControls({
               step={10}
               value={totalBudget}
               onChange={(e) => onTotalBudgetChange(Number(e.target.value))}
-              className="w-full min-w-[10rem] rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-slate-900 outline-none ring-accent/30 transition focus:border-accent focus:bg-white focus:ring-2 sm:w-44"
+              className="w-full min-w-[10rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-44"
             />
           </label>
-          <div className="flex flex-col gap-1 rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3 sm:min-w-[12rem]">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <div className="flex flex-col gap-1 rounded-control border border-line bg-canvas px-4 py-3 sm:min-w-[12rem]">
+            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
               Budget pro Person
             </span>
-            <span className="text-lg font-semibold text-slate-800">
+            <span className="text-lg font-bold text-ink">
               {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(
                 perPersonBudget
               )}

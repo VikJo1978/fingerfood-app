@@ -14,10 +14,10 @@ export function BudgetStatus({ enabled, totalBudget, subtotal }: BudgetStatusPro
 
   return (
     <div
-      className={`rounded-xl border px-4 py-3 text-sm ${
+      className={`rounded-control border px-4 py-3 text-sm ${
         over
-          ? "border-red-200 bg-red-50 text-red-900"
-          : "border-emerald-200 bg-emerald-50 text-emerald-900"
+          ? "border-danger-border bg-danger-soft text-danger"
+          : "border-accent/30 bg-accent-soft text-accent-deep"
       }`}
       role="status"
     >

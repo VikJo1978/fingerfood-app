@@ -62,7 +62,7 @@ export function SearchFilters({
   const advancedPanelId = "search-filters-advanced";
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
+    <div className="space-y-4 rounded-card border border-line bg-white p-5 shadow-card">
       <div>
         <label className="sr-only" htmlFor="search">
           Suche
@@ -73,12 +73,12 @@ export function SearchFilters({
           placeholder="Suche im Katalog (Speisen, Getränke, Personal, Geschirr, Equipment)…"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
+          className="w-full rounded-control border border-line bg-canvas/60 px-4 py-3 text-ink placeholder:text-muted focus:border-accent focus:bg-white"
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-medium text-slate-500">Baustein-Typ</span>
+        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Baustein-Typ</span>
         <div className="flex flex-wrap gap-2">
           {MODULE_CHIPS.map(({ value, label }) => {
             const active = catalogModule === value;
@@ -89,8 +89,8 @@ export function SearchFilters({
                 onClick={() => onCatalogModuleChange(value)}
                 className={
                   active
-                    ? "rounded-full border border-accent bg-accent px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-deep"
-                    : "rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                    ? "rounded-full border border-accent bg-accent px-3.5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-accent-deep"
+                    : "rounded-full border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-accent hover:bg-accent-soft"
                 }
               >
                 {label}
@@ -100,7 +100,7 @@ export function SearchFilters({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 pt-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3">
         <button
           type="button"
           id={`${advancedPanelId}-toggle`}
@@ -112,7 +112,7 @@ export function SearchFilters({
           {advancedOpen ? "Weitere Filter ausblenden" : "Weitere Filter anzeigen"}
         </button>
         {advancedFiltersActive ? (
-          <span className="text-xs font-medium text-slate-600">Erweiterte Filter aktiv</span>
+          <span className="text-xs font-medium text-muted">Erweiterte Filter aktiv</span>
         ) : null}
       </div>
 
@@ -121,15 +121,15 @@ export function SearchFilters({
           id={advancedPanelId}
           role="region"
           aria-labelledby={`${advancedPanelId}-toggle`}
-          className="space-y-4 border-t border-slate-100 pt-4"
+          className="space-y-4 border-t border-line pt-4"
         >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-slate-500">Bereich</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Bereich</span>
               <select
                 value={section}
                 onChange={(e) => onSectionChange(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+                className="rounded-control border border-line bg-white px-3 py-2.5 text-sm text-ink focus:border-accent"
               >
                 <option value="">Alle Bereiche</option>
                 {sections.map((s) => (
@@ -141,11 +141,11 @@ export function SearchFilters({
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-slate-500">Preisart</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Preisart</span>
               <select
                 value={priceType}
                 onChange={(e) => onPriceTypeChange(e.target.value as PriceTypeFilter)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+                className="rounded-control border border-line bg-white px-3 py-2.5 text-sm text-ink focus:border-accent"
               >
                 <option value="">Alle</option>
                 <option value="piece">Nach Stück</option>
@@ -154,11 +154,11 @@ export function SearchFilters({
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-slate-500">Ernährung</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Ernährung</span>
               <select
                 value={diet}
                 onChange={(e) => onDietChange(e.target.value as DietType | "")}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-accent/30 focus:border-accent focus:ring-2"
+                className="rounded-control border border-line bg-white px-3 py-2.5 text-sm text-ink focus:border-accent"
               >
                 <option value="">Alle</option>
                 {DIET_TYPES.map((d) => (
@@ -170,7 +170,7 @@ export function SearchFilters({
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-slate-500">Höchstpreis pro Einheit</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Höchstpreis pro Einheit</span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -178,21 +178,21 @@ export function SearchFilters({
                 placeholder="kein Limit"
                 value={maxUnitPrice}
                 onChange={(e) => onMaxUnitPriceChange(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
+                className="rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent focus:bg-white"
               />
             </label>
           </div>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-slate-500">Allergene ausblenden</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Allergene ausblenden</span>
             <input
               type="text"
               placeholder="z. B. gluten, milk, nuts"
               value={excludeAllergens}
               onChange={(e) => onExcludeAllergensChange(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none ring-accent/30 placeholder:text-slate-400 focus:border-accent focus:bg-white focus:ring-2"
+              className="rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent focus:bg-white"
             />
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-muted">
               Blendet Artikel aus, die diese Stoffe ausweisen. Mehrere Einträge mit Komma trennen (z. B.
               gluten, milk, nuts).
             </span>

@@ -494,17 +494,17 @@ export function HomePage() {
           />
         ) : null}
 
-        <p className="text-sm text-slate-500">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs">
           <button
             type="button"
             onClick={() => setPageMode("inquiry")}
-            className="font-medium text-accent underline-offset-2 hover:underline"
+            className="inline-flex items-center gap-1 font-bold text-muted transition hover:text-accent-deep"
           >
-            Zurück zur Anfrage
+            <span aria-hidden="true">←</span> Zurück zur Anfrage
           </button>
-          <span className="mx-2 text-slate-300">·</span>
-          Konfigurator
-        </p>
+          <span className="text-line">·</span>
+          <span className="font-bold text-accent-deep">Konfigurator</span>
+        </nav>
 
         <OrderContextCard
           orderContext={offerDraft.orderContext}
@@ -533,23 +533,18 @@ export function HomePage() {
           <WarningBanner message="Hinweis: Viele Angebote und Positionen sind erst ab 10 Personen vorgesehen." />
         ) : null}
 
-        {loadError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-            {loadError}
-          </div>
-        ) : null}
+        {loadError ? <WarningBanner tone="danger" message={loadError} /> : null}
 
-        {addItemError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-            {addItemError}
-          </div>
-        ) : null}
+        {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="space-y-5">
-            <div className="space-y-2">
-              <h2 className="text-base font-semibold text-slate-900">Angebotsbausteine auswählen</h2>
-              <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
+            <div className="space-y-1 border-b border-line pb-4">
+              <p className="text-[11px] font-extrabold uppercase tracking-[.08em] text-accent">
+                Katalog
+              </p>
+              <h2 className="text-[17px] font-bold text-ink">Angebotsbausteine auswählen</h2>
+              <p className="max-w-3xl text-sm leading-relaxed text-muted">
                 Wählen Sie Speisen, Getränke, Personal oder weitere Bausteine für das Angebot. Details
                 und Mengen können pro Position angepasst werden.
               </p>
@@ -573,11 +568,11 @@ export function HomePage() {
             />
 
             {loading ? (
-              <p className="text-sm text-slate-500">Artikel werden geladen…</p>
+              <p className="text-sm text-muted">Artikel werden geladen…</p>
             ) : (
               <div className="space-y-4">
                 {visibleItems.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">
+                  <p className="rounded-card border border-dashed border-line bg-white px-4 py-10 text-center text-sm text-muted">
                     Keine Treffer. Bitte Filter lockern oder Suche ändern.
                   </p>
                 ) : (
@@ -618,7 +613,7 @@ export function HomePage() {
           />
         </div>
 
-        <footer className="border-t border-slate-200 pt-6 text-center text-xs text-slate-400">
+        <footer className="border-t border-line pt-6 text-center text-xs text-muted">
           Keine Buchung — nur Orientierung. Summen: {formatCurrency(subtotal)} · Status:
           Entwurf
         </footer>
