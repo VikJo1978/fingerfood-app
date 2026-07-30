@@ -292,7 +292,7 @@ export function HomePage() {
     setOfferDraft((d) => ({
       ...d,
       lines: d.lines.map((l) =>
-        l.lineId === lineId ? { ...l, quantity: Math.max(0.5, q) } : l
+        l.lineId === lineId ? { ...l, quantity: Math.max(1, Math.round(q)) } : l
       ),
     }));
   };

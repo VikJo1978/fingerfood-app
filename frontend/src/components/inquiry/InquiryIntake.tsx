@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { InquiryToConfiguratorTransferV1, ItemModule } from "../../types";
+import { IntegerField } from "../ui/IntegerField";
 
 export interface InquiryIntakeProps {
   onPrepareOffer: (transfer: InquiryToConfiguratorTransferV1) => void;
@@ -290,12 +291,13 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
           ) : null}
           <label className="flex flex-col gap-1">
             <span className={labelClass}>Personen (erwartet)</span>
-            <input
-              type="number"
-              min={1}
+            <IntegerField
               value={guestCount}
-              onChange={(e) => setGuestCount(Number(e.target.value))}
-              className="rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
+              onChange={setGuestCount}
+              min={1}
+              aria-label="Personen (erwartet)"
+              inputClassName="w-full min-w-[5rem] rounded-control border border-line px-3 py-2 text-sm focus:border-accent"
+              stepperClassName="flex w-8 items-center justify-center rounded-control border border-line text-sm text-ink transition hover:border-accent hover:bg-accent-soft"
             />
           </label>
         </div>

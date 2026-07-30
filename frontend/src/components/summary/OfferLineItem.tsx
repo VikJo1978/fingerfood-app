@@ -1,5 +1,6 @@
 import type { CatalogItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
 import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings } from "../../utils/pricing";
+import { IntegerField } from "../ui/IntegerField";
 
 function warningLineClasses(severity: WarningSeverity): string {
   if (severity === "blocking") {
@@ -36,11 +37,11 @@ export function OfferLineItem({
     catalogItem?.item_kind === "composite" || line.snapshot.item_kind === "composite";
 
   return (
-    <li className="rounded-control border border-line bg-canvas/60 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold text-ink">{line.snapshot.title}</p>
+    <li className="rounded-control border border-line bg-canvas/60 p-2.5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-0.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm font-semibold text-ink">{line.snapshot.title}</p>
             {isComposite ? (
               <span className="inline-flex items-center rounded-full border border-line bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 Paket
@@ -65,14 +66,14 @@ export function OfferLineItem({
           type="button"
           onClick={() => onRemove(line.lineId)}
           aria-label={`${line.snapshot.title} entfernen`}
-          className="shrink-0 self-start rounded-control border border-line bg-white px-3 py-1.5 text-xs font-medium text-muted transition hover:border-danger-border hover:bg-danger-soft hover:text-danger"
+          className="shrink-0 self-start rounded-control border border-line bg-white px-2.5 py-1 text-xs font-medium text-muted transition hover:border-danger-border hover:bg-danger-soft hover:text-danger"
         >
           Entfernen
         </button>
       </div>
 
       {warnings.length ? (
-        <ul className="mt-3 space-y-1 text-xs">
+        <ul className="mt-2 space-y-1 text-xs">
           {warnings.map((w, i) => (
             <li key={`${w.code}-${i}`} className={warningLineClasses(w.severity)}>
               {w.message}
@@ -81,27 +82,27 @@ export function OfferLineItem({
         </ul>
       ) : null}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        <label className="flex flex-col gap-1">
+      <div className="mt-1.5 grid gap-2 xl:grid-cols-3">
+        <label className="flex flex-col gap-0.5">
           <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Bezug</span>
           <select
             value={line.quantityMode}
             onChange={(e) => onModeChange(line.lineId, e.target.value as QuantityMode)}
-            className="rounded-control border border-line bg-white px-2 py-1.5 text-sm focus:border-accent"
+            className="rounded-control border border-line bg-white px-2 py-1 text-sm focus:border-accent"
           >
             <option value="total">Gesamt</option>
             <option value="per_person">Pro Person</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-0.5">
           <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Menge</span>
-          <input
-            type="number"
-            min={0.5}
-            step={0.5}
+          <IntegerField
             value={line.quantity}
-            onChange={(e) => onQuantityChange(line.lineId, Number(e.target.value))}
-            className="rounded-control border border-line bg-white px-2 py-1.5 text-sm focus:border-accent"
+            onChange={(q) => onQuantityChange(line.lineId, q)}
+            min={1}
+            aria-label={`Menge für ${line.snapshot.title}`}
+            inputClassName="w-full min-w-[3rem] rounded-control border border-line bg-white px-2 py-1 text-sm focus:border-accent"
+            stepperClassName="flex w-7 items-center justify-center rounded-control border border-line bg-white text-sm text-ink transition hover:border-accent hover:bg-accent-soft"
           />
         </label>
         <div className="flex flex-col justify-end">
@@ -113,7 +114,7 @@ export function OfferLineItem({
       </div>
 
       {isComposite ? (
-        <label className="mt-3 flex flex-col gap-1.5">
+        <label className="mt-2 flex flex-col gap-1.5">
           <span className="text-xs font-medium text-ink">Änderungswunsch am Paket</span>
           <textarea
             rows={2}

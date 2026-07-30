@@ -4,6 +4,7 @@ import { computeLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings } from
 import { TagBadge } from "../ui/TagBadge";
 import { ALLERGEN_LABELS_DE } from "../../constants/classification";
 import { activeIngredientLabels, dietLabelDe } from "../../utils/classificationDisplay";
+import { IntegerField } from "../ui/IntegerField";
 
 interface ItemCardProps {
   item: CatalogItem;
@@ -166,13 +167,13 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
 
         <label className="flex flex-col gap-1.5">
           <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Menge</span>
-          <input
-            type="number"
-            min={0.5}
-            step={0.5}
+          <IntegerField
             value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            className="rounded-control border border-line bg-canvas/60 px-3 py-2 text-sm focus:border-accent focus:bg-white"
+            onChange={setQuantity}
+            min={1}
+            aria-label="Menge"
+            inputClassName="w-full min-w-[4.5rem] rounded-control border border-line bg-canvas/60 px-3 py-2 text-sm focus:border-accent focus:bg-white"
+            stepperClassName="flex w-9 items-center justify-center rounded-control border border-line bg-white text-sm text-ink transition hover:border-accent hover:bg-accent-soft"
           />
         </label>
       </div>

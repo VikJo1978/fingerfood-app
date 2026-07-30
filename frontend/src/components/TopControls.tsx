@@ -1,3 +1,5 @@
+import { IntegerField } from "./ui/IntegerField";
+
 interface TopControlsProps {
   persons: number;
   onPersonsChange: (n: number) => void;
@@ -23,13 +25,14 @@ export function TopControls({
         <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
           Anzahl Personen
         </span>
-        <input
-          type="number"
+        <IntegerField
+          value={persons}
+          onChange={onPersonsChange}
           min={1}
           max={5000}
-          value={persons}
-          onChange={(e) => onPersonsChange(Number(e.target.value))}
-          className="w-full min-w-[8rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-36"
+          aria-label="Anzahl Personen"
+          inputClassName="w-full min-w-[6rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-28"
+          stepperClassName="flex w-9 items-center justify-center rounded-control border border-line bg-white text-ink transition hover:border-accent hover:bg-accent-soft"
         />
       </label>
 
