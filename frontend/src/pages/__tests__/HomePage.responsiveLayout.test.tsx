@@ -88,8 +88,11 @@ describe("HomePage — catalog/summary responsive layout", () => {
     });
     await screen.findByText("Testartikel");
 
+    // OfferSummary's <aside> sits inside a right-column wrapper, which is
+    // itself the second child of the two-column grid.
     const aside = screen.getByRole("complementary");
-    const grid = aside.parentElement;
+    const rightColumn = aside.parentElement;
+    const grid = rightColumn?.parentElement;
     expect(grid).not.toBeNull();
     expect(grid?.className).toContain("grid");
     // No bare `grid-cols-*` at the base (mobile) breakpoint — only under `lg:`/`xl:`.
@@ -97,7 +100,7 @@ describe("HomePage — catalog/summary responsive layout", () => {
     expect(grid?.className).toMatch(/lg:grid-cols-/);
   });
 
-  it("places the Offer summary after the catalog in source order (so it stacks below on narrow screens)", async () => {
+  it("places the Offer summary's column after the catalog column in source order (so it stacks below on narrow screens)", async () => {
     render(<HomePage />);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Zum Konfigurator (Test)" }));
@@ -105,9 +108,10 @@ describe("HomePage — catalog/summary responsive layout", () => {
     await screen.findByText("Testartikel");
 
     const aside = screen.getByRole("complementary");
-    const grid = aside.parentElement as HTMLElement;
+    const rightColumn = aside.parentElement as HTMLElement;
+    const grid = rightColumn.parentElement as HTMLElement;
     const children = Array.from(grid.children);
-    expect(children.indexOf(aside)).toBe(children.length - 1);
+    expect(children.indexOf(rightColumn)).toBe(children.length - 1);
     expect(children[0].textContent).toContain("Angebotsbausteine auswählen");
   });
 });

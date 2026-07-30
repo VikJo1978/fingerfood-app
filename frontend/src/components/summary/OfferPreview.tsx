@@ -7,19 +7,11 @@ import {
   type VatBreakdown,
 } from "../../utils/pricing";
 import logo from "../../assets/silberloeffel-logo.jpg";
+import { formatDateDe } from "../../utils/formatDate";
 
 function dashIfEmpty(v: string | undefined): string {
   const t = v?.trim();
   return t ? t : "—";
-}
-
-/** "YYYY-MM-DD" (native date input) -> "DD.MM.YYYY" (real Angebote's format). */
-function formatDateDe(iso: string | undefined): string {
-  const t = iso?.trim();
-  if (!t) return "—";
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
-  if (!m) return t;
-  return `${m[3]}.${m[2]}.${m[1]}`;
 }
 
 function todayDe(): string {

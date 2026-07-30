@@ -2,7 +2,7 @@ import type { OrderContextV1 } from "../types";
 import { Card } from "./ui/Card";
 
 const inputClass =
-  "w-full rounded-control border border-line bg-canvas/60 px-3 py-2 text-sm text-ink transition focus:border-accent focus:bg-white";
+  "w-full rounded-control border border-line bg-canvas/60 px-3 py-1.5 text-sm text-ink transition focus:border-accent focus:bg-white";
 
 const fieldLabelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
 
@@ -23,12 +23,8 @@ export function OrderContextCard({
     : [];
 
   return (
-    <Card
-      eyebrow="Basisdaten"
-      title="Auftragskontext"
-      subtitle="Kernangaben zur Veranstaltung — lokal im Entwurf, ohne Speicherung."
-    >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <Card eyebrow="Basisdaten" title="Auftragskontext">
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         <label className="flex flex-col gap-1.5">
           <span className={fieldLabelClass}>Firma / Organisation</span>
           <input
