@@ -48,7 +48,7 @@ export function TopControls({
         <IntegerField
           value={persons}
           onChange={onPersonsChange}
-          min={1}
+          min={0}
           max={5000}
           aria-label="Anzahl Personen"
           inputClassName="w-full min-w-[6rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-28"

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import {
   buildBudgetDefinition,
+  buildChargesDefinition,
   buildOfferSnapshotRequest,
   navigateToPreparedCoreOffer,
   parseOfferPrepareResponse,
@@ -13,6 +14,7 @@ import {
   parseCoreInquiryHandoff,
 } from "../coreInquiryHandoff";
 import type { OfferDraft } from "../../types";
+import { createInitialChargesDefinition } from "../../types";
 
 const draft = {
   persons: 10,
@@ -21,6 +23,7 @@ const draft = {
   budgetType: "total",
   budgetBasis: "gross",
   budgetScope: "full_offer",
+  chargesDefinition: createInitialChargesDefinition(),
   lines: [],
   orderContext: {
     companyName: "Example GmbH",
@@ -365,5 +368,91 @@ describe("budget_definition in the Core snapshot payload", () => {
       null
     );
     expect("budget_definition" in body.offer).toBe(false);
+  });
+});
+
+describe("charges_definition in the Core snapshot payload", () => {
+  it("is always sent with the approved new-draft defaults", () => {
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    expect(body.charges_definition).toEqual({
+      delivery: { amount_cents: 3500 },
+      dishware: {
+        base_mode: "NONE",
+        pauschale_per_person_cents: 200,
+        additional_lines: [],
+      },
+      buffet: {
+        base_mode: "NONE",
+        pauschale_per_person_cents: 50,
+      },
+    });
+  });
+
+  it("serializes editable charges as integer cents without UI-only fields or line totals", () => {
+    const body = buildOfferSnapshotRequest(
+      {
+        ...draft,
+        persons: 12,
+        chargesDefinition: {
+          buffet: { baseMode: "PAUSCHALE", pauschalePerPersonCents: 75 },
+          delivery: { amountCents: 0 },
+          dishware: {
+            baseMode: "NONE",
+            pauschalePerPersonCents: 200,
+            additionalLines: [
+              {
+                lineId: "ui-only-id",
+                description: "Teller extra",
+                quantity: 24,
+                unitNetCents: 125,
+              },
+            ],
+          },
+        },
+      },
+      "inq-1",
+      null
+    );
+
+    expect(body.event.guest_count).toBe(12);
+    expect(body.offer.persons).toBe(12);
+    expect(body.charges_definition).toEqual({
+      delivery: { amount_cents: 0 },
+      dishware: {
+        base_mode: "NONE",
+        pauschale_per_person_cents: 200,
+        additional_lines: [
+          {
+            description: "Teller extra",
+            quantity: 24,
+            unit_net_cents: 125,
+          },
+        ],
+      },
+      buffet: {
+        base_mode: "PAUSCHALE",
+        pauschale_per_person_cents: 75,
+      },
+    });
+    expect(JSON.stringify(body.charges_definition)).not.toContain("lineId");
+    expect(JSON.stringify(body.charges_definition)).not.toContain("net_total_cents");
+  });
+
+  it("trims additional-line descriptions at the request boundary", () => {
+    const definition = buildChargesDefinition({
+      ...draft.chargesDefinition,
+      dishware: {
+        ...draft.chargesDefinition.dishware,
+        additionalLines: [
+          {
+            lineId: "line-1",
+            description: "  Gläser  ",
+            quantity: 10,
+            unitNetCents: 50,
+          },
+        ],
+      },
+    });
+    expect(definition.dishware.additional_lines[0].description).toBe("Gläser");
   });
 });

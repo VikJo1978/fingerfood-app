@@ -145,6 +145,30 @@ export type BudgetBasis = "net" | "gross";
  * to the catalog positions (Speisen etc.) only. */
 export type BudgetScope = "full_offer" | "positions_only";
 
+export type ChargeBaseMode = "NONE" | "PAUSCHALE";
+
+export interface DishwareAdditionalLine {
+  lineId: string;
+  description: string;
+  quantity: number;
+  unitNetCents: number;
+}
+
+export interface ChargesDefinition {
+  buffet: {
+    baseMode: ChargeBaseMode;
+    pauschalePerPersonCents: number;
+  };
+  delivery: {
+    amountCents: number;
+  };
+  dishware: {
+    baseMode: ChargeBaseMode;
+    pauschalePerPersonCents: number;
+    additionalLines: DishwareAdditionalLine[];
+  };
+}
+
 /**
  * In-memory offer being edited in the configurator (not yet a persisted snapshot).
  * Totals stay derived in UI until a dedicated calculation/snapshot step owns them.
@@ -159,6 +183,7 @@ export interface OfferDraft {
   budgetType: BudgetType;
   budgetBasis: BudgetBasis;
   budgetScope: BudgetScope;
+  chargesDefinition: ChargesDefinition;
   lines: OfferLine[];
   /** Populated when server calculation is wired; optional for local-only flow. */
   warnings?: OfferWarning[];
@@ -251,6 +276,24 @@ export function createInitialOfferDraft(): OfferDraft {
     budgetType: "total",
     budgetBasis: "gross",
     budgetScope: "full_offer",
+    chargesDefinition: createInitialChargesDefinition(),
     lines: [],
+  };
+}
+
+export function createInitialChargesDefinition(): ChargesDefinition {
+  return {
+    buffet: {
+      baseMode: "NONE",
+      pauschalePerPersonCents: 50,
+    },
+    delivery: {
+      amountCents: 3500,
+    },
+    dishware: {
+      baseMode: "NONE",
+      pauschalePerPersonCents: 200,
+      additionalLines: [],
+    },
   };
 }

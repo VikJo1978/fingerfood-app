@@ -11,7 +11,13 @@ import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { createDraft, fetchItems, updateDraft } from "../services/api";
-import type { CatalogItem, InquiryToConfiguratorTransferV1, OfferLine, QuantityMode } from "../types";
+import type {
+  CatalogItem,
+  ChargesDefinition,
+  InquiryToConfiguratorTransferV1,
+  OfferLine,
+  QuantityMode,
+} from "../types";
 import { createInitialOfferDraft } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
 import { UuidGenerationError, generateUuidV4 } from "../utils/uuid";
@@ -168,8 +174,14 @@ export function HomePage() {
   }, [offerDraft.lines, offerDraft.persons]);
 
   const pauschalen = useMemo(
-    () => computePauschalen(subtotal, offerDraft.persons, offerDraft.lines.length > 0),
-    [subtotal, offerDraft.persons, offerDraft.lines.length]
+    () =>
+      computePauschalen(
+        subtotal,
+        offerDraft.persons,
+        offerDraft.lines.length > 0,
+        offerDraft.chargesDefinition
+      ),
+    [subtotal, offerDraft.persons, offerDraft.lines.length, offerDraft.chargesDefinition]
   );
 
   const vat = useMemo(
@@ -177,7 +189,7 @@ export function HomePage() {
     [offerDraft, itemsById, pauschalen]
   );
 
-  const clampPersons = (n: number) => Math.min(5000, Math.max(1, Math.round(n) || 1));
+  const clampPersons = (n: number) => Math.min(5000, Math.max(0, Math.round(n) || 0));
 
   const handlePrepareOffer = useCallback((transfer: InquiryToConfiguratorTransferV1) => {
     const { planning, orderContextPrefill: pre } = transfer;
@@ -383,6 +395,18 @@ export function HomePage() {
     }));
   };
 
+  const onChargesChange = useCallback((charges: ChargesDefinition) => {
+    setOfferDraft((d) => ({ ...d, chargesDefinition: charges }));
+  }, []);
+
+  const createChargeLineId = useCallback(() => {
+    try {
+      return generateUuidV4();
+    } catch {
+      return `dishware-${Date.now()}-${Math.round(Math.random() * 1_000_000)}`;
+    }
+  }, []);
+
   const exportPayload = () => {
     const lines = offerDraft.lines.map((l) => {
       const it = itemsById[l.itemId];
@@ -483,6 +507,29 @@ export function HomePage() {
     if (offerDraft.lines.length === 0) {
       setPrepareStatus("error");
       setPrepareMessage("Bitte mindestens eine Position hinzufügen.");
+      return;
+    }
+    if (offerDraft.persons <= 0) {
+      setPrepareStatus("error");
+      setPrepareMessage("Bitte zuerst eine gültige Personenzahl eintragen.");
+      return;
+    }
+    if (
+      (offerDraft.chargesDefinition.buffet.baseMode === "PAUSCHALE" ||
+        offerDraft.chargesDefinition.dishware.baseMode === "PAUSCHALE") &&
+      offerDraft.persons <= 0
+    ) {
+      setPrepareStatus("error");
+      setPrepareMessage("Pauschalen pro Person benötigen eine gültige Personenzahl.");
+      return;
+    }
+    if (
+      offerDraft.chargesDefinition.dishware.additionalLines.some(
+        (line) => line.description.trim() === "" || line.description.length > 500
+      )
+    ) {
+      setPrepareStatus("error");
+      setPrepareMessage("Bitte zusätzliche Geschirrpositionen vollständig ausfüllen.");
       return;
     }
     setPrepareStatus("preparing");
@@ -697,6 +744,8 @@ export function HomePage() {
               onModeChange={onLineMode}
               onCustomizationNoteChange={onLineCustomizationNote}
               onRemove={onRemoveLine}
+              onChargesChange={onChargesChange}
+              createChargeLineId={createChargeLineId}
               onExportJson={onExportJson}
               onExportCsv={onExportCsv}
               onExportProposalJson={onExportProposalJson}

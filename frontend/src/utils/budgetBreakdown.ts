@@ -142,7 +142,10 @@ export function computeBudgetBreakdown({
     included.push({
       label: PAUSCHALEN_LABEL,
       amount:
-        pauschalen.buffetpauschale + pauschalen.geschirrpauschale + pauschalen.anlieferung,
+        pauschalen.buffetpauschale +
+        pauschalen.geschirrpauschale +
+        pauschalen.anlieferung +
+        pauschalen.dishwareAdditional,
     });
     if (budgetBasis === "gross") {
       included.push({ label: MWST_LABEL, amount: vat.vat7Amount + vat.vat19Amount });

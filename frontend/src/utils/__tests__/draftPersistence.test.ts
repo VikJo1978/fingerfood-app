@@ -61,6 +61,22 @@ describe("saveDraftToSession / readDraftFromSession", () => {
       budgetType: "per_person",
       budgetBasis: "net",
       budgetScope: "positions_only",
+      chargesDefinition: {
+        buffet: { baseMode: "PAUSCHALE", pauschalePerPersonCents: 75 },
+        delivery: { amountCents: 0 },
+        dishware: {
+          baseMode: "NONE",
+          pauschalePerPersonCents: 200,
+          additionalLines: [
+            {
+              lineId: "dishware-1",
+              description: "Teller extra",
+              quantity: 24,
+              unitNetCents: 125,
+            },
+          ],
+        },
+      },
       lines: [sampleLine],
     });
     saveDraftToSession(INQUIRY_A, draft, storage);
@@ -70,6 +86,16 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     expect(restored?.budgetType).toBe("per_person");
     expect(restored?.budgetBasis).toBe("net");
     expect(restored?.budgetScope).toBe("positions_only");
+    expect(restored?.chargesDefinition.delivery.amountCents).toBe(0);
+    expect(restored?.chargesDefinition.buffet.baseMode).toBe("PAUSCHALE");
+    expect(restored?.chargesDefinition.dishware.additionalLines).toEqual([
+      {
+        lineId: "dishware-1",
+        description: "Teller extra",
+        quantity: 24,
+        unitNetCents: 125,
+      },
+    ]);
     expect(restored?.lines).toHaveLength(1);
   });
 
@@ -146,6 +172,7 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     delete legacyRecord.budgetType;
     delete legacyRecord.budgetBasis;
     delete legacyRecord.budgetScope;
+    delete legacyRecord.chargesDefinition;
     storage.setItem(
       draftStorageKey(INQUIRY_A),
       JSON.stringify({
@@ -160,6 +187,7 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     expect(restored?.budgetType).toBe("total");
     expect(restored?.budgetBasis).toBe("net");
     expect(restored?.budgetScope).toBe("positions_only");
+    expect(restored?.chargesDefinition).toEqual(createInitialOfferDraft().chargesDefinition);
     expect(restored?.totalBudget).toBe(1200);
   });
 

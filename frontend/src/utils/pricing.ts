@@ -1,4 +1,13 @@
-import type { CatalogItem, OfferDraft, OfferLine, OfferWarning, PriceType, QuantityMode } from "../types";
+import type {
+  CatalogItem,
+  ChargesDefinition,
+  DishwareAdditionalLine,
+  OfferDraft,
+  OfferLine,
+  OfferWarning,
+  PriceType,
+  QuantityMode,
+} from "../types";
 
 /**
  * Line totals use `price_type` (unit basis: piece vs person), not `pricing_mode`.
@@ -114,7 +123,46 @@ export interface PauschalenBreakdown {
   buffetpauschale: number;
   geschirrpauschale: number;
   anlieferung: number;
+  dishwareAdditional: number;
   grandTotal: number;
+}
+
+export function centsToEuros(cents: number): number {
+  return cents / 100;
+}
+
+function additionalDishwareCents(lines: DishwareAdditionalLine[]): number {
+  return lines.reduce((sum, line) => sum + line.quantity * line.unitNetCents, 0);
+}
+
+export function computeChargesCents(
+  charges: ChargesDefinition,
+  persons: number
+): {
+  buffetCents: number;
+  dishwarePauschaleCents: number;
+  deliveryCents: number;
+  dishwareAdditionalCents: number;
+  totalCents: number;
+} {
+  const validPersons = Number.isInteger(persons) && persons > 0;
+  const buffetCents =
+    charges.buffet.baseMode === "PAUSCHALE" && validPersons
+      ? charges.buffet.pauschalePerPersonCents * persons
+      : 0;
+  const dishwarePauschaleCents =
+    charges.dishware.baseMode === "PAUSCHALE" && validPersons
+      ? charges.dishware.pauschalePerPersonCents * persons
+      : 0;
+  const deliveryCents = charges.delivery.amountCents;
+  const dishwareAdditionalCents = additionalDishwareCents(charges.dishware.additionalLines);
+  return {
+    buffetCents,
+    dishwarePauschaleCents,
+    deliveryCents,
+    dishwareAdditionalCents,
+    totalCents: buffetCents + dishwarePauschaleCents + deliveryCents + dishwareAdditionalCents,
+  };
 }
 
 /**
@@ -126,16 +174,33 @@ export interface PauschalenBreakdown {
 export function computePauschalen(
   subtotal: number,
   persons: number,
-  hasLines: boolean
+  hasLines: boolean,
+  charges?: ChargesDefinition
 ): PauschalenBreakdown {
+  if (charges) {
+    const c = computeChargesCents(charges, persons);
+    return {
+      buffetpauschale: centsToEuros(c.buffetCents),
+      geschirrpauschale: centsToEuros(c.dishwarePauschaleCents),
+      anlieferung: centsToEuros(c.deliveryCents),
+      dishwareAdditional: centsToEuros(c.dishwareAdditionalCents),
+      grandTotal: Math.round((subtotal + centsToEuros(c.totalCents)) * 100) / 100,
+    };
+  }
   if (!hasLines) {
-    return { buffetpauschale: 0, geschirrpauschale: 0, anlieferung: 0, grandTotal: 0 };
+    return {
+      buffetpauschale: 0,
+      geschirrpauschale: 0,
+      anlieferung: 0,
+      dishwareAdditional: 0,
+      grandTotal: 0,
+    };
   }
   const buffetpauschale = Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
   const geschirrpauschale = Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
   const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;
   const grandTotal = Math.round((subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100) / 100;
-  return { buffetpauschale, geschirrpauschale, anlieferung, grandTotal };
+  return { buffetpauschale, geschirrpauschale, anlieferung, dishwareAdditional: 0, grandTotal };
 }
 
 /**
@@ -169,7 +234,11 @@ export function computeVatBreakdown(
     if (rate === 7) vat7Base += total;
     else vat19Base += total;
   }
-  vat19Base += pauschalen.buffetpauschale + pauschalen.geschirrpauschale + pauschalen.anlieferung;
+  vat19Base +=
+    pauschalen.buffetpauschale +
+    pauschalen.geschirrpauschale +
+    pauschalen.anlieferung +
+    pauschalen.dishwareAdditional;
   const vat7Amount = Math.round(vat7Base * 0.07 * 100) / 100;
   const vat19Amount = Math.round(vat19Base * 0.19 * 100) / 100;
   const totalInclVat = Math.round((pauschalen.grandTotal + vat7Amount + vat19Amount) * 100) / 100;
@@ -200,7 +269,10 @@ export function computePositionsOnlyGross(
   pauschalen: PauschalenBreakdown
 ): number {
   const pauschalenBeforeVat =
-    pauschalen.buffetpauschale + pauschalen.geschirrpauschale + pauschalen.anlieferung;
+    pauschalen.buffetpauschale +
+    pauschalen.geschirrpauschale +
+    pauschalen.anlieferung +
+    pauschalen.dishwareAdditional;
   const itemsOnly19Base = Math.max(0, vat.vat19Base - pauschalenBeforeVat);
   const itemsOnly19Amount =
     Math.round(itemsOnly19Base * (PAUSCHALEN_VAT_RATE_PERCENT / 100) * 100) / 100;
