@@ -5,7 +5,7 @@
  * (Core handoff present, at least one line) the restyle was not meant to
  * change. Also covers opening the Angebotsvorschau preview from here. */
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { OfferSummary } from "../OfferSummary";
 import { computePauschalen, computeVatBreakdown } from "../../../utils/pricing";
@@ -143,7 +143,7 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const region = screen.getByTestId("offer-summary-scroll-region");
 
-    const positionenLabel = screen.getByText("Positionen");
+    const positionenLabel = screen.getByText(/^Positionen \(/);
     const pauschaleLabel = screen.getByText("Büffetpauschale");
     const previewButton = screen.getByRole("button", { name: "Angebotsvorschau anzeigen" });
     const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
@@ -172,7 +172,7 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
 
   it("only applies the scroll-affordance shadow/divider at lg:, and keeps the outer card's own max-height desktop-only", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
-    const positionenLabel = screen.getByText("Positionen");
+    const positionenLabel = screen.getByText(/^Positionen \(/);
     const footer = positionenLabel.closest(".shrink-0");
     expect(footer?.className).toMatch(/lg:shadow-/);
 
@@ -203,25 +203,27 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
  * <details>/<summary> disclosure; the actual totals (Positionen, Pauschalen,
  * netto, VAT amounts, brutto) are never part of what's hidden. */
 describe("OfferSummary — VAT notice disclosure", () => {
+  function vatDetails(): HTMLDetailsElement {
+    const summary = screen.getByText("MwSt.-Details");
+    return summary.closest("details") as HTMLDetailsElement;
+  }
+
   it("collapses the detailed VAT legal text by default", () => {
     // jsdom doesn't apply the browser's UA stylesheet that visually hides a
     // closed <details>'s children (it keeps them in the DOM either way, same
     // as a real browser) — `open` is the actual signal that drives that
     // hiding, so that's what this asserts.
     renderSummary({});
-    const details = document.querySelector("details");
+    const details = vatDetails();
     expect(details).not.toBeNull();
-    expect(details?.open).toBe(false);
-    expect(screen.getByText("⚠ MwSt.-Hinweis")).toBeTruthy();
-    expect(screen.getByText("Details anzeigen")).toBeTruthy();
+    expect(details.open).toBe(false);
   });
 
   it("expands to reveal the full legal wording when the summary is activated", () => {
     renderSummary({});
-    const summary = document.querySelector("details summary") as HTMLElement;
-    fireEvent.click(summary);
-    const details = document.querySelector("details");
-    expect(details?.open).toBe(true);
+    const details = vatDetails();
+    fireEvent.click(within(details).getByText("MwSt.-Details"));
+    expect(details.open).toBe(true);
     expect(
       screen.getByText(/historische Leistungen werden nicht steuerlich bewertet/)
     ).toBeTruthy();
@@ -252,7 +254,7 @@ describe("OfferSummary — VAT notice disclosure", () => {
     // Positionen, Pauschalen and the netto/brutto totals must all be
     // findable while the disclosure is still closed.
     expect(details?.open).toBe(false);
-    expect(screen.getByText("Positionen")).toBeTruthy();
+    expect(screen.getByText(/^Positionen \(/)).toBeTruthy();
     expect(screen.getByText("Büffetpauschale")).toBeTruthy();
     expect(screen.getByText("Geschirrpauschale")).toBeTruthy();
     expect(screen.getByText(/Gesamt \(netto\)/)).toBeTruthy();
@@ -294,7 +296,8 @@ describe("OfferSummary — multiple selected lines stay inside the scrollable re
 
   it("keeps both final action buttons outside the scrollable region even with 6 lines and the VAT notice open", () => {
     renderSummary({ draft: draftWithLines(6), canPrepareInCore: true });
-    fireEvent.click(document.querySelector("details summary") as HTMLElement);
+    fireEvent.click(screen.getByText("MwSt.-Details"));
+    fireEvent.click(screen.getByText("Weitere Aktionen"));
     const region = screen.getByTestId("offer-summary-scroll-region");
     const previewButton = screen.getByRole("button", { name: "Angebotsvorschau anzeigen" });
     const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
@@ -302,3 +305,65 @@ describe("OfferSummary — multiple selected lines stay inside the scrollable re
     expect(region.contains(prepareButton)).toBe(false);
   });
 });
+
+/** Split-screen mockup follow-up: secondary utilities (save draft,
+ * exports) no longer sit inline in the scrollable region — they're
+ * collapsed behind their own "Weitere Aktionen" disclosure in the fixed
+ * footer, same pattern as the MwSt.-Details disclosure. */
+describe("OfferSummary — secondary actions disclosure", () => {
+  it("collapses save/export actions behind 'Weitere Aktionen' by default", () => {
+    // Same jsdom caveat as the MwSt.-Details disclosure: it doesn't apply
+    // the UA stylesheet that visually hides a closed <details>'s children,
+    // so `open` is the signal that actually drives the hiding.
+    renderSummary({});
+    const summary = screen.getByText("Weitere Aktionen");
+    const details = summary.closest("details");
+    expect(details?.open).toBe(false);
+  });
+
+  it("reveals Entwurf speichern and the export actions when expanded", () => {
+    renderSummary({});
+    fireEvent.click(screen.getByText("Weitere Aktionen"));
+    expect(screen.getByRole("button", { name: "Entwurf speichern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export JSON" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export fürs Büro (JSON)" })).toBeTruthy();
+  });
+});
+
+describe("OfferSummary — Budget stat card position", () => {
+  it("shows the Budget/Aktuell/Verfügbar card in the fixed header, above the item list", () => {
+    const draft: OfferDraft = { ...createInitialOfferDraft(), budgetEnabled: true, totalBudget: 1200 };
+    renderSummary({ draft });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    const budgetLabel = screen.getByText("Budget");
+    expect(region.contains(budgetLabel)).toBe(false);
+  });
+
+  it("shows the current position count next to the title", () => {
+    const draft = draftFor(3);
+    renderSummary({ draft });
+    expect(screen.getByText("3 Positionen")).toBeTruthy();
+  });
+});
+
+function draftFor(count: number): OfferDraft {
+  const base = createInitialOfferDraft();
+  return {
+    ...base,
+    lines: Array.from({ length: count }, (_, i) => ({
+      lineId: `line-${i}`,
+      itemId: `item-${i}`,
+      quantityMode: "total" as const,
+      quantity: 10,
+      snapshot: {
+        title: `Artikel ${i}`,
+        source_type: "internal" as const,
+        pricing_mode: "per_piece" as const,
+        price_type: "piece" as const,
+        chosen_price: 2.3,
+        item_kind: "simple" as const,
+      },
+    })),
+  };
+}

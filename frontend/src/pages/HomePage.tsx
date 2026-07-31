@@ -520,7 +520,7 @@ export function HomePage() {
 
         {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
 
-        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,.72fr)]">
+        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)]">
           <div className="grid content-start gap-[22px]">
             <OrderContextCard
               orderContext={offerDraft.orderContext}
@@ -572,7 +572,7 @@ export function HomePage() {
             {loading ? (
               <p className="text-sm text-muted">Artikel werden geladen…</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {visibleItems.length === 0 ? (
                   <p className="rounded-card border border-dashed border-line bg-white px-4 py-10 text-center text-sm text-muted">
                     Keine Treffer. Bitte Filter lockern oder Suche ändern.

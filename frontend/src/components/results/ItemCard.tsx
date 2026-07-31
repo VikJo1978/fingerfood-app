@@ -46,19 +46,19 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
   const itemsIncludedText = item.items_included?.trim() ?? "";
 
   return (
-    <article className="flex flex-col gap-3 rounded-card border border-line bg-white p-4 shadow-card">
-      <div className="space-y-1">
+    <article className="flex flex-col gap-2 rounded-card border border-line bg-white p-3 shadow-card">
+      <div className="space-y-0.5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            <h3 className="text-base font-bold text-ink">{item.name}</h3>
+            <h3 className="text-sm font-bold text-ink">{item.name}</h3>
             {item.item_kind === "composite" ? <TagBadge label="Paket" /> : null}
           </div>
-          <span className="shrink-0 rounded-control bg-accent-soft px-2.5 py-1 text-sm font-bold text-accent-deep">
+          <span className="shrink-0 rounded-control bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-deep">
             {priceLabel}
           </span>
         </div>
-        <p className="text-sm leading-relaxed text-muted">{item.description}</p>
-        <p className="text-xs text-muted">
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted">{item.description}</p>
+        <p className="text-[11px] text-muted">
           Mindestbestellmenge: {item.min_order} {item.unit_label}
         </p>
       </div>
@@ -150,36 +150,36 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         ) : null}
       </div>
 
-      <div className="grid gap-3 border-t border-line pt-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5">
+      <div className="grid gap-2 border-t border-line pt-2 sm:grid-cols-2">
+        <label className="flex flex-col gap-0.5">
           <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">
             Menge bezieht sich auf
           </span>
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as QuantityMode)}
-            className="rounded-control border border-line bg-white px-3 py-2 text-sm focus:border-accent"
+            className="rounded-control border border-line bg-white px-2 py-1.5 text-sm focus:border-accent"
           >
             <option value="total">Gesamt</option>
             <option value="per_person">Pro Person</option>
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5">
+        <label className="flex flex-col gap-0.5">
           <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Menge</span>
           <IntegerField
             value={quantity}
             onChange={setQuantity}
             min={1}
             aria-label="Menge"
-            inputClassName="w-full min-w-[4.5rem] rounded-control border border-line bg-canvas/60 px-3 py-2 text-sm focus:border-accent focus:bg-white"
-            stepperClassName="flex w-9 items-center justify-center rounded-control border border-line bg-white text-sm text-ink transition hover:border-accent hover:bg-accent-soft"
+            inputClassName="w-full min-w-[4rem] rounded-control border border-line bg-canvas/60 px-2 py-1.5 text-sm focus:border-accent focus:bg-white"
+            stepperClassName="flex w-8 items-center justify-center rounded-control border border-line bg-white text-sm text-ink transition hover:border-accent hover:bg-accent-soft"
           />
         </label>
       </div>
 
       {hasSurcharge ? (
-        <label className="flex items-center gap-2 text-sm text-ink">
+        <label className="flex items-center gap-2 text-xs text-ink">
           <input
             type="checkbox"
             checked={surchargeSelected}
@@ -190,15 +190,15 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
         </label>
       ) : null}
 
-      <div className="flex flex-col gap-3 border-t border-line pt-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm">
+      <div className="flex flex-col gap-2 border-t border-line pt-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-xs">
           <span className="text-muted">Vorschau: </span>
           <span className="font-bold text-ink">{formatCurrency(preview)}</span>
         </div>
         <button
           type="button"
           onClick={() => onAdd(item, mode, quantity, surchargeSelected)}
-          className="inline-flex h-11 items-center justify-center rounded-control bg-accent px-5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-deep active:scale-[0.98]"
+          className="inline-flex h-9 items-center justify-center rounded-control bg-accent px-4 text-sm font-bold text-white shadow-sm transition hover:bg-accent-deep active:scale-[0.98]"
         >
           Zum Angebot hinzufügen
         </button>
