@@ -136,6 +136,15 @@ export interface OrderContextV1 {
   remarks?: string;
 }
 
+/** Whether `totalBudget` is a per-person rate (multiplied by `persons` for
+ * comparison) or an already-absolute total for the whole offer. */
+export type BudgetType = "per_person" | "total";
+/** Whether the budget is compared against the netto or brutto (incl. VAT) total. */
+export type BudgetBasis = "net" | "gross";
+/** Whether the comparison total includes Pauschalen/delivery, or is limited
+ * to the catalog positions (Speisen etc.) only. */
+export type BudgetScope = "full_offer" | "positions_only";
+
 /**
  * In-memory offer being edited in the configurator (not yet a persisted snapshot).
  * Totals stay derived in UI until a dedicated calculation/snapshot step owns them.
@@ -145,6 +154,11 @@ export interface OfferDraft {
   persons: number;
   budgetEnabled: boolean;
   totalBudget: number;
+  /** Local UI-only budget presentation config — never sent to Core (see
+   * utils/offerSnapshotRequest.ts, which does not reference budget at all). */
+  budgetType: BudgetType;
+  budgetBasis: BudgetBasis;
+  budgetScope: BudgetScope;
   lines: OfferLine[];
   /** Populated when server calculation is wired; optional for local-only flow. */
   warnings?: OfferWarning[];
@@ -232,6 +246,11 @@ export function createInitialOfferDraft(): OfferDraft {
     persons: 10,
     budgetEnabled: false,
     totalBudget: 500,
+    // Defaults preserve the exact previous (pre-selector) behavior: an
+    // absolute total compared against the full brutto offer.
+    budgetType: "total",
+    budgetBasis: "gross",
+    budgetScope: "full_offer",
     lines: [],
   };
 }

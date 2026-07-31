@@ -543,6 +543,12 @@ export function HomePage() {
               onTotalBudgetChange={(n) =>
                 setOfferDraft((d) => ({ ...d, totalBudget: Math.max(0, n) }))
               }
+              budgetType={offerDraft.budgetType}
+              onBudgetTypeChange={(v) => setOfferDraft((d) => ({ ...d, budgetType: v }))}
+              budgetBasis={offerDraft.budgetBasis}
+              onBudgetBasisChange={(v) => setOfferDraft((d) => ({ ...d, budgetBasis: v }))}
+              budgetScope={offerDraft.budgetScope}
+              onBudgetScopeChange={(v) => setOfferDraft((d) => ({ ...d, budgetScope: v }))}
             />
 
             <div className="space-y-0.5">

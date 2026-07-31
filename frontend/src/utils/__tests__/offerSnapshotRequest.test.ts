@@ -17,6 +17,9 @@ const draft = {
   persons: 10,
   budgetEnabled: false,
   totalBudget: 0,
+  budgetType: "total",
+  budgetBasis: "gross",
+  budgetScope: "full_offer",
   lines: [],
   orderContext: {
     companyName: "Example GmbH",

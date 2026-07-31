@@ -181,3 +181,28 @@ export function computeVatBreakdown(
     totalInclVat,
   };
 }
+
+/**
+ * "Positionen only, brutto" — the catalog positions' own price plus their
+ * own VAT, deliberately excluding Pauschalen/Anlieferung and the VAT on
+ * them. Used only for the budget transparency breakdown (POSITIONS_ONLY +
+ * GROSS); the authoritative Positionen/Pauschalen/VAT totals shown
+ * elsewhere are computed by `computeVatBreakdown` above and are
+ * unaffected by this helper. `vat.vat7Base` is already positions-only
+ * (Pauschalen are only ever added to the 19% bucket), so only the 19%
+ * bucket needs the Pauschalen contribution subtracted back out before
+ * applying the same `PAUSCHALEN_VAT_RATE_PERCENT` rate computeVatBreakdown
+ * already uses.
+ */
+export function computePositionsOnlyGross(
+  subtotal: number,
+  vat: VatBreakdown,
+  pauschalen: PauschalenBreakdown
+): number {
+  const pauschalenBeforeVat =
+    pauschalen.buffetpauschale + pauschalen.geschirrpauschale + pauschalen.anlieferung;
+  const itemsOnly19Base = Math.max(0, vat.vat19Base - pauschalenBeforeVat);
+  const itemsOnly19Amount =
+    Math.round(itemsOnly19Base * (PAUSCHALEN_VAT_RATE_PERCENT / 100) * 100) / 100;
+  return Math.round((subtotal + vat.vat7Amount + itemsOnly19Amount) * 100) / 100;
+}

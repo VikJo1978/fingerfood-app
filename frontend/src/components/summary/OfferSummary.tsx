@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { CatalogItem, OfferDraft, QuantityMode } from "../../types";
 import { formatCurrency, type PauschalenBreakdown, type VatBreakdown } from "../../utils/pricing";
+import { computeBudgetBreakdown } from "../../utils/budgetBreakdown";
 import { BudgetStatus } from "./BudgetStatus";
 import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
@@ -63,8 +64,24 @@ export function OfferSummary({
   canPrepareInCore,
   onPrepareInCore,
 }: OfferSummaryProps) {
-  const { lines, persons, budgetEnabled, totalBudget } = draft;
+  const { lines, persons, budgetEnabled, totalBudget, budgetType, budgetBasis, budgetScope } = draft;
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  const budgetBreakdown = useMemo(
+    () =>
+      computeBudgetBreakdown({
+        budgetType,
+        budgetBasis,
+        budgetScope,
+        configuredAmount: totalBudget,
+        persons,
+        subtotal,
+        pauschalen,
+        vat,
+        formatCurrency,
+      }),
+    [budgetType, budgetBasis, budgetScope, totalBudget, persons, subtotal, pauschalen, vat]
+  );
 
   return (
     <aside className="flex flex-col rounded-card border border-line bg-white shadow-card lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
@@ -77,7 +94,7 @@ export function OfferSummary({
             {lines.length} {lines.length === 1 ? "Position" : "Positionen"}
           </span>
         </div>
-        <BudgetStatus enabled={budgetEnabled} totalBudget={totalBudget} currentTotal={vat.totalInclVat} />
+        <BudgetStatus enabled={budgetEnabled} breakdown={budgetBreakdown} />
         <p className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
           Ausgewählte Positionen
         </p>
