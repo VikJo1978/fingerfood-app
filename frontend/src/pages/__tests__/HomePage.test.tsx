@@ -94,7 +94,9 @@ function offerSummary(): HTMLElement {
 }
 
 function positionenTotalText(): string | null {
-  const label = within(offerSummary()).getByText("Positionen");
+  // The footer label is now "Positionen (N)" (item count in parens), so
+  // match the stable prefix rather than the old exact "Positionen" text.
+  const label = within(offerSummary()).getByText(/^Positionen \(/);
   return label.nextElementSibling?.textContent ?? null;
 }
 

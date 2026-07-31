@@ -223,6 +223,7 @@ def build_offer_snapshot_v2(
     payment_terms: dict[str, str],
     offer: OfferRequest,
     source_draft_id: str | None = None,
+    budget_definition: dict[str, object] | None = None,
     catalog_revision: str = "core-catalog-v1",
     snapshot_created_at: datetime | None = None,
 ) -> dict[str, object]:
@@ -298,5 +299,7 @@ def build_offer_snapshot_v2(
             }
         ],
     }
+    if budget_definition is not None:
+        body["budget_definition"] = budget_definition
     body["snapshot_hash"] = compute_snapshot_hash(body)
     return body

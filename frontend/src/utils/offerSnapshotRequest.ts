@@ -4,6 +4,29 @@ import type { OfferDraft } from "../types";
 import { offerDraftToCalculateBody } from "../services/api";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
+/** OFFER_BUDGET_DEFINITION_V1 wire shape — matches the Core snapshot
+ * contract exactly (uppercase enums, integer euro cents; see
+ * silberloeffel-catering domain/offer_budget_definition.py). Internal
+ * planning metadata only: never referenced by anything customer-facing. */
+export interface OfferSnapshotBudgetDefinition {
+  amount_cents: number;
+  type: "TOTAL" | "PER_PERSON";
+  tax_basis: "GROSS" | "NET";
+  cost_scope: "FULL_OFFER" | "POSITIONS_ONLY";
+}
+
+export function buildBudgetDefinition(
+  draft: OfferDraft
+): OfferSnapshotBudgetDefinition | undefined {
+  if (!draft.budgetEnabled) return undefined;
+  return {
+    amount_cents: Math.round(Math.max(0, draft.totalBudget) * 100),
+    type: draft.budgetType === "per_person" ? "PER_PERSON" : "TOTAL",
+    tax_basis: draft.budgetBasis === "gross" ? "GROSS" : "NET",
+    cost_scope: draft.budgetScope === "full_offer" ? "FULL_OFFER" : "POSITIONS_ONLY",
+  };
+}
+
 export interface OfferSnapshotRequestBody {
   inquiry_id: string;
   snapshot_id: string;
@@ -32,6 +55,10 @@ export interface OfferSnapshotRequestBody {
     customer_visible_text: string;
   };
   offer: ReturnType<typeof offerDraftToCalculateBody>;
+  /** Present only when the operator enabled budget tracking for this
+   * draft — omitted entirely (not null/undefined-valued) otherwise, so no
+   * unsupported/empty field ever reaches Core. */
+  budget_definition?: OfferSnapshotBudgetDefinition;
 }
 
 function defaultValidUntil(eventDate: string): string {
@@ -57,11 +84,13 @@ export function buildOfferSnapshotRequest(
   const location = ctx.location.trim() || "–";
   const billing = ctx.billingAddress?.trim() || location;
   const remarks = ctx.remarks?.trim() ?? "";
+  const budgetDefinition = buildBudgetDefinition(draft);
   return {
     inquiry_id: inquiryId,
     snapshot_id: generateUuidV4(),
     valid_until: defaultValidUntil(ctx.eventDate),
     ...(draftId ? { source_draft_id: draftId } : {}),
+    ...(budgetDefinition ? { budget_definition: budgetDefinition } : {}),
     recipient: {
       company_name: company,
       contact_name: contact,

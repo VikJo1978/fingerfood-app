@@ -243,3 +243,153 @@ def test_catalog_to_core_prepare_offer_preserves_allergens(
     api_position = detail.json()["versions"][0]["variants"][0]["positions"][0]
     assert api_position["allergens"] == ["A", "G"]
     assert api_position["unit_net_cents"] == 1200
+
+
+def test_catalog_to_core_prepare_offer_preserves_budget_definition(
+    tmp_path: Path, core_api: tuple[str, Path, str]
+) -> None:
+    """OFFER_BUDGET_DEFINITION_V1, full cross-repo round trip: Configurator
+    backend snapshot builder -> real Core prepare-offer HTTP endpoint ->
+    Core SQLite persistence -> Core Office API read. No mocking of Core on
+    either side of the boundary."""
+    base, db, inquiry_id = core_api
+    items_path = tmp_path / "items.json"
+    _write_items(items_path)
+    catalog_client = CatalogClient(
+        "http://catalog.test", "token", transport=_mock_transport()
+    )
+    adapter = CatalogAdapter(catalog_client, items_path=items_path)
+    offer = OfferRequest(
+        persons=10,
+        lines=[
+            OfferLineIn(
+                item_id=_SOURCE_ID,
+                quantity_mode="total",
+                quantity=10,
+                surcharge_selected=False,
+            )
+        ],
+    )
+    snapshot = build_offer_snapshot_v2(
+        adapter=adapter,
+        inquiry_id=inquiry_id,
+        snapshot_id=str(uuid.uuid4()),
+        valid_until=date(2026, 7, 30),
+        recipient={
+            "company_name": "Example",
+            "contact_name": "Contact",
+            "email": "a@example.invalid",
+            "postal_address": "Address",
+        },
+        event={
+            "event_date": "2026-08-20",
+            "time_window_text": "18:00–22:00",
+            "location_text": "Hamburg",
+            "guest_count": 10,
+            "planning_mode": "caterer_suggestion",
+        },
+        customer_text={"title": "Pasta", "introduction": "Intro", "notes": ""},
+        payment_terms={"method": "RECHNUNG", "customer_visible_text": "Rechnung"},
+        offer=offer,
+        budget_definition={
+            "amount_cents": 3500,
+            "type": "PER_PERSON",
+            "tax_basis": "GROSS",
+            "cost_scope": "FULL_OFFER",
+        },
+    )
+    assert snapshot["budget_definition"]["amount_cents"] == 3500
+
+    core = CoreOfficeClient(base, _TOKEN)
+    result = core.prepare_offer(inquiry_id, snapshot)
+    assert result["offer_id"]
+
+    from catering_system.repositories.sqlite_offer_repository import (
+        SQLiteOfferRepository,
+    )
+
+    repo = SQLiteOfferRepository(db)
+    try:
+        stored = repo.get(result["offer_id"])
+        assert stored is not None
+        budget = stored.versions[0].budget_definition
+        assert budget is not None
+        assert budget.amount_cents == 3500
+        assert budget.type == "PER_PERSON"
+        assert budget.tax_basis == "GROSS"
+        assert budget.cost_scope == "FULL_OFFER"
+    finally:
+        repo.close()
+
+    detail = httpx.get(
+        f"{base}/office/v1/offers/{result['offer_id']}",
+        headers={"Authorization": f"Bearer {_TOKEN}"},
+    )
+    assert detail.status_code == 200
+    api_budget = detail.json()["versions"][0]["budget_definition"]
+    assert api_budget["amount_cents"] == 3500
+    assert api_budget["type"] == "PER_PERSON"
+    assert api_budget["tax_basis"] == "GROSS"
+    assert api_budget["cost_scope"] == "FULL_OFFER"
+    # comparison/remaining/over are pre-computed server-side from the
+    # already-frozen position cents, not re-derived client-side.
+    assert isinstance(api_budget["comparison_amount_cents"], int)
+    assert isinstance(api_budget["remaining_cents"], int)
+    assert isinstance(api_budget["over"], bool)
+
+
+def test_catalog_to_core_prepare_offer_omits_budget_definition_when_disabled(
+    tmp_path: Path, core_api: tuple[str, Path, str]
+) -> None:
+    base, db, inquiry_id = core_api
+    items_path = tmp_path / "items.json"
+    _write_items(items_path)
+    catalog_client = CatalogClient(
+        "http://catalog.test", "token", transport=_mock_transport()
+    )
+    adapter = CatalogAdapter(catalog_client, items_path=items_path)
+    offer = OfferRequest(
+        persons=10,
+        lines=[
+            OfferLineIn(
+                item_id=_SOURCE_ID,
+                quantity_mode="total",
+                quantity=10,
+                surcharge_selected=False,
+            )
+        ],
+    )
+    snapshot = build_offer_snapshot_v2(
+        adapter=adapter,
+        inquiry_id=inquiry_id,
+        snapshot_id=str(uuid.uuid4()),
+        valid_until=date(2026, 7, 30),
+        recipient={
+            "company_name": "Example",
+            "contact_name": "Contact",
+            "email": "a@example.invalid",
+            "postal_address": "Address",
+        },
+        event={
+            "event_date": "2026-08-20",
+            "time_window_text": "18:00–22:00",
+            "location_text": "Hamburg",
+            "guest_count": 10,
+            "planning_mode": "caterer_suggestion",
+        },
+        customer_text={"title": "Pasta", "introduction": "Intro", "notes": ""},
+        payment_terms={"method": "RECHNUNG", "customer_visible_text": "Rechnung"},
+        offer=offer,
+        # budget_definition omitted — budget tracking disabled.
+    )
+    assert "budget_definition" not in snapshot
+
+    core = CoreOfficeClient(base, _TOKEN)
+    result = core.prepare_offer(inquiry_id, snapshot)
+
+    detail = httpx.get(
+        f"{base}/office/v1/offers/{result['offer_id']}",
+        headers={"Authorization": f"Bearer {_TOKEN}"},
+    )
+    assert detail.status_code == 200
+    assert "budget_definition" not in detail.json()["versions"][0]

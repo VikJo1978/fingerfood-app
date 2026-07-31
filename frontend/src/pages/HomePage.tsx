@@ -35,6 +35,14 @@ import {
   readStoredCoreInquiryHandoff,
   storeCoreInquiryHandoff,
 } from "../utils/coreInquiryHandoff";
+import {
+  clearDraftFromSession,
+  readDraftFromSession,
+  readManualDraftHistoryMarker,
+  saveDraftToSession,
+  writeManualDraftHistoryMarker,
+  type DraftPersistenceScope,
+} from "../utils/draftPersistence";
 import { formatDateDe } from "../utils/formatDate";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
@@ -61,6 +69,13 @@ export function HomePage() {
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSaveMessage, setDraftSaveMessage] = useState<string | null>(null);
   const [importedInquiryId, setImportedInquiryId] = useState<string | null>(null);
+  // Which sessionStorage key the active draft persists under — resolved
+  // once we know whether this is a Core-Inquiry session or a manual one
+  // (see utils/draftPersistence.ts). Starts "manual" since that's the
+  // scope for a fresh, not-yet-resolved intake session.
+  const [draftScope, setDraftScope] = useState<DraftPersistenceScope>({
+    kind: "manual",
+  });
   // Hero-card display only (see InquiryHeroCard) — not part of OrderContextV1
   // / OfferDraft, so it never reaches the Core prepare-offer payload.
   const [inquiryEventType, setInquiryEventType] = useState("");
@@ -199,16 +214,41 @@ export function HomePage() {
    * standalone new draft, not a Core handoff. Clears any handoff still
    * cached in sessionStorage from a previous customer's Inquiry in this
    * tab before applying the manually-entered data, so it can never bleed
-   * into (or later resurface for) this unrelated draft. */
+   * into (or later resurface for) this unrelated draft. Also: explicitly
+   * starting a new draft here — resets to a fresh OfferDraft (not whatever
+   * lines/budget a previous draft in this tab left behind) and clears any
+   * persisted manual-scope draft, per the same "never bleed into an
+   * unrelated draft" rule applied to sessionStorage persistence. */
   const onManualPrepareOffer = useCallback(
     (transfer: InquiryToConfiguratorTransferV1) => {
       clearStoredCoreInquiryHandoff();
+      clearDraftFromSession({ kind: "manual" });
+      setOfferDraft(createInitialOfferDraft());
+      setImportedInquiryId(null);
+      setDraftScope({ kind: "manual" });
+      writeManualDraftHistoryMarker(window.location, window.history);
       handlePrepareOffer(transfer);
     },
     [handlePrepareOffer]
   );
 
   useEffect(() => {
+    /** Persisted-draft restore is a pure convenience layered on top of the
+     * existing Core-handoff prefill: it never runs instead of
+     * handlePrepareOffer, only after it, and — when a matching persisted
+     * draft exists for the resolved scope — replaces the whole draft
+     * wholesale with the operator's own more-complete in-progress editing
+     * state (added lines, configured budget) rather than merging field by
+     * field. Scope keying alone (see draftStorageKey) is what guarantees
+     * this can never pull one Inquiry's saved state into another. */
+    function restoreScopedDraft(scope: DraftPersistenceScope): void {
+      const restored = readDraftFromSession(scope);
+      if (restored !== null) {
+        setOfferDraft(restored);
+      }
+      setDraftScope(scope);
+    }
+
     const result = consumeCoreInquiryHandoff(window.location, window.history);
     if (result.present) {
       if (result.handoff === null) {
@@ -218,6 +258,7 @@ export function HomePage() {
       handlePrepareOffer(result.handoff.transfer);
       setImportedInquiryId(result.handoff.inquiry_id);
       storeCoreInquiryHandoff(result.handoff);
+      restoreScopedDraft({ kind: "inquiry", inquiryId: result.handoff.inquiry_id });
       return;
     }
     // No fragment in this load's URL. Only restore a stored handoff if
@@ -229,13 +270,36 @@ export function HomePage() {
     // tab that previously handled a different customer's Inquiry would
     // silently reuse that customer's contact/address/event data.
     const marker = readCoreInquiryHandoffHistoryMarker(window.history);
-    if (marker === null) return;
-    const restored = readStoredCoreInquiryHandoff(marker.inquiry_id);
-    if (restored !== null) {
-      handlePrepareOffer(restored.transfer);
-      setImportedInquiryId(restored.inquiry_id);
+    if (marker !== null) {
+      const restored = readStoredCoreInquiryHandoff(marker.inquiry_id);
+      if (restored !== null) {
+        handlePrepareOffer(restored.transfer);
+        setImportedInquiryId(restored.inquiry_id);
+        restoreScopedDraft({ kind: "inquiry", inquiryId: restored.inquiry_id });
+      }
+      return;
+    }
+    // Same reload-restore idea for the manual flow's own history marker —
+    // no Core handoff involved, so nothing to re-validate beyond the
+    // persisted draft's own shape (see readDraftFromSession).
+    const manualMarker = readManualDraftHistoryMarker(window.history);
+    if (manualMarker === null) return;
+    const restoredManual = readDraftFromSession({ kind: "manual" });
+    if (restoredManual !== null) {
+      setOfferDraft(restoredManual);
+      setDraftScope({ kind: "manual" });
+      setPageMode("configurator");
     }
   }, [handlePrepareOffer]);
+
+  // Persist the active draft on every change while in the Configurator —
+  // the one place all seven required fields (positions, quantities, guest
+  // count, budget amount/type/basis/scope) live together. Best-effort; see
+  // saveDraftToSession.
+  useEffect(() => {
+    if (pageMode !== "configurator") return;
+    saveDraftToSession(draftScope, offerDraft);
+  }, [pageMode, draftScope, offerDraft]);
 
   const onAddLine = (
     item: CatalogItem,
@@ -292,7 +356,7 @@ export function HomePage() {
     setOfferDraft((d) => ({
       ...d,
       lines: d.lines.map((l) =>
-        l.lineId === lineId ? { ...l, quantity: Math.max(0.5, q) } : l
+        l.lineId === lineId ? { ...l, quantity: Math.max(1, Math.round(q)) } : l
       ),
     }));
   };
@@ -433,8 +497,12 @@ export function HomePage() {
         onPrepared: (result) => {
           // Prepared successfully and about to navigate away to Core — the
           // handoff has done its job; clear it so it can't resurface for a
-          // later, unrelated Configurator visit in this tab.
+          // later, unrelated Configurator visit in this tab. Same for the
+          // persisted draft: this Inquiry's Offer now exists in Core, so
+          // there is nothing left in this Configurator session worth
+          // restoring for it later.
           clearStoredCoreInquiryHandoff();
+          clearDraftFromSession(draftScope);
           setPrepareStatus("done");
           setPrepareMessage(
             `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`
@@ -445,7 +513,7 @@ export function HomePage() {
       setPrepareStatus("error");
       setPrepareMessage(prepareOfferErrorMessage(error));
     }
-  }, [currentDraftId, importedInquiryId, offerDraft]);
+  }, [currentDraftId, draftScope, importedInquiryId, offerDraft]);
 
   const onExportCsv = () => {
     const header =
@@ -498,30 +566,50 @@ export function HomePage() {
   return (
     <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
       <div className="space-y-5">
-        {importedInquiryId ? (
-          <WarningBanner
-            message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
-          />
-        ) : null}
+        {/* OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: a real fixed-height,
+            overflow:hidden split workspace on desktop — not sticky. Sticky
+            (the previous approach here) only pins *after* the page has
+            been scrolled past its natural in-flow position, so the pane
+            visibly travels with the document until that point; it also
+            made the pane's height a guess (`max-h`) tuned for one specific
+            scroll offset. Here the workspace itself is the fixed-size box
+            (viewport height minus the TopBar (76px) and the content area's
+            top padding (34px) = 110px, using 100dvh so mobile Safari's
+            dynamic toolbar doesn't leave a stale gap), `overflow-hidden`
+            so it is never itself a scroll container, and each column
+            declares its own scroll region inside that fixed box: the left
+            column (catalog/context) via `overflow-y-auto`, the right
+            column (Offer pane) via `h-full` feeding OfferSummary's own
+            existing fixed-header/scrollable-middle/fixed-footer structure.
+            The document/body is never the scroll container for either —
+            scrolling the catalog cannot move the Offer pane, because the
+            Offer pane isn't positioned relative to document scroll at all
+            anymore. Mobile/tablet (below `lg:`) keeps normal page flow —
+            none of this applies below the breakpoint. */}
+        <div className="grid gap-[22px] lg:h-[calc(100dvh-110px)] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:overflow-hidden">
+          <div className="grid content-start gap-[22px] lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+            {importedInquiryId ? (
+              <WarningBanner
+                message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
+              />
+            ) : null}
 
-        <InquiryHeroCard
-          eyebrow="Angebot vorbereiten"
-          title={heroTitle}
-          facts={heroFacts}
-          stateTitle="Angebot zusammenstellen"
-          stateDescription="Entwurf — noch kein Auftrag, keine Kundenbenachrichtigung."
-        />
+            <InquiryHeroCard
+              eyebrow="Angebot vorbereiten"
+              title={heroTitle}
+              facts={heroFacts}
+              stateTitle="Angebot zusammenstellen"
+              stateDescription="Entwurf — noch kein Auftrag, keine Kundenbenachrichtigung."
+            />
 
-        {showPersonWarning ? (
-          <WarningBanner message="Hinweis: Viele Angebote und Positionen sind erst ab 10 Personen vorgesehen." />
-        ) : null}
+            {showPersonWarning ? (
+              <WarningBanner message="Hinweis: Viele Angebote und Positionen sind erst ab 10 Personen vorgesehen." />
+            ) : null}
 
-        {loadError ? <WarningBanner tone="danger" message={loadError} /> : null}
+            {loadError ? <WarningBanner tone="danger" message={loadError} /> : null}
 
-        {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
+            {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
 
-        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,.72fr)]">
-          <div className="grid content-start gap-[22px]">
             <OrderContextCard
               orderContext={offerDraft.orderContext}
               onOrderContextChange={(patch) =>
@@ -543,6 +631,12 @@ export function HomePage() {
               onTotalBudgetChange={(n) =>
                 setOfferDraft((d) => ({ ...d, totalBudget: Math.max(0, n) }))
               }
+              budgetType={offerDraft.budgetType}
+              onBudgetTypeChange={(v) => setOfferDraft((d) => ({ ...d, budgetType: v }))}
+              budgetBasis={offerDraft.budgetBasis}
+              onBudgetBasisChange={(v) => setOfferDraft((d) => ({ ...d, budgetBasis: v }))}
+              budgetScope={offerDraft.budgetScope}
+              onBudgetScopeChange={(v) => setOfferDraft((d) => ({ ...d, budgetScope: v }))}
             />
 
             <div className="space-y-0.5">
@@ -572,7 +666,7 @@ export function HomePage() {
             {loading ? (
               <p className="text-sm text-muted">Artikel werden geladen…</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {visibleItems.length === 0 ? (
                   <p className="rounded-card border border-dashed border-line bg-white px-4 py-10 text-center text-sm text-muted">
                     Keine Treffer. Bitte Filter lockern oder Suche ändern.
@@ -591,7 +685,7 @@ export function HomePage() {
             )}
           </div>
 
-          <div className="grid content-start gap-[22px]">
+          <div className="grid content-start gap-[22px] lg:h-full lg:min-h-0">
             <OfferSummary
               draft={offerDraft}
               itemsById={itemsById}

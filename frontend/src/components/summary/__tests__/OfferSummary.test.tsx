@@ -5,7 +5,7 @@
  * (Core handoff present, at least one line) the restyle was not meant to
  * change. Also covers opening the Angebotsvorschau preview from here. */
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { OfferSummary } from "../OfferSummary";
 import { computePauschalen, computeVatBreakdown } from "../../../utils/pricing";
@@ -94,6 +94,72 @@ describe("OfferSummary — primary action visibility", () => {
     fireEvent.click(screen.getByRole("button", { name: "Angebotsvorschau anzeigen" }));
     expect(screen.getByRole("dialog", { name: "Angebotsvorschau" })).toBeTruthy();
   });
+
+  function draftWithOneLine(overrides: Partial<OfferDraft>): OfferDraft {
+    return {
+      ...createInitialOfferDraft(),
+      lines: [
+        {
+          lineId: "line-1",
+          itemId: "item-1",
+          quantityMode: "total",
+          quantity: 10,
+          snapshot: {
+            title: "Brötchen Mix 1",
+            source_type: "internal",
+            pricing_mode: "per_piece",
+            price_type: "piece",
+            chosen_price: 2.3,
+            item_kind: "simple",
+          },
+        },
+      ],
+      ...overrides,
+    };
+  }
+
+  it("blocks the Core-prepare action for a PER_PERSON budget with guest_count=0, with a validation reason", () => {
+    const draft = draftWithOneLine({
+      persons: 0,
+      budgetEnabled: true,
+      budgetType: "per_person",
+      totalBudget: 25,
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(btn.hasAttribute("disabled")).toBe(true);
+    // Both the Budget stat card and the prepare-action area show their own
+    // "Personenzahl erforderlich" reason — assert the specific one next to
+    // the blocked action, not just that some alert exists somewhere.
+    expect(screen.getByText(/erst vorbereitet werden/).textContent).toMatch(
+      /Personenzahl erforderlich/
+    );
+  });
+
+  it("does not block the Core-prepare action for a TOTAL budget, even with guest_count=0", () => {
+    const draft = draftWithOneLine({
+      persons: 0,
+      budgetEnabled: true,
+      budgetType: "total",
+      totalBudget: 500,
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(btn.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("does not block the Core-prepare action for a PER_PERSON budget with a valid positive guest count", () => {
+    const draft = draftWithOneLine({
+      persons: 30,
+      budgetEnabled: true,
+      budgetType: "per_person",
+      totalBudget: 25,
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(btn.hasAttribute("disabled")).toBe(false);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });
 
 /** Regression coverage for the scrolling UX fix: with several lines
@@ -143,7 +209,7 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const region = screen.getByTestId("offer-summary-scroll-region");
 
-    const positionenLabel = screen.getByText("Positionen");
+    const positionenLabel = screen.getByText(/^Positionen \(/);
     const pauschaleLabel = screen.getByText("Büffetpauschale");
     const previewButton = screen.getByRole("button", { name: "Angebotsvorschau anzeigen" });
     const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
@@ -170,15 +236,23 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     expect(region.contains(firstItem)).toBe(true);
   });
 
-  it("only applies the scroll-affordance shadow/divider at lg:, and keeps the outer card's own max-height desktop-only", () => {
+  it("only applies the scroll-affordance shadow/divider at lg:, and fills its workspace column's full height desktop-only", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
-    const positionenLabel = screen.getByText("Positionen");
+    const positionenLabel = screen.getByText(/^Positionen \(/);
     const footer = positionenLabel.closest(".shrink-0");
     expect(footer?.className).toMatch(/lg:shadow-/);
 
     const aside = footer?.closest("aside");
-    expect(aside?.className).toMatch(/lg:max-h-\[calc\(100vh-4rem\)\]/);
+    // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: the aside itself no longer
+    // guesses its own height (no more sticky/max-h) — it just fills
+    // whatever real fixed-height ancestor HomePage's workspace column
+    // provides. `lg:min-h-0` is required so the flex-1 scroll region
+    // below can actually shrink/scroll instead of forcing the aside
+    // taller than that ancestor.
+    expect(aside?.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
+    expect(aside?.className).toMatch(/(?:^|\s)lg:min-h-0(?:\s|$)/);
     expect(aside?.className).not.toMatch(/(?:^|\s)max-h-\[/);
+    expect(aside?.className).not.toMatch(/sticky/);
   });
 
   it("mobile/tablet: nothing forces a cramped fixed-height inner scroller — summary flows naturally", () => {
@@ -194,3 +268,176 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     }
   });
 });
+
+/** Follow-up fix: the previous restructure still left the full VAT legal
+ * paragraph permanently in the fixed footer, which — combined with 6+
+ * lines — pushed "Angebot in Core vorbereiten" below the fold in real
+ * production use even though it passed the earlier (lighter) test/manual
+ * check. The paragraph is now collapsed by default behind a one-line
+ * <details>/<summary> disclosure; the actual totals (Positionen, Pauschalen,
+ * netto, VAT amounts, brutto) are never part of what's hidden. */
+describe("OfferSummary — VAT notice disclosure", () => {
+  function vatDetails(): HTMLDetailsElement {
+    const summary = screen.getByText("MwSt.-Details");
+    return summary.closest("details") as HTMLDetailsElement;
+  }
+
+  it("collapses the detailed VAT legal text by default", () => {
+    // jsdom doesn't apply the browser's UA stylesheet that visually hides a
+    // closed <details>'s children (it keeps them in the DOM either way, same
+    // as a real browser) — `open` is the actual signal that drives that
+    // hiding, so that's what this asserts.
+    renderSummary({});
+    const details = vatDetails();
+    expect(details).not.toBeNull();
+    expect(details.open).toBe(false);
+  });
+
+  it("expands to reveal the full legal wording when the summary is activated", () => {
+    renderSummary({});
+    const details = vatDetails();
+    fireEvent.click(within(details).getByText("MwSt.-Details"));
+    expect(details.open).toBe(true);
+    expect(
+      screen.getByText(/historische Leistungen werden nicht steuerlich bewertet/)
+    ).toBeTruthy();
+  });
+
+  it("never hides the actual financial values behind the VAT disclosure", () => {
+    const draft: OfferDraft = {
+      ...createInitialOfferDraft(),
+      lines: [
+        {
+          lineId: "line-1",
+          itemId: "item-1",
+          quantityMode: "total",
+          quantity: 10,
+          snapshot: {
+            title: "Brötchen Mix 1",
+            source_type: "internal",
+            pricing_mode: "per_piece",
+            price_type: "piece",
+            chosen_price: 2.3,
+            item_kind: "simple",
+          },
+        },
+      ],
+    };
+    renderSummary({ draft });
+    const details = document.querySelector("details");
+    // Positionen, Pauschalen and the netto/brutto totals must all be
+    // findable while the disclosure is still closed.
+    expect(details?.open).toBe(false);
+    expect(screen.getByText(/^Positionen \(/)).toBeTruthy();
+    expect(screen.getByText("Büffetpauschale")).toBeTruthy();
+    expect(screen.getByText("Geschirrpauschale")).toBeTruthy();
+    expect(screen.getByText(/Gesamt \(netto\)/)).toBeTruthy();
+    expect(screen.getByText(/zzgl\. 7% MwSt\./)).toBeTruthy();
+    expect(screen.getByText(/zzgl\. 19% MwSt\./)).toBeTruthy();
+    expect(screen.getByText(/Gesamt \(brutto\)/)).toBeTruthy();
+  });
+});
+
+describe("OfferSummary — multiple selected lines stay inside the scrollable region", () => {
+  function draftWithLines(count: number): OfferDraft {
+    const base = createInitialOfferDraft();
+    return {
+      ...base,
+      lines: Array.from({ length: count }, (_, i) => ({
+        lineId: `line-${i}`,
+        itemId: `item-${i}`,
+        quantityMode: "total" as const,
+        quantity: 10,
+        snapshot: {
+          title: `Artikel ${i}`,
+          source_type: "internal" as const,
+          pricing_mode: "per_piece" as const,
+          price_type: "piece" as const,
+          chosen_price: 2.3,
+          item_kind: "simple" as const,
+        },
+      })),
+    };
+  }
+
+  it("keeps every selected line — not just the first — inside the scrollable region with 6 lines", () => {
+    renderSummary({ draft: draftWithLines(6) });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    for (let i = 0; i < 6; i++) {
+      expect(region.contains(screen.getByText(`Artikel ${i}`))).toBe(true);
+    }
+  });
+
+  it("keeps both final action buttons outside the scrollable region even with 6 lines and the VAT notice open", () => {
+    renderSummary({ draft: draftWithLines(6), canPrepareInCore: true });
+    fireEvent.click(screen.getByText("MwSt.-Details"));
+    fireEvent.click(screen.getByText("Weitere Aktionen"));
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    const previewButton = screen.getByRole("button", { name: "Angebotsvorschau anzeigen" });
+    const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(region.contains(previewButton)).toBe(false);
+    expect(region.contains(prepareButton)).toBe(false);
+  });
+});
+
+/** Split-screen mockup follow-up: secondary utilities (save draft,
+ * exports) no longer sit inline in the scrollable region — they're
+ * collapsed behind their own "Weitere Aktionen" disclosure in the fixed
+ * footer, same pattern as the MwSt.-Details disclosure. */
+describe("OfferSummary — secondary actions disclosure", () => {
+  it("collapses save/export actions behind 'Weitere Aktionen' by default", () => {
+    // Same jsdom caveat as the MwSt.-Details disclosure: it doesn't apply
+    // the UA stylesheet that visually hides a closed <details>'s children,
+    // so `open` is the signal that actually drives the hiding.
+    renderSummary({});
+    const summary = screen.getByText("Weitere Aktionen");
+    const details = summary.closest("details");
+    expect(details?.open).toBe(false);
+  });
+
+  it("reveals Entwurf speichern and the export actions when expanded", () => {
+    renderSummary({});
+    fireEvent.click(screen.getByText("Weitere Aktionen"));
+    expect(screen.getByRole("button", { name: "Entwurf speichern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export JSON" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Export fürs Büro (JSON)" })).toBeTruthy();
+  });
+});
+
+describe("OfferSummary — Budget stat card position", () => {
+  it("shows the Budget/Aktuell/Verfügbar card in the fixed header, above the item list", () => {
+    const draft: OfferDraft = { ...createInitialOfferDraft(), budgetEnabled: true, totalBudget: 1200 };
+    renderSummary({ draft });
+    const region = screen.getByTestId("offer-summary-scroll-region");
+    const budgetLabel = screen.getByText("Budget");
+    expect(region.contains(budgetLabel)).toBe(false);
+  });
+
+  it("shows the current position count next to the title", () => {
+    const draft = draftFor(3);
+    renderSummary({ draft });
+    expect(screen.getByText("3 Positionen")).toBeTruthy();
+  });
+});
+
+function draftFor(count: number): OfferDraft {
+  const base = createInitialOfferDraft();
+  return {
+    ...base,
+    lines: Array.from({ length: count }, (_, i) => ({
+      lineId: `line-${i}`,
+      itemId: `item-${i}`,
+      quantityMode: "total" as const,
+      quantity: 10,
+      snapshot: {
+        title: `Artikel ${i}`,
+        source_type: "internal" as const,
+        pricing_mode: "per_piece" as const,
+        price_type: "piece" as const,
+        chosen_price: 2.3,
+        item_kind: "simple" as const,
+      },
+    })),
+  };
+}

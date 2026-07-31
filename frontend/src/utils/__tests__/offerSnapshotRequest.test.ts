@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import {
+  buildBudgetDefinition,
   buildOfferSnapshotRequest,
   navigateToPreparedCoreOffer,
   parseOfferPrepareResponse,
@@ -17,6 +18,9 @@ const draft = {
   persons: 10,
   budgetEnabled: false,
   totalBudget: 0,
+  budgetType: "total",
+  budgetBasis: "gross",
+  budgetScope: "full_offer",
   lines: [],
   orderContext: {
     companyName: "Example GmbH",
@@ -258,5 +262,108 @@ describe("prepareOfferInCore", () => {
     expect(buildOfferSnapshotRequest(draft, handoff!.inquiry_id, null).inquiry_id).toBe(
       inquiryId
     );
+  });
+});
+
+describe("budget_definition in the Core snapshot payload", () => {
+  it("is omitted entirely when budget tracking is disabled", () => {
+    const body = buildOfferSnapshotRequest(
+      { ...draft, budgetEnabled: false },
+      "inq-1",
+      null
+    );
+    expect(body.budget_definition).toBeUndefined();
+    expect("budget_definition" in body).toBe(false);
+  });
+
+  it("sends all four fields with the exact amount representation (integer euro cents)", () => {
+    const enabled: OfferDraft = {
+      ...draft,
+      budgetEnabled: true,
+      totalBudget: 35,
+      budgetType: "per_person",
+      budgetBasis: "net",
+      budgetScope: "positions_only",
+    };
+    const body = buildOfferSnapshotRequest(enabled, "inq-1", null);
+    expect(body.budget_definition).toEqual({
+      amount_cents: 3500,
+      type: "PER_PERSON",
+      tax_basis: "NET",
+      cost_scope: "POSITIONS_ONLY",
+    });
+  });
+
+  it("maps every budgetType/budgetBasis/budgetScope combination to the exact Core enum casing", () => {
+    const cases: Array<{
+      budgetType: OfferDraft["budgetType"];
+      budgetBasis: OfferDraft["budgetBasis"];
+      budgetScope: OfferDraft["budgetScope"];
+      expected: { type: string; tax_basis: string; cost_scope: string };
+    }> = [
+      {
+        budgetType: "total",
+        budgetBasis: "gross",
+        budgetScope: "full_offer",
+        expected: { type: "TOTAL", tax_basis: "GROSS", cost_scope: "FULL_OFFER" },
+      },
+      {
+        budgetType: "total",
+        budgetBasis: "net",
+        budgetScope: "positions_only",
+        expected: { type: "TOTAL", tax_basis: "NET", cost_scope: "POSITIONS_ONLY" },
+      },
+      {
+        budgetType: "per_person",
+        budgetBasis: "gross",
+        budgetScope: "positions_only",
+        expected: { type: "PER_PERSON", tax_basis: "GROSS", cost_scope: "POSITIONS_ONLY" },
+      },
+      {
+        budgetType: "per_person",
+        budgetBasis: "net",
+        budgetScope: "full_offer",
+        expected: { type: "PER_PERSON", tax_basis: "NET", cost_scope: "FULL_OFFER" },
+      },
+    ];
+    for (const { budgetType, budgetBasis, budgetScope, expected } of cases) {
+      const definition = buildBudgetDefinition({
+        ...draft,
+        budgetEnabled: true,
+        totalBudget: 100,
+        budgetType,
+        budgetBasis,
+        budgetScope,
+      });
+      expect(definition).toMatchObject(expected);
+    }
+  });
+
+  it("rounds fractional euro amounts to the nearest cent, never emitting a float amount", () => {
+    const definition = buildBudgetDefinition({
+      ...draft,
+      budgetEnabled: true,
+      totalBudget: 35.005,
+    });
+    expect(definition?.amount_cents).toBe(3501);
+    expect(Number.isInteger(definition?.amount_cents)).toBe(true);
+  });
+
+  it("clamps a negative budget amount to zero cents rather than sending a negative value", () => {
+    const definition = buildBudgetDefinition({
+      ...draft,
+      budgetEnabled: true,
+      totalBudget: -50,
+    });
+    expect(definition?.amount_cents).toBe(0);
+  });
+
+  it("does not attach budget_definition to the offer/positions sub-object", () => {
+    const body = buildOfferSnapshotRequest(
+      { ...draft, budgetEnabled: true, totalBudget: 35 },
+      "inq-1",
+      null
+    );
+    expect("budget_definition" in body.offer).toBe(false);
   });
 });

@@ -30,6 +30,12 @@ class OfferSnapshotBuildRequest(BaseModel):
     payment_terms: dict[str, str]
     offer: OfferRequest
     source_draft_id: str | None = None
+    # OFFER_BUDGET_DEFINITION_V1: optional, internal-only operator planning
+    # metadata — forwarded to Core as-is when present, omitted entirely
+    # when the operator never enabled budget tracking. Deep validation
+    # (enum values, cents) happens on the Core side; this is purely a
+    # pass-through shape here.
+    budget_definition: dict[str, object] | None = None
 
 
 def _build_snapshot_payload(body: OfferSnapshotBuildRequest) -> dict[str, object]:
@@ -45,6 +51,7 @@ def _build_snapshot_payload(body: OfferSnapshotBuildRequest) -> dict[str, object
         payment_terms=body.payment_terms,
         offer=body.offer,
         source_draft_id=body.source_draft_id,
+        budget_definition=body.budget_definition,
         catalog_revision=adapter.load_items_for_compose().catalog_revision,
     )
 

@@ -1,3 +1,7 @@
+import type { BudgetBasis, BudgetScope, BudgetType } from "../types";
+import { formatCurrency } from "../utils/pricing";
+import { IntegerField } from "./ui/IntegerField";
+
 interface TopControlsProps {
   persons: number;
   onPersonsChange: (n: number) => void;
@@ -5,7 +9,17 @@ interface TopControlsProps {
   onBudgetEnabledChange: (v: boolean) => void;
   totalBudget: number;
   onTotalBudgetChange: (n: number) => void;
+  budgetType: BudgetType;
+  onBudgetTypeChange: (v: BudgetType) => void;
+  budgetBasis: BudgetBasis;
+  onBudgetBasisChange: (v: BudgetBasis) => void;
+  budgetScope: BudgetScope;
+  onBudgetScopeChange: (v: BudgetScope) => void;
 }
+
+const selectClass =
+  "rounded-control border border-line bg-white px-2.5 py-2 text-sm text-ink transition focus:border-accent";
+const fieldLabelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
 
 export function TopControls({
   persons,
@@ -14,29 +28,36 @@ export function TopControls({
   onBudgetEnabledChange,
   totalBudget,
   onTotalBudgetChange,
+  budgetType,
+  onBudgetTypeChange,
+  budgetBasis,
+  onBudgetBasisChange,
+  budgetScope,
+  onBudgetScopeChange,
 }: TopControlsProps) {
-  const perPersonBudget = persons > 0 ? totalBudget / persons : 0;
+  // Inverse of whatever the operator configured — a per-person rate shown
+  // as its absolute total, or an absolute total shown as its per-person
+  // rate — purely informational, doesn't affect budgetType itself.
+  const convertedAmount =
+    budgetType === "per_person" ? totalBudget * persons : persons > 0 ? totalBudget / persons : 0;
 
   return (
     <div className="flex flex-col gap-4 rounded-card border border-line bg-white p-5 shadow-card sm:flex-row sm:flex-wrap sm:items-end sm:gap-6">
       <label className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
-          Anzahl Personen
-        </span>
-        <input
-          type="number"
+        <span className={fieldLabelClass}>Anzahl Personen</span>
+        <IntegerField
+          value={persons}
+          onChange={onPersonsChange}
           min={1}
           max={5000}
-          value={persons}
-          onChange={(e) => onPersonsChange(Number(e.target.value))}
-          className="w-full min-w-[8rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-36"
+          aria-label="Anzahl Personen"
+          inputClassName="w-full min-w-[6rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-28"
+          stepperClassName="flex w-9 items-center justify-center rounded-control border border-line bg-white text-ink transition hover:border-accent hover:bg-accent-soft"
         />
       </label>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
-          Budget
-        </span>
+        <span className={fieldLabelClass}>Budget</span>
         <button
           type="button"
           onClick={() => onBudgetEnabledChange(!budgetEnabled)}
@@ -65,8 +86,8 @@ export function TopControls({
       {budgetEnabled ? (
         <>
           <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
-              Gesamtbudget
+            <span className={fieldLabelClass}>
+              {budgetType === "per_person" ? "Budget pro Person" : "Gesamtbudget"}
             </span>
             <input
               type="number"
@@ -74,18 +95,51 @@ export function TopControls({
               step={10}
               value={totalBudget}
               onChange={(e) => onTotalBudgetChange(Number(e.target.value))}
-              className="w-full min-w-[10rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-44"
+              className="w-full min-w-[9rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-36"
             />
           </label>
-          <div className="flex flex-col gap-1 rounded-control border border-line bg-canvas px-4 py-3 sm:min-w-[12rem]">
-            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
-              Budget pro Person
+
+          <label className="flex flex-col gap-1.5">
+            <span className={fieldLabelClass}>Budget-Typ</span>
+            <select
+              value={budgetType}
+              onChange={(e) => onBudgetTypeChange(e.target.value as BudgetType)}
+              className={selectClass}
+            >
+              <option value="total">Gesamt</option>
+              <option value="per_person">Pro Person</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className={fieldLabelClass}>Basis</span>
+            <select
+              value={budgetBasis}
+              onChange={(e) => onBudgetBasisChange(e.target.value as BudgetBasis)}
+              className={selectClass}
+            >
+              <option value="gross">Brutto</option>
+              <option value="net">Netto</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className={fieldLabelClass}>Umfang</span>
+            <select
+              value={budgetScope}
+              onChange={(e) => onBudgetScopeChange(e.target.value as BudgetScope)}
+              className={selectClass}
+            >
+              <option value="full_offer">Gesamtes Angebot</option>
+              <option value="positions_only">Nur Positionen</option>
+            </select>
+          </label>
+
+          <div className="flex flex-col gap-1 rounded-control border border-line bg-canvas px-4 py-3 sm:min-w-[11rem]">
+            <span className={fieldLabelClass}>
+              {budgetType === "per_person" ? "Budget gesamt" : "Budget pro Person"}
             </span>
-            <span className="text-lg font-bold text-ink">
-              {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(
-                perPersonBudget
-              )}
-            </span>
+            <span className="text-lg font-bold text-ink">{formatCurrency(convertedAmount)}</span>
           </div>
         </>
       ) : null}
