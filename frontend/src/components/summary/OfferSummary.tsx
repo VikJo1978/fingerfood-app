@@ -91,18 +91,19 @@ export function OfferSummary({
   const budgetBlocksPrepare = budgetEnabled && budgetBreakdown.personsRequired;
 
   return (
-    // OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1: `max-h` used to assume this pane
-    // is already pinned at its `top-8` (2rem) sticky offset (`4rem` = top +
-    // a matching bottom margin). But at scrollY=0 the pane hasn't stuck yet
-    // — it renders at its natural in-flow position, which is *below* the
-    // fixed TopBar (76px) plus the content area's top padding (34px) =
-    // 110px, not 32px. Sizing for the old (stuck-only) assumption left the
-    // pane's own bottom edge — and both final action buttons — below the
-    // fold on first paint. 130px (110px natural top + 20px bottom margin)
-    // is the real worst case: once actually scrolled and stuck at top-8,
-    // the box has *more* headroom (900 - 32 = 868 vs this height), never
-    // less, so tuning for the natural offset is always the tighter bound.
-    <aside className="flex flex-col rounded-card border border-line bg-white shadow-card lg:sticky lg:top-8 lg:max-h-[calc(100vh-130px)]">
+    // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: no more sticky/max-h guess.
+    // HomePage now renders this aside inside a real fixed-height
+    // (`lg:h-[calc(100dvh-110px)]`), `overflow-hidden` workspace column —
+    // `lg:h-full` here simply fills that already-correctly-sized ancestor,
+    // so this pane never moves when the *left* column's own independent
+    // `overflow-y-auto` scrolls. `lg:min-h-0` is required for the
+    // `lg:flex-1 lg:overflow-y-auto` middle region below to actually be
+    // allowed to shrink/scroll inside a flex column — without it a flex
+    // item's default `min-height:auto` would let this column's content
+    // (specifically the position list) push the whole aside taller than
+    // its `h-full`, defeating the fixed layout the same way `overflow:
+    // visible` would.
+    <aside className="flex flex-col rounded-card border border-line bg-white shadow-card lg:h-full lg:min-h-0">
       {/* Fixed header — never scrolls: title/count, then the Budget stat
           card (only rendered when budget tracking is enabled). */}
       <div className="shrink-0 space-y-2 rounded-t-[18px] border-b border-line p-3 pb-2.5">
@@ -121,11 +122,13 @@ export function OfferSummary({
       {/* Scrollable region — only the selected-item rows live here. On
           mobile/tablet this has no height constraint and just flows
           naturally with the rest of the card; the `lg:` classes are what
-          turn it into an internal scroller once the summary becomes a
-          bounded sticky column. */}
+          turn it into the *only* internal scroller once the aside is a
+          fixed-height workspace column (see HomePage's
+          OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1 comment) — header and
+          footer stay put, this is the one region that moves. */}
       <div
         data-testid="offer-summary-scroll-region"
-        className="p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+        className="p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain"
       >
         {lines.length === 0 ? (
           <p className="rounded-card border border-dashed border-line bg-canvas/60 px-4 py-8 text-center text-sm text-muted">

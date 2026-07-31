@@ -236,18 +236,23 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     expect(region.contains(firstItem)).toBe(true);
   });
 
-  it("only applies the scroll-affordance shadow/divider at lg:, and keeps the outer card's own max-height desktop-only", () => {
+  it("only applies the scroll-affordance shadow/divider at lg:, and fills its workspace column's full height desktop-only", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const positionenLabel = screen.getByText(/^Positionen \(/);
     const footer = positionenLabel.closest(".shrink-0");
     expect(footer?.className).toMatch(/lg:shadow-/);
 
     const aside = footer?.closest("aside");
-    // OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1: tuned for the pane's natural
-    // (pre-stick) top offset — see the comment on this class in
-    // OfferSummary.tsx — not the old stuck-only `4rem` assumption.
-    expect(aside?.className).toMatch(/lg:max-h-\[calc\(100vh-130px\)\]/);
+    // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: the aside itself no longer
+    // guesses its own height (no more sticky/max-h) — it just fills
+    // whatever real fixed-height ancestor HomePage's workspace column
+    // provides. `lg:min-h-0` is required so the flex-1 scroll region
+    // below can actually shrink/scroll instead of forcing the aside
+    // taller than that ancestor.
+    expect(aside?.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
+    expect(aside?.className).toMatch(/(?:^|\s)lg:min-h-0(?:\s|$)/);
     expect(aside?.className).not.toMatch(/(?:^|\s)max-h-\[/);
+    expect(aside?.className).not.toMatch(/sticky/);
   });
 
   it("mobile/tablet: nothing forces a cramped fixed-height inner scroller — summary flows naturally", () => {

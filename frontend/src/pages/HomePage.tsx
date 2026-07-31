@@ -566,18 +566,28 @@ export function HomePage() {
   return (
     <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
       <div className="space-y-5">
-        {/* OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1: the hero/context/banner
-            stack lives inside the left column now, not full-width above
-            the two-column grid — a full-width block up here would push
-            *both* columns (including the sticky Offer pane) down by its
-            own height before the sticky column ever gets a chance to
-            pin, which is exactly what used to leave both final action
-            buttons below the fold at 1440x900/scrollY=0. The grid itself
-            now starts immediately below the application top bar (see
-            ConfiguratorShell's TopBar), so the right column's natural
-            (pre-stick) top sits right under it. */}
-        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:items-start">
-          <div className="grid content-start gap-[22px]">
+        {/* OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: a real fixed-height,
+            overflow:hidden split workspace on desktop — not sticky. Sticky
+            (the previous approach here) only pins *after* the page has
+            been scrolled past its natural in-flow position, so the pane
+            visibly travels with the document until that point; it also
+            made the pane's height a guess (`max-h`) tuned for one specific
+            scroll offset. Here the workspace itself is the fixed-size box
+            (viewport height minus the TopBar (76px) and the content area's
+            top padding (34px) = 110px, using 100dvh so mobile Safari's
+            dynamic toolbar doesn't leave a stale gap), `overflow-hidden`
+            so it is never itself a scroll container, and each column
+            declares its own scroll region inside that fixed box: the left
+            column (catalog/context) via `overflow-y-auto`, the right
+            column (Offer pane) via `h-full` feeding OfferSummary's own
+            existing fixed-header/scrollable-middle/fixed-footer structure.
+            The document/body is never the scroll container for either —
+            scrolling the catalog cannot move the Offer pane, because the
+            Offer pane isn't positioned relative to document scroll at all
+            anymore. Mobile/tablet (below `lg:`) keeps normal page flow —
+            none of this applies below the breakpoint. */}
+        <div className="grid gap-[22px] lg:h-[calc(100dvh-110px)] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:overflow-hidden">
+          <div className="grid content-start gap-[22px] lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             {importedInquiryId ? (
               <WarningBanner
                 message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
@@ -675,7 +685,7 @@ export function HomePage() {
             )}
           </div>
 
-          <div className="grid content-start gap-[22px]">
+          <div className="grid content-start gap-[22px] lg:h-full lg:min-h-0">
             <OfferSummary
               draft={offerDraft}
               itemsById={itemsById}

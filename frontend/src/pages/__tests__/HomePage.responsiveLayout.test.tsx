@@ -154,4 +154,51 @@ describe("HomePage — catalog/summary responsive layout", () => {
       expect(preceding.querySelector("h1, h2")).toBeNull();
     }
   });
+
+  /** OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1 regression coverage: scrolling
+   * the catalog used to move the Offer pane too, because the pane relied
+   * on `position: sticky` against document scroll — it only stayed in
+   * place *after* the page had already scrolled it out of its natural
+   * position once. The fix makes the two-column grid itself a real
+   * fixed-height (desktop-only), `overflow-hidden` workspace, so neither
+   * column's scrolling can ever move the other — there is no document
+   * scroll for either column to react to in the first place. jsdom can't
+   * measure real pixel scroll behavior, so this asserts the structural
+   * contract that behavior depends on. */
+  it("makes the workspace grid a fixed-height, overflow-hidden box on desktop, with each column scrolling independently", async () => {
+    render(<HomePage />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Zum Konfigurator (Test)" }));
+    });
+    await screen.findByText("Testartikel");
+
+    const aside = screen.getByRole("complementary");
+    const rightColumn = aside.parentElement as HTMLElement;
+    const grid = rightColumn.parentElement as HTMLElement;
+    const leftColumn = grid.children[0] as HTMLElement;
+
+    // The workspace itself: a real fixed height on desktop (not a sticky
+    // guess), and never itself a scroll container.
+    expect(grid.className).toMatch(/lg:h-\[calc\(100dvh-110px\)\]/);
+    expect(grid.className).toMatch(/(?:^|\s)lg:overflow-hidden(?:\s|$)/);
+    expect(grid.className).not.toMatch(/sticky/);
+
+    // Left column (catalog/context) scrolls independently of the page.
+    expect(leftColumn.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
+    expect(leftColumn.className).toMatch(/(?:^|\s)lg:overflow-y-auto(?:\s|$)/);
+
+    // Right column wrapper feeds a real height down to the aside, rather
+    // than the aside computing its own via sticky/max-height.
+    expect(rightColumn.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
+    expect(aside.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
+    expect(aside.className).not.toMatch(/sticky/);
+    expect(aside.className).not.toMatch(/max-h-\[/);
+
+    // Only one region inside the whole workspace is meant to scroll on
+    // the right: the selected-position list. Header and footer must not
+    // carry their own overflow/scroll declarations.
+    const scrollRegion = screen.getByTestId("offer-summary-scroll-region");
+    expect(scrollRegion.className).toMatch(/(?:^|\s)lg:overflow-y-auto(?:\s|$)/);
+    expect(aside.className).not.toMatch(/(?:^|\s)lg:overflow-y-auto(?:\s|$)/);
+  });
 });
