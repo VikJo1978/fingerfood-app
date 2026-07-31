@@ -220,6 +220,66 @@ describe("Configurator draft session persistence — manual flow", () => {
     expect(screen.getAllByText("Fingerfood Paket").length).toBeGreaterThan(0);
   });
 
+  it("survives a same-tab reload with zero guests while preserving charges and blocked-prepare state", async () => {
+    const first = render(<HomePage />);
+    await act(async () => {});
+    fireEvent.click(screen.getByRole("button", { name: "Angebot vorbereiten" }));
+    await act(async () => {});
+    await screen.findAllByText("Fingerfood Paket");
+    fireEvent.change(screen.getByLabelText("Anzahl Personen"), {
+      target: { value: "0" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByRole("combobox", { name: "Büffetpauschale" }), {
+      target: { value: "PAUSCHALE" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Geschirr" }), {
+      target: { value: "PAUSCHALE" },
+    });
+    fireEvent.change(screen.getByLabelText("Anlieferung netto"), {
+      target: { value: "0,00" },
+    });
+    fireEvent.change(screen.getAllByLabelText("Netto pro Person")[1], {
+      target: { value: "2,50" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Position hinzufügen" }));
+    fireEvent.change(screen.getByDisplayValue("Zusatzgeschirr"), {
+      target: { value: "Weinglaser" },
+    });
+    fireEvent.change(screen.getByLabelText("Anzahl Weinglaser"), {
+      target: { value: "24" },
+    });
+    fireEvent.change(screen.getByLabelText("Netto-Einzelpreis"), {
+      target: { value: "1,25" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    enableBudgetAndSet("net", "positions_only", "per_person", "42");
+    await act(async () => {});
+    first.unmount();
+
+    render(<HomePage />);
+    await act(async () => {});
+    await screen.findAllByText("Fingerfood Paket");
+
+    expect(screen.getByDisplayValue("0")).toBeTruthy();
+    expect((screen.getByLabelText("Budget-Typ") as HTMLSelectElement).value).toBe(
+      "per_person"
+    );
+    expect((screen.getByLabelText("Basis") as HTMLSelectElement).value).toBe("net");
+    expect((screen.getByLabelText("Umfang") as HTMLSelectElement).value).toBe(
+      "positions_only"
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    expect(screen.getByDisplayValue("0,00")).toBeTruthy();
+    expect(screen.getByDisplayValue("2,50")).toBeTruthy();
+    expect(screen.getByDisplayValue("Weinglaser")).toBeTruthy();
+    expect(screen.getByDisplayValue("24")).toBeTruthy();
+    expect(screen.getByDisplayValue("1,25")).toBeTruthy();
+  });
+
   it("starting a new manual draft clears the previous manual draft instead of carrying it over", async () => {
     render(<HomePage />);
     await act(async () => {});

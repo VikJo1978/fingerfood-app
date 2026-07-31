@@ -123,7 +123,9 @@ function isChargesDefinition(value: unknown): value is ChargesDefinition {
 function isOfferDraftShape(value: unknown): value is OfferDraft {
   if (!isRecord(value)) return false;
   if (!isOrderContext(value.orderContext)) return false;
-  if (!isFiniteNumber(value.persons) || value.persons < 1 || value.persons > 5000) {
+  // Reload restoration intentionally accepts a temporary zero-guest draft
+  // state; prepare-time validation still blocks sending it to Core.
+  if (!isFiniteNumber(value.persons) || value.persons < 0 || value.persons > 5000) {
     return false;
   }
   if (typeof value.budgetEnabled !== "boolean") return false;

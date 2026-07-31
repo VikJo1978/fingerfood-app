@@ -99,6 +99,54 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     expect(restored?.lines).toHaveLength(1);
   });
 
+  it("round-trips a zero-guest draft with complete chargesDefinition and budget intact", () => {
+    const storage = new FakeStorage();
+    const draft = draftWithBudget({
+      persons: 0,
+      budgetEnabled: true,
+      totalBudget: 35,
+      budgetType: "per_person",
+      budgetBasis: "net",
+      budgetScope: "positions_only",
+      chargesDefinition: {
+        buffet: { baseMode: "PAUSCHALE", pauschalePerPersonCents: 75 },
+        delivery: { amountCents: 0 },
+        dishware: {
+          baseMode: "PAUSCHALE",
+          pauschalePerPersonCents: 250,
+          additionalLines: [
+            {
+              lineId: "dishware-1",
+              description: "Teller extra",
+              quantity: 24,
+              unitNetCents: 125,
+            },
+            {
+              lineId: "dishware-2",
+              description: "Glaser",
+              quantity: 12,
+              unitNetCents: 80,
+            },
+          ],
+        },
+      },
+      lines: [sampleLine],
+    });
+    saveDraftToSession(INQUIRY_A, draft, storage);
+    const restored = readDraftFromSession(INQUIRY_A, storage);
+    expect(restored).not.toBeNull();
+    expect(restored?.persons).toBe(0);
+    expect(restored?.budgetEnabled).toBe(true);
+    expect(restored?.budgetType).toBe("per_person");
+    expect(restored?.budgetBasis).toBe("net");
+    expect(restored?.budgetScope).toBe("positions_only");
+    expect(restored?.chargesDefinition).toEqual(draft.chargesDefinition);
+    expect(restored?.chargesDefinition.delivery.amountCents).toBe(0);
+    expect(restored?.chargesDefinition.dishware.additionalLines).toEqual(
+      draft.chargesDefinition.dishware.additionalLines
+    );
+  });
+
   it("isolates different Inquiries — draft saved under Inquiry A never returns for Inquiry B", () => {
     const storage = new FakeStorage();
     saveDraftToSession(INQUIRY_A, draftWithBudget({ persons: 11 }), storage);
@@ -159,6 +207,20 @@ describe("saveDraftToSession / readDraftFromSession", () => {
         scope_key: draftStorageKey(INQUIRY_A),
         saved_at: new Date().toISOString(),
         draft: broken,
+      })
+    );
+    expect(readDraftFromSession(INQUIRY_A, storage)).toBeNull();
+  });
+
+  it("rejects a negative guest count", () => {
+    const storage = new FakeStorage();
+    storage.setItem(
+      draftStorageKey(INQUIRY_A),
+      JSON.stringify({
+        schema_version: "fingerfood.configurator-draft.v1",
+        scope_key: draftStorageKey(INQUIRY_A),
+        saved_at: new Date().toISOString(),
+        draft: draftWithBudget({ persons: -1 }),
       })
     );
     expect(readDraftFromSession(INQUIRY_A, storage)).toBeNull();
