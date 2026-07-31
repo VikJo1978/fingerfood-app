@@ -7,6 +7,9 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Literal
 
+from pydantic import ValidationError as PydanticValidationError
+
+from app.models.charges_definition import ChargesDefinitionIn, DishwareAdditionalLineIn
 from app.models.offer import OfferLineIn, OfferRequest
 from app.models.resolved_catalog import ResolvedCatalogLine
 from app.services.catalog_adapter import CatalogAdapter
@@ -71,7 +74,7 @@ def _build_catalog_position(
 
 def _build_charge_position(
     *,
-    kind: Literal["surcharge", "fee"],
+    kind: Literal["surcharge", "fee", "delivery", "dishware", "buffet_fee"],
     name: str,
     quantity_mode: Literal["total", "per_person"],
     quantity: str,
@@ -167,6 +170,144 @@ def _build_fee_positions(
     ]
 
 
+def _parse_charges_definition(value: dict[str, object]) -> ChargesDefinitionIn:
+    """Strict local validation matching Core PR #62 as closely as pydantic
+    allows (see app/models/charges_definition.py). Re-raised as ValueError
+    so it flows through the existing `except ValueError -> 422` handling in
+    routes/offer.py exactly like every other snapshot-build failure — a raw
+    pydantic ValidationError would otherwise surface as an uncaught 500."""
+    try:
+        return ChargesDefinitionIn.model_validate(value)
+    except PydanticValidationError as exc:
+        raise ValueError(f"invalid charges_definition: {exc}") from exc
+
+
+def _extract_guest_count(event: dict[str, object]) -> int | None:
+    """Guest count for CONFIGURABLE_OFFER_CHARGES_V1 Pauschale math is read
+    from `event.guest_count` — the same field Core's own consistency
+    validator checks against — deliberately not `offer.persons`, which is a
+    separate, independently client-supplied value that is not guaranteed to
+    match `event.guest_count` and is never seen by Core's cross-check."""
+    value = event.get("guest_count")
+    if value is None:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError("event.guest_count must be a positive integer or null")
+    if value < 1:
+        raise ValueError("event.guest_count must be a positive integer or null")
+    return value
+
+
+def _build_delivery_position(charges: ChargesDefinitionIn) -> dict[str, object]:
+    """Core PR #62's consistency validator always requires exactly one
+    `kind="delivery"` position, unconditionally — including when
+    `amount_cents == 0` (pickup/free delivery). Confirmed by reading
+    `_validate_delivery_consistency` in Core's
+    services/offer_snapshot_validation.py directly, not assumed: it checks
+    `len(positions) != 1` with no exemption for a zero amount."""
+    amount = charges.delivery.amount_cents
+    return _build_charge_position(
+        kind="delivery",
+        name="Anlieferung",
+        quantity_mode="total",
+        quantity="1",
+        unit_label="Pauschale",
+        unit_net_cents=amount,
+        net_total_cents=amount,
+        vat_rate_percent=PAUSCHALEN_VAT_RATE_PERCENT,
+    )
+
+
+def _build_dishware_pauschale_position(
+    charges: ChargesDefinitionIn, *, guest_count: int
+) -> dict[str, object]:
+    """Canonical Pauschale identity per Core's deterministic matching rule:
+    kind="dishware", quantity_mode="per_person", quantity="1",
+    unit_net_cents == pauschale_per_person_cents — never inferred by
+    elimination on the Core side, so this exact shape is required, not just
+    convenient."""
+    rate = charges.dishware.pauschale_per_person_cents
+    return _build_charge_position(
+        kind="dishware",
+        name="Geschirrpauschale",
+        quantity_mode="per_person",
+        quantity="1",
+        unit_label="Person",
+        unit_net_cents=rate,
+        net_total_cents=rate * guest_count,
+        vat_rate_percent=PAUSCHALEN_VAT_RATE_PERCENT,
+    )
+
+
+def _build_dishware_line_position(line: DishwareAdditionalLineIn) -> dict[str, object]:
+    """Matches Core's line-correspondence contract exactly:
+    quantity_mode="total", quantity=str(line.quantity), name==description,
+    unit_net_cents==line.unit_net_cents, net_total_cents derived server-side
+    (never client-supplied) as quantity * unit_net_cents in integer cents."""
+    net_total = line.quantity * line.unit_net_cents
+    return _build_charge_position(
+        kind="dishware",
+        name=line.description,
+        quantity_mode="total",
+        quantity=str(line.quantity),
+        unit_label="Stück",
+        unit_net_cents=line.unit_net_cents,
+        net_total_cents=net_total,
+        vat_rate_percent=PAUSCHALEN_VAT_RATE_PERCENT,
+    )
+
+
+def _build_buffet_position(
+    charges: ChargesDefinitionIn, *, guest_count: int
+) -> dict[str, object]:
+    rate = charges.buffet.pauschale_per_person_cents
+    return _build_charge_position(
+        kind="buffet_fee",
+        name="Büffetpauschale",
+        quantity_mode="per_person",
+        quantity="1",
+        unit_label="Person",
+        unit_net_cents=rate,
+        net_total_cents=rate * guest_count,
+        vat_rate_percent=PAUSCHALEN_VAT_RATE_PERCENT,
+    )
+
+
+def _build_charges_definition_positions(
+    charges: ChargesDefinitionIn, *, event: dict[str, object]
+) -> list[dict[str, object]]:
+    """Delivery is always materialized (see _build_delivery_position).
+    Dishware Pauschale / buffet_fee are materialized only when their
+    respective base_mode is PAUSCHALE — never added automatically for
+    NONE. Additional dishware lines are independent of dishware.base_mode
+    and always materialized one-for-one."""
+    positions: list[dict[str, object]] = [_build_delivery_position(charges)]
+
+    needs_guest_count = (
+        charges.dishware.base_mode == "PAUSCHALE"
+        or charges.buffet.base_mode == "PAUSCHALE"
+    )
+    guest_count = _extract_guest_count(event)
+    if needs_guest_count and guest_count is None:
+        raise ValueError(
+            "charges_definition requires event.guest_count when dishware or "
+            "buffet base_mode is PAUSCHALE"
+        )
+
+    if charges.dishware.base_mode == "PAUSCHALE":
+        assert guest_count is not None
+        positions.append(
+            _build_dishware_pauschale_position(charges, guest_count=guest_count)
+        )
+    for line in charges.dishware.additional_lines:
+        positions.append(_build_dishware_line_position(line))
+    if charges.buffet.base_mode == "PAUSCHALE":
+        assert guest_count is not None
+        positions.append(_build_buffet_position(charges, guest_count=guest_count))
+
+    return positions
+
+
 def _position_int(position: dict[str, object], field: str) -> int:
     value = position.get(field)
     if type(value) is not int or value < 0:
@@ -224,6 +365,7 @@ def build_offer_snapshot_v2(
     offer: OfferRequest,
     source_draft_id: str | None = None,
     budget_definition: dict[str, object] | None = None,
+    charges_definition: dict[str, object] | None = None,
     catalog_revision: str = "core-catalog-v1",
     snapshot_created_at: datetime | None = None,
 ) -> dict[str, object]:
@@ -265,7 +407,20 @@ def build_offer_snapshot_v2(
     if not positions:
         raise ValueError("snapshot requires at least one catalog position")
 
-    positions.extend(_build_fee_positions(priced, persons=offer.persons))
+    # CONFIGURABLE_OFFER_CHARGES_V1 temporary compatibility strategy: requests
+    # that omit charges_definition keep today's legacy hardcoded Pauschale
+    # generation unchanged (this is what the currently deployed frontend
+    # still sends); requests that include it use the new explicit path
+    # exclusively. Omitted charges_definition never silently means the new
+    # NONE defaults — that only happens once the frontend is updated
+    # (Stage 2C) and both sides deploy together.
+    if charges_definition is not None:
+        parsed_charges = _parse_charges_definition(charges_definition)
+        positions.extend(
+            _build_charges_definition_positions(parsed_charges, event=event)
+        )
+    else:
+        positions.extend(_build_fee_positions(priced, persons=offer.persons))
 
     totals = _calculate_totals_from_positions(positions)
     body: dict[str, object] = {
@@ -301,5 +456,10 @@ def build_offer_snapshot_v2(
     }
     if budget_definition is not None:
         body["budget_definition"] = budget_definition
+    if charges_definition is not None:
+        # Passed through unchanged in semantic value — the raw dict already
+        # validated above via _parse_charges_definition, not a re-serialized
+        # model, so no subtle key-ordering/shape drift can be introduced.
+        body["charges_definition"] = charges_definition
     body["snapshot_hash"] = compute_snapshot_hash(body)
     return body

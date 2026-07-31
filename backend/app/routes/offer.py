@@ -36,6 +36,17 @@ class OfferSnapshotBuildRequest(BaseModel):
     # (enum values, cents) happens on the Core side; this is purely a
     # pass-through shape here.
     budget_definition: dict[str, object] | None = None
+    # CONFIGURABLE_OFFER_CHARGES_V1: optional, customer-facing delivery/
+    # dishware/buffet charge definition. Kept as a raw dict at this route
+    # boundary (rather than a nested pydantic field) so the strict
+    # ChargesDefinitionIn validation in offer_snapshot_service.py stays the
+    # single source of truth shared by both /snapshot and /prepare, instead
+    # of duplicating it here. Omitted entirely means the legacy hardcoded
+    # Büffetpauschale/Geschirrpauschale/Anlieferung path (see
+    # offer_snapshot_service.build_offer_snapshot_v2 for the exact
+    # compatibility rule) — this is what the currently deployed frontend
+    # still sends.
+    charges_definition: dict[str, object] | None = None
 
 
 def _build_snapshot_payload(body: OfferSnapshotBuildRequest) -> dict[str, object]:
@@ -52,6 +63,7 @@ def _build_snapshot_payload(body: OfferSnapshotBuildRequest) -> dict[str, object
         offer=body.offer,
         source_draft_id=body.source_draft_id,
         budget_definition=body.budget_definition,
+        charges_definition=body.charges_definition,
         catalog_revision=adapter.load_items_for_compose().catalog_revision,
     )
 
