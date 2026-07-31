@@ -1,6 +1,6 @@
 /** Map frontend OfferDraft to backend snapshot/prepare payloads. */
 
-import type { OfferDraft } from "../types";
+import type { ChargesDefinition, OfferDraft } from "../types";
 import { offerDraftToCalculateBody } from "../services/api";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
@@ -15,6 +15,25 @@ export interface OfferSnapshotBudgetDefinition {
   cost_scope: "FULL_OFFER" | "POSITIONS_ONLY";
 }
 
+export interface OfferSnapshotChargesDefinition {
+  delivery: {
+    amount_cents: number;
+  };
+  dishware: {
+    base_mode: "NONE" | "PAUSCHALE";
+    pauschale_per_person_cents: number;
+    additional_lines: {
+      description: string;
+      quantity: number;
+      unit_net_cents: number;
+    }[];
+  };
+  buffet: {
+    base_mode: "NONE" | "PAUSCHALE";
+    pauschale_per_person_cents: number;
+  };
+}
+
 export function buildBudgetDefinition(
   draft: OfferDraft
 ): OfferSnapshotBudgetDefinition | undefined {
@@ -24,6 +43,29 @@ export function buildBudgetDefinition(
     type: draft.budgetType === "per_person" ? "PER_PERSON" : "TOTAL",
     tax_basis: draft.budgetBasis === "gross" ? "GROSS" : "NET",
     cost_scope: draft.budgetScope === "full_offer" ? "FULL_OFFER" : "POSITIONS_ONLY",
+  };
+}
+
+export function buildChargesDefinition(
+  charges: ChargesDefinition
+): OfferSnapshotChargesDefinition {
+  return {
+    delivery: {
+      amount_cents: charges.delivery.amountCents,
+    },
+    dishware: {
+      base_mode: charges.dishware.baseMode,
+      pauschale_per_person_cents: charges.dishware.pauschalePerPersonCents,
+      additional_lines: charges.dishware.additionalLines.map((line) => ({
+        description: line.description.trim(),
+        quantity: line.quantity,
+        unit_net_cents: line.unitNetCents,
+      })),
+    },
+    buffet: {
+      base_mode: charges.buffet.baseMode,
+      pauschale_per_person_cents: charges.buffet.pauschalePerPersonCents,
+    },
   };
 }
 
@@ -59,6 +101,7 @@ export interface OfferSnapshotRequestBody {
    * draft — omitted entirely (not null/undefined-valued) otherwise, so no
    * unsupported/empty field ever reaches Core. */
   budget_definition?: OfferSnapshotBudgetDefinition;
+  charges_definition: OfferSnapshotChargesDefinition;
 }
 
 function defaultValidUntil(eventDate: string): string {
@@ -85,6 +128,7 @@ export function buildOfferSnapshotRequest(
   const billing = ctx.billingAddress?.trim() || location;
   const remarks = ctx.remarks?.trim() ?? "";
   const budgetDefinition = buildBudgetDefinition(draft);
+  const guestCount = Math.round(draft.persons) || 0;
   return {
     inquiry_id: inquiryId,
     snapshot_id: generateUuidV4(),
@@ -101,7 +145,7 @@ export function buildOfferSnapshotRequest(
       event_date: ctx.eventDate,
       time_window_text: ctx.eventTime.trim() || "–",
       location_text: location,
-      guest_count: Math.max(1, Math.round(draft.persons) || 1),
+      guest_count: guestCount,
       planning_mode: "caterer_suggestion",
     },
     customer_text: {
@@ -113,7 +157,8 @@ export function buildOfferSnapshotRequest(
       method: "RECHNUNG",
       customer_visible_text: "Zahlung per Rechnung",
     },
-    offer: offerDraftToCalculateBody(draft),
+    offer: { ...offerDraftToCalculateBody(draft), persons: guestCount },
+    charges_definition: buildChargesDefinition(draft.chargesDefinition),
   };
 }
 

@@ -23,7 +23,12 @@ function renderSummary(overrides: {
   const draft = overrides.draft ?? createInitialOfferDraft();
   const itemsById = {};
   const subtotal = 0;
-  const pauschalen = computePauschalen(subtotal, draft.persons, draft.lines.length > 0);
+  const pauschalen = computePauschalen(
+    subtotal,
+    draft.persons,
+    draft.lines.length > 0,
+    draft.chargesDefinition
+  );
   const vat = computeVatBreakdown(draft, itemsById, pauschalen);
   render(
     <OfferSummary
@@ -37,6 +42,8 @@ function renderSummary(overrides: {
       onModeChange={noop}
       onCustomizationNoteChange={noop}
       onRemove={noop}
+      onChargesChange={noop}
+      createChargeLineId={() => "charge-line-1"}
       onExportJson={noop}
       onExportCsv={noop}
       onExportProposalJson={noop}
@@ -95,6 +102,20 @@ describe("OfferSummary — primary action visibility", () => {
     expect(screen.getByRole("dialog", { name: "Angebotsvorschau" })).toBeTruthy();
   });
 
+  it("opens the Pauschalen & Lieferung modal from compact charge rows", () => {
+    renderSummary({});
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
+    expect(screen.getByLabelText("Anlieferung netto")).toBeTruthy();
+  });
+
+  it("shows explicit default charges in the compact rows, including delivery on an empty draft", () => {
+    renderSummary({});
+    expect(screen.getByText("Büffetpauschale").parentElement?.textContent).toContain("0,00");
+    expect(screen.getByText("Geschirr").parentElement?.textContent).toContain("0,00");
+    expect(screen.getByText("Anlieferung").parentElement?.textContent).toContain("35,00");
+  });
+
   function draftWithOneLine(overrides: Partial<OfferDraft>): OfferDraft {
     return {
       ...createInitialOfferDraft(),
@@ -136,7 +157,7 @@ describe("OfferSummary — primary action visibility", () => {
     );
   });
 
-  it("does not block the Core-prepare action for a TOTAL budget, even with guest_count=0", () => {
+  it("blocks the Core-prepare action when guest_count=0, even for a TOTAL budget", () => {
     const draft = draftWithOneLine({
       persons: 0,
       budgetEnabled: true,
@@ -145,7 +166,25 @@ describe("OfferSummary — primary action visibility", () => {
     });
     renderSummary({ draft, canPrepareInCore: true });
     const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
-    expect(btn.hasAttribute("disabled")).toBe(false);
+    expect(btn.hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText(/Angebot vorzubereiten/).textContent).toMatch(
+      /Personenzahl erforderlich/
+    );
+  });
+
+  it("blocks prepare and explains the reason when a Pauschale is enabled without guests", () => {
+    const draft = draftWithOneLine({
+      persons: 0,
+      chargesDefinition: {
+        ...createInitialOfferDraft().chargesDefinition,
+        buffet: { baseMode: "PAUSCHALE", pauschalePerPersonCents: 50 },
+      },
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    expect(
+      screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
+    ).toBe(true);
+    expect(screen.getByText(/Büffet- oder Geschirrpauschale/)).toBeTruthy();
   });
 
   it("does not block the Core-prepare action for a PER_PERSON budget with a valid positive guest count", () => {
@@ -330,7 +369,7 @@ describe("OfferSummary — VAT notice disclosure", () => {
     expect(details?.open).toBe(false);
     expect(screen.getByText(/^Positionen \(/)).toBeTruthy();
     expect(screen.getByText("Büffetpauschale")).toBeTruthy();
-    expect(screen.getByText("Geschirrpauschale")).toBeTruthy();
+    expect(screen.getByText("Geschirr")).toBeTruthy();
     expect(screen.getByText(/Gesamt \(netto\)/)).toBeTruthy();
     expect(screen.getByText(/zzgl\. 7% MwSt\./)).toBeTruthy();
     expect(screen.getByText(/zzgl\. 19% MwSt\./)).toBeTruthy();

@@ -237,11 +237,25 @@ export function OfferPreview({
                     </td>
                   </tr>
                 ) : null}
-                {pauschalen.anlieferung > 0 ? (
+                {draft.chargesDefinition.dishware.additionalLines.map((line) => (
+                  <tr key={line.lineId} className="border-b border-slate-200 text-slate-700">
+                    <td className="py-2 pr-2">{line.quantity} Stück</td>
+                    <td className="py-2 pr-2">{line.description}</td>
+                    <td className="py-2 pr-2 text-right">
+                      {formatCurrency(line.unitNetCents / 100)}
+                    </td>
+                    <td className="py-2 pl-2 text-right font-semibold">
+                      {formatCurrency((line.quantity * line.unitNetCents) / 100)}
+                    </td>
+                  </tr>
+                ))}
+                {pauschalen.anlieferung >= 0 ? (
                   <tr className="border-b border-slate-200 text-slate-700">
-                    <td className="py-2 pr-2">—</td>
+                    <td className="py-2 pr-2">1 Pauschale</td>
                     <td className="py-2 pr-2">Anlieferung (Standardzone)</td>
-                    <td className="py-2 pr-2 text-right">—</td>
+                    <td className="py-2 pr-2 text-right">
+                      {formatCurrency(pauschalen.anlieferung)}
+                    </td>
                     <td className="py-2 pl-2 text-right font-semibold">
                       {formatCurrency(pauschalen.anlieferung)}
                     </td>

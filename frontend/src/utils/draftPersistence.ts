@@ -1,4 +1,11 @@
-import type { OfferDraft, OfferLine, OrderContextV1 } from "../types";
+import type {
+  ChargesDefinition,
+  DishwareAdditionalLine,
+  OfferDraft,
+  OfferLine,
+  OrderContextV1,
+} from "../types";
+import { createInitialChargesDefinition } from "../types";
 import { normalizeBudgetDefinition } from "./budgetNormalization";
 
 /** Namespaced and versioned like CORE_INQUIRY_SESSION_KEY: bumping the
@@ -34,6 +41,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isNonnegativeInteger(value: unknown): value is number {
+  return Number.isInteger(value) && typeof value === "number" && value >= 0;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isInteger(value) && typeof value === "number" && value >= 1;
 }
 
 function isNonEmptyString(value: unknown, max = 2_000): value is string {
@@ -78,14 +93,46 @@ function isOfferLine(value: unknown): value is OfferLine {
   return true;
 }
 
+function isDishwareAdditionalLine(value: unknown): value is DishwareAdditionalLine {
+  if (!isRecord(value)) return false;
+  return (
+    isNonEmptyString(value.lineId) &&
+    isNonEmptyString(value.description, 500) &&
+    value.description === value.description.trim() &&
+    isPositiveInteger(value.quantity) &&
+    isNonnegativeInteger(value.unitNetCents)
+  );
+}
+
+function isChargesDefinition(value: unknown): value is ChargesDefinition {
+  if (!isRecord(value)) return false;
+  if (!isRecord(value.buffet) || !isRecord(value.delivery) || !isRecord(value.dishware)) {
+    return false;
+  }
+  if (value.buffet.baseMode !== "NONE" && value.buffet.baseMode !== "PAUSCHALE") return false;
+  if (!isNonnegativeInteger(value.buffet.pauschalePerPersonCents)) return false;
+  if (!isNonnegativeInteger(value.delivery.amountCents)) return false;
+  if (value.dishware.baseMode !== "NONE" && value.dishware.baseMode !== "PAUSCHALE") {
+    return false;
+  }
+  if (!isNonnegativeInteger(value.dishware.pauschalePerPersonCents)) return false;
+  if (!Array.isArray(value.dishware.additionalLines)) return false;
+  return value.dishware.additionalLines.every(isDishwareAdditionalLine);
+}
+
 function isOfferDraftShape(value: unknown): value is OfferDraft {
   if (!isRecord(value)) return false;
   if (!isOrderContext(value.orderContext)) return false;
-  if (!isFiniteNumber(value.persons) || value.persons < 1 || value.persons > 5000) {
+  // Reload restoration intentionally accepts a temporary zero-guest draft
+  // state; prepare-time validation still blocks sending it to Core.
+  if (!isFiniteNumber(value.persons) || value.persons < 0 || value.persons > 5000) {
     return false;
   }
   if (typeof value.budgetEnabled !== "boolean") return false;
   if (!isFiniteNumber(value.totalBudget) || value.totalBudget < 0) return false;
+  if (value.chargesDefinition !== undefined && !isChargesDefinition(value.chargesDefinition)) {
+    return false;
+  }
   if (!Array.isArray(value.lines) || !value.lines.every(isOfferLine)) return false;
   return true;
 }
@@ -163,6 +210,7 @@ export function readDraftFromSession(
   return {
     ...draft,
     ...normalizeBudgetDefinition(draft),
+    chargesDefinition: draft.chargesDefinition ?? createInitialChargesDefinition(),
   };
 }
 
