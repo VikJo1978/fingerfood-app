@@ -16,37 +16,58 @@ export interface BudgetBreakdown {
   budgetType: BudgetType;
   budgetBasis: BudgetBasis;
   budgetScope: BudgetScope;
-  persons: number;
+  /** Raw input, unmodified — `null`/`<= 0` is a real, distinct state, not
+   * normalized away. See `personsRequired`. */
+  persons: number | null;
   /** The raw configured number — a per-person rate or an absolute total,
    * depending on `budgetType`. */
   configuredAmount: number;
   /** `configuredAmount` expressed as an absolute total (× persons when
-   * `budgetType === "per_person"`, unchanged otherwise). */
-  absoluteBudget: number;
+   * `budgetType === "per_person"`, unchanged otherwise). `null` exactly
+   * when `personsRequired` is true — TOTAL is never affected, since it
+   * never multiplies by persons. */
+  absoluteBudget: number | null;
   /** The comparison total selected by basis/scope, as an absolute amount
    * — always one of subtotal / pauschalen.grandTotal / vat.totalInclVat /
-   * computePositionsOnlyGross(...), never independently recalculated. */
+   * computePositionsOnlyGross(...), never independently recalculated.
+   * Always computable — it never depends on `persons`. */
   comparisonAbsolute: number;
-  comparisonPerPerson: number;
+  /** `null` exactly when `personsRequired` is true. Mirrors Core's
+   * `compute_offer_budget_presentation`, which returns
+   * `comparison_amount_cents=None` rather than dividing by an assumed
+   * guest count of 1. */
+  comparisonPerPerson: number | null;
   /** Label for the comparison total, e.g. "Aktuell (brutto)". */
   comparisonLabel: string;
+  /** True exactly when `budgetType === "per_person"` and no valid guest
+   * count (missing or `<= 0`) is available — matches Core's
+   * `guest_count is None or guest_count <= 0` guard. When true, no
+   * Aktuell/Verfügbar/percentage value is fabricated; the UI must show a
+   * "Personenzahl erforderlich" state instead, and the operator's chosen
+   * amount is never divided by an assumed single guest. TOTAL budgets are
+   * entirely unaffected — they never depend on `persons`. */
+  personsRequired: boolean;
   /** Remaining budget (positive) or amount exceeded (negative) — per
    * person when budgetType is "per_person", absolute otherwise, so it's
    * always directly comparable to `configuredAmount`. Rounded to the cent
    * (the project's established currency-comparison policy, matching
    * pricing.ts) before `over` is decided, so an operator-visible exact
    * match (e.g. "0,00 €" available) is never reported as exceeded (or vice
-   * versa) purely from sub-cent floating-point residue. */
-  remaining: number;
-  over: boolean;
+   * versa) purely from sub-cent floating-point residue. `null` exactly
+   * when `personsRequired` is true. */
+  remaining: number | null;
+  over: boolean | null;
   included: BudgetComponentLine[];
   excluded: BudgetComponentLine[];
   /** Concise always-visible formula text, e.g.
-   * "35,00 € × 30 Personen = 1.050,00 €" (per_person) or "1.200,00 €" (total). */
+   * "35,00 € × 30 Personen = 1.050,00 €" (per_person) or "1.200,00 €"
+   * (total). A German "guest count required" sentence when
+   * `personsRequired` is true. */
   formulaText: string;
   /** Progress-bar percentage (0–100, already clamped) — precomputed here
-   * so the component only renders it, never recomputes it. */
-  pctUsed: number;
+   * so the component only renders it, never recomputes it. `null` exactly
+   * when `personsRequired` is true (no misleading percentage). */
+  pctUsed: number | null;
   barPct: number;
 }
 
@@ -66,12 +87,18 @@ interface ComputeBudgetBreakdownInput {
   budgetBasis: BudgetBasis;
   budgetScope: BudgetScope;
   configuredAmount: number;
-  persons: number;
+  /** `null` and `<= 0` are both treated as "no valid guest count" for
+   * `budgetType === "per_person"` — mirrors Core's `guest_count: int |
+   * None` plus its `guest_count <= 0` defensive guard. Irrelevant for
+   * `budgetType === "total"`, which never divides by persons. */
+  persons: number | null;
   subtotal: number;
   pauschalen: PauschalenBreakdown;
   vat: VatBreakdown;
   formatCurrency: (n: number) => string;
 }
+
+export const PERSONS_REQUIRED_TEXT = "Personenzahl erforderlich";
 
 const POSITIONEN_LABEL = "Positionen (Speisen etc.) netto";
 const PAUSCHALEN_LABEL = "Pauschalen (Büffet, Geschirr, Anlieferung)";
@@ -96,10 +123,14 @@ export function computeBudgetBreakdown({
   vat,
   formatCurrency,
 }: ComputeBudgetBreakdownInput): BudgetBreakdown {
-  const safePersons = persons > 0 ? persons : 1;
+  const personsRequired = budgetType === "per_person" && !(typeof persons === "number" && persons > 0);
 
   const absoluteBudget =
-    budgetType === "per_person" ? configuredAmount * safePersons : configuredAmount;
+    budgetType === "per_person"
+      ? personsRequired
+        ? null
+        : configuredAmount * (persons as number)
+      : configuredAmount;
 
   let comparisonAbsolute: number;
   let comparisonLabel: string;
@@ -138,33 +169,40 @@ export function computeBudgetBreakdown({
     }
   }
 
-  const comparisonPerPerson = comparisonAbsolute / safePersons;
-  const remaining = roundCents(
-    budgetType === "per_person"
-      ? configuredAmount - comparisonPerPerson
-      : absoluteBudget - comparisonAbsolute
-  );
-  const over = remaining < 0;
+  const comparisonPerPerson = personsRequired ? null : comparisonAbsolute / (persons as number);
+  const remaining = personsRequired
+    ? null
+    : roundCents(
+        budgetType === "per_person"
+          ? configuredAmount - (comparisonPerPerson as number)
+          : (absoluteBudget as number) - comparisonAbsolute
+      );
+  const over = remaining === null ? null : remaining < 0;
 
-  const formulaText =
-    budgetType === "per_person"
-      ? `${formatCurrency(configuredAmount)} × ${safePersons} Personen = ${formatCurrency(absoluteBudget)}`
-      : formatCurrency(absoluteBudget);
+  const formulaText = personsRequired
+    ? `${formatCurrency(configuredAmount)} / Person — ${PERSONS_REQUIRED_TEXT}`
+    : budgetType === "per_person"
+      ? `${formatCurrency(configuredAmount)} × ${persons} Personen = ${formatCurrency(absoluteBudget as number)}`
+      : formatCurrency(absoluteBudget as number);
 
-  const pctUsed =
-    absoluteBudget > 0 ? Math.round((comparisonAbsolute / absoluteBudget) * 100) : 0;
-  const barPct = Math.min(100, Math.max(0, pctUsed));
+  const pctUsed = personsRequired
+    ? null
+    : absoluteBudget !== null && absoluteBudget > 0
+      ? Math.round((comparisonAbsolute / absoluteBudget) * 100)
+      : 0;
+  const barPct = pctUsed === null ? 0 : Math.min(100, Math.max(0, pctUsed));
 
   return {
     budgetType,
     budgetBasis,
     budgetScope,
-    persons: safePersons,
+    persons,
     configuredAmount,
     absoluteBudget,
     comparisonAbsolute,
     comparisonPerPerson,
     comparisonLabel,
+    personsRequired,
     remaining,
     over,
     included,

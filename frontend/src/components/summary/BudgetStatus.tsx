@@ -1,4 +1,4 @@
-import type { BudgetBreakdown } from "../../utils/budgetBreakdown";
+import { PERSONS_REQUIRED_TEXT, type BudgetBreakdown } from "../../utils/budgetBreakdown";
 import { formatCurrency } from "../../utils/pricing";
 
 interface BudgetStatusProps {
@@ -41,6 +41,7 @@ export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
     comparisonLabel,
     comparisonAbsolute,
     comparisonPerPerson,
+    personsRequired,
     pctUsed,
     barPct,
   } = breakdown;
@@ -68,27 +69,44 @@ export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
           <p className="truncate text-[10px] font-bold uppercase tracking-[.05em] text-muted">
             {currentLabel}
           </p>
-          <p className="text-sm font-bold text-ink">{formatCurrency(headlineCurrent)}</p>
+          <p className="text-sm font-bold text-ink" data-testid="budget-aktuell">
+            {/* No fabricated value: with no valid guest count for a
+                per-person budget, there is nothing to divide the Aktuell
+                total by, so nothing numeric is shown here (mirrors Core's
+                comparison_amount_cents=None). */}
+            {personsRequired || headlineCurrent === null ? "–" : formatCurrency(headlineCurrent)}
+          </p>
         </div>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.05em] text-muted">
             {availableLabel}
           </p>
-          <p className={`text-sm font-bold ${over ? "text-danger" : "text-accent-deep"}`}>
-            {formatCurrency(remaining)}
+          <p
+            className={`text-sm font-bold ${over ? "text-danger" : "text-accent-deep"}`}
+            data-testid="budget-verfuegbar"
+          >
+            {personsRequired || remaining === null ? "–" : formatCurrency(remaining)}
           </p>
         </div>
       </div>
 
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
-        <div
-          className={`h-full rounded-full transition-[width] ${over ? "bg-danger" : "bg-accent"}`}
-          style={{ width: `${barPct}%` }}
-        />
-      </div>
-      <p className="mt-1 text-xs text-muted">
-        {over ? "Budget überschritten" : `${pctUsed}% des Budgets verwendet`}
-      </p>
+      {personsRequired ? (
+        <p className="mt-2 text-xs font-semibold text-danger" role="alert">
+          Personenzahl erforderlich, um das Pro-Person-Budget zu berechnen.
+        </p>
+      ) : (
+        <>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className={`h-full rounded-full transition-[width] ${over ? "bg-danger" : "bg-accent"}`}
+              style={{ width: `${barPct}%` }}
+            />
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            {over ? "Budget überschritten" : `${pctUsed}% des Budgets verwendet`}
+          </p>
+        </>
+      )}
 
       <details className="group mt-2 rounded-control border border-line">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-1 text-xs font-semibold text-ink [&::-webkit-details-marker]:hidden">
@@ -125,17 +143,31 @@ export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
               <span>{formatCurrency(breakdown.comparisonAbsolute)}</span>
             </div>
             {budgetType === "per_person" ? (
-              <div className="flex items-baseline justify-between gap-3 text-muted">
-                <span>{breakdown.comparisonLabel} ÷ {breakdown.persons} Personen</span>
-                <span>{formatCurrency(breakdown.comparisonPerPerson)}</span>
-              </div>
+              personsRequired ? (
+                <div className="flex items-baseline justify-between gap-3 text-muted">
+                  <span>{breakdown.comparisonLabel} ÷ Personen</span>
+                  <span>{PERSONS_REQUIRED_TEXT}</span>
+                </div>
+              ) : (
+                <div className="flex items-baseline justify-between gap-3 text-muted">
+                  <span>{breakdown.comparisonLabel} ÷ {breakdown.persons} Personen</span>
+                  <span>{formatCurrency(breakdown.comparisonPerPerson as number)}</span>
+                </div>
+              )
             ) : null}
-            <div
-              className={`flex items-baseline justify-between gap-3 font-bold ${over ? "text-danger" : "text-accent-deep"}`}
-            >
-              <span>{over ? "Überschritten" : "Verfügbar"}{budgetType === "per_person" ? " pro Person" : ""}</span>
-              <span>{formatCurrency(Math.abs(remaining))}</span>
-            </div>
+            {personsRequired ? (
+              <div className="flex items-baseline justify-between gap-3 font-bold text-muted">
+                <span>Verfügbar pro Person</span>
+                <span>{PERSONS_REQUIRED_TEXT}</span>
+              </div>
+            ) : (
+              <div
+                className={`flex items-baseline justify-between gap-3 font-bold ${over ? "text-danger" : "text-accent-deep"}`}
+              >
+                <span>{over ? "Überschritten" : "Verfügbar"}{budgetType === "per_person" ? " pro Person" : ""}</span>
+                <span>{formatCurrency(Math.abs(remaining as number))}</span>
+              </div>
+            )}
           </div>
         </div>
       </details>

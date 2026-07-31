@@ -94,6 +94,72 @@ describe("OfferSummary — primary action visibility", () => {
     fireEvent.click(screen.getByRole("button", { name: "Angebotsvorschau anzeigen" }));
     expect(screen.getByRole("dialog", { name: "Angebotsvorschau" })).toBeTruthy();
   });
+
+  function draftWithOneLine(overrides: Partial<OfferDraft>): OfferDraft {
+    return {
+      ...createInitialOfferDraft(),
+      lines: [
+        {
+          lineId: "line-1",
+          itemId: "item-1",
+          quantityMode: "total",
+          quantity: 10,
+          snapshot: {
+            title: "Brötchen Mix 1",
+            source_type: "internal",
+            pricing_mode: "per_piece",
+            price_type: "piece",
+            chosen_price: 2.3,
+            item_kind: "simple",
+          },
+        },
+      ],
+      ...overrides,
+    };
+  }
+
+  it("blocks the Core-prepare action for a PER_PERSON budget with guest_count=0, with a validation reason", () => {
+    const draft = draftWithOneLine({
+      persons: 0,
+      budgetEnabled: true,
+      budgetType: "per_person",
+      totalBudget: 25,
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(btn.hasAttribute("disabled")).toBe(true);
+    // Both the Budget stat card and the prepare-action area show their own
+    // "Personenzahl erforderlich" reason — assert the specific one next to
+    // the blocked action, not just that some alert exists somewhere.
+    expect(screen.getByText(/erst vorbereitet werden/).textContent).toMatch(
+      /Personenzahl erforderlich/
+    );
+  });
+
+  it("does not block the Core-prepare action for a TOTAL budget, even with guest_count=0", () => {
+    const draft = draftWithOneLine({
+      persons: 0,
+      budgetEnabled: true,
+      budgetType: "total",
+      totalBudget: 500,
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(btn.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("does not block the Core-prepare action for a PER_PERSON budget with a valid positive guest count", () => {
+    const draft = draftWithOneLine({
+      persons: 30,
+      budgetEnabled: true,
+      budgetType: "per_person",
+      totalBudget: 25,
+    });
+    renderSummary({ draft, canPrepareInCore: true });
+    const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(btn.hasAttribute("disabled")).toBe(false);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });
 
 /** Regression coverage for the scrolling UX fix: with several lines
@@ -177,7 +243,10 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     expect(footer?.className).toMatch(/lg:shadow-/);
 
     const aside = footer?.closest("aside");
-    expect(aside?.className).toMatch(/lg:max-h-\[calc\(100vh-4rem\)\]/);
+    // OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1: tuned for the pane's natural
+    // (pre-stick) top offset — see the comment on this class in
+    // OfferSummary.tsx — not the old stuck-only `4rem` assumption.
+    expect(aside?.className).toMatch(/lg:max-h-\[calc\(100vh-130px\)\]/);
     expect(aside?.className).not.toMatch(/(?:^|\s)max-h-\[/);
   });
 

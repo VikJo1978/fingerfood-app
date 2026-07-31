@@ -566,30 +566,40 @@ export function HomePage() {
   return (
     <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
       <div className="space-y-5">
-        {importedInquiryId ? (
-          <WarningBanner
-            message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
-          />
-        ) : null}
-
-        <InquiryHeroCard
-          eyebrow="Angebot vorbereiten"
-          title={heroTitle}
-          facts={heroFacts}
-          stateTitle="Angebot zusammenstellen"
-          stateDescription="Entwurf — noch kein Auftrag, keine Kundenbenachrichtigung."
-        />
-
-        {showPersonWarning ? (
-          <WarningBanner message="Hinweis: Viele Angebote und Positionen sind erst ab 10 Personen vorgesehen." />
-        ) : null}
-
-        {loadError ? <WarningBanner tone="danger" message={loadError} /> : null}
-
-        {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
-
-        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)]">
+        {/* OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1: the hero/context/banner
+            stack lives inside the left column now, not full-width above
+            the two-column grid — a full-width block up here would push
+            *both* columns (including the sticky Offer pane) down by its
+            own height before the sticky column ever gets a chance to
+            pin, which is exactly what used to leave both final action
+            buttons below the fold at 1440x900/scrollY=0. The grid itself
+            now starts immediately below the application top bar (see
+            ConfiguratorShell's TopBar), so the right column's natural
+            (pre-stick) top sits right under it. */}
+        <div className="grid gap-[22px] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:items-start">
           <div className="grid content-start gap-[22px]">
+            {importedInquiryId ? (
+              <WarningBanner
+                message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
+              />
+            ) : null}
+
+            <InquiryHeroCard
+              eyebrow="Angebot vorbereiten"
+              title={heroTitle}
+              facts={heroFacts}
+              stateTitle="Angebot zusammenstellen"
+              stateDescription="Entwurf — noch kein Auftrag, keine Kundenbenachrichtigung."
+            />
+
+            {showPersonWarning ? (
+              <WarningBanner message="Hinweis: Viele Angebote und Positionen sind erst ab 10 Personen vorgesehen." />
+            ) : null}
+
+            {loadError ? <WarningBanner tone="danger" message={loadError} /> : null}
+
+            {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
+
             <OrderContextCard
               orderContext={offerDraft.orderContext}
               onOrderContextChange={(patch) =>

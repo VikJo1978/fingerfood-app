@@ -257,20 +257,87 @@ describe("computeBudgetBreakdown — budgetType affects units, not included/excl
     expect(perPersonR.over).toBe(true);
   });
 
-  it("does not divide by zero when persons is 0", () => {
+});
+
+/** Cross-repo parity requirement: Core's `compute_offer_budget_presentation`
+ * returns `comparison_amount_cents=None`/`remaining_cents=None`/`over=None`
+ * for `budgetType === PER_PERSON` when `guest_count is None or guest_count
+ * <= 0` — it never assumes a guest count of 1. This mirrors that exactly:
+ * no fabricated Aktuell/Verfügbar value, ever, for a missing/invalid guest
+ * count. TOTAL is asserted to be entirely unaffected in every case, since
+ * it never divides by persons (matches Core's TOTAL branch, which never
+ * even looks at guest_count). */
+describe("computeBudgetBreakdown — PER_PERSON guest-count parity with Core", () => {
+  const persons = 20;
+  const { subtotal, pauschalen, vat } = computeAll(persons);
+
+  it.each([
+    ["guest_count = 0", 0],
+    ["guest_count missing (null)", null],
+  ] as const)("%s: personsRequired is true, nothing is fabricated", (_label, invalidPersons) => {
     const r = computeBudgetBreakdown({
       budgetType: "per_person",
       budgetBasis: "gross",
       budgetScope: "full_offer",
       configuredAmount: 35,
-      persons: 0,
+      persons: invalidPersons,
       subtotal,
       pauschalen,
       vat,
       formatCurrency,
     });
-    expect(Number.isFinite(r.comparisonPerPerson)).toBe(true);
-    expect(Number.isFinite(r.remaining)).toBe(true);
+    expect(r.personsRequired).toBe(true);
+    expect(r.comparisonPerPerson).toBeNull();
+    expect(r.remaining).toBeNull();
+    expect(r.over).toBeNull();
+    expect(r.absoluteBudget).toBeNull();
+    expect(r.pctUsed).toBeNull();
+    expect(r.barPct).toBe(0);
+    expect(r.formulaText).toContain("Personenzahl erforderlich");
+    // comparisonAbsolute never depends on persons — still fully computed.
+    expect(r.comparisonAbsolute).toBe(vat.totalInclVat);
+  });
+
+  it.each([
+    ["guest_count = 1", 1],
+    ["guest_count = 30 (normal positive)", 30],
+  ] as const)("%s: personsRequired is false, a real comparison is shown", (_label, validPersons) => {
+    const r = computeBudgetBreakdown({
+      budgetType: "per_person",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: 35,
+      persons: validPersons,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    expect(r.personsRequired).toBe(false);
+    expect(r.comparisonPerPerson).toBeCloseTo(vat.totalInclVat / validPersons, 5);
+    expect(r.remaining).not.toBeNull();
+    expect(r.over).not.toBeNull();
+    expect(typeof r.pctUsed).toBe("number");
+  });
+
+  it("TOTAL budgets are entirely unaffected by guest_count = 0 or missing", () => {
+    for (const invalidPersons of [0, null] as const) {
+      const r = computeBudgetBreakdown({
+        budgetType: "total",
+        budgetBasis: "gross",
+        budgetScope: "full_offer",
+        configuredAmount: 2000,
+        persons: invalidPersons,
+        subtotal,
+        pauschalen,
+        vat,
+        formatCurrency,
+      });
+      expect(r.personsRequired).toBe(false);
+      expect(r.absoluteBudget).toBe(2000);
+      expect(r.remaining).toBeCloseTo(2000 - vat.totalInclVat, 5);
+      expect(r.over).not.toBeNull();
+    }
   });
 });
 
@@ -361,8 +428,10 @@ describe("computeBudgetBreakdown — exact-equality and rounding-boundary curren
       vat,
       formatCurrency,
     });
-    const cents = Math.round(r.remaining * 100);
-    expect(cents / 100).toBeCloseTo(r.remaining, 10);
+    expect(r.remaining).not.toBeNull();
+    const remaining = r.remaining as number;
+    const cents = Math.round(remaining * 100);
+    expect(cents / 100).toBeCloseTo(remaining, 10);
   });
 
   it("pctUsed/barPct are precomputed on the breakdown, not left for the component to derive", () => {

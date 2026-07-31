@@ -83,8 +83,26 @@ export function OfferSummary({
     [budgetType, budgetBasis, budgetScope, totalBudget, persons, subtotal, pauschalen, vat]
   );
 
+  /** Mirrors Core's own hard requirement (a PER_PERSON budget without a
+   * valid guest count has nothing to compare against) — the prepare
+   * action must not send Core a PER_PERSON budget_definition while the
+   * operator has no way to see what it would evaluate to. TOTAL budgets
+   * are never blocked by this — they don't depend on persons. */
+  const budgetBlocksPrepare = budgetEnabled && budgetBreakdown.personsRequired;
+
   return (
-    <aside className="flex flex-col rounded-card border border-line bg-white shadow-card lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
+    // OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1: `max-h` used to assume this pane
+    // is already pinned at its `top-8` (2rem) sticky offset (`4rem` = top +
+    // a matching bottom margin). But at scrollY=0 the pane hasn't stuck yet
+    // — it renders at its natural in-flow position, which is *below* the
+    // fixed TopBar (76px) plus the content area's top padding (34px) =
+    // 110px, not 32px. Sizing for the old (stuck-only) assumption left the
+    // pane's own bottom edge — and both final action buttons — below the
+    // fold on first paint. 130px (110px natural top + 20px bottom margin)
+    // is the real worst case: once actually scrolled and stuck at top-8,
+    // the box has *more* headroom (900 - 32 = 868 vs this height), never
+    // less, so tuning for the natural offset is always the tighter bound.
+    <aside className="flex flex-col rounded-card border border-line bg-white shadow-card lg:sticky lg:top-8 lg:max-h-[calc(100vh-130px)]">
       {/* Fixed header — never scrolls: title/count, then the Budget stat
           card (only rendered when budget tracking is enabled). */}
       <div className="shrink-0 space-y-2 rounded-t-[18px] border-b border-line p-3 pb-2.5">
@@ -270,7 +288,7 @@ export function OfferSummary({
           <div className="mt-1.5 space-y-1.5 border-t border-line pt-1.5">
             <button
               type="button"
-              disabled={prepareStatus === "preparing" || lines.length === 0}
+              disabled={prepareStatus === "preparing" || lines.length === 0 || budgetBlocksPrepare}
               onClick={() => void onPrepareInCore()}
               className="inline-flex h-10 w-full items-center justify-center rounded-control bg-accent px-3 text-sm font-bold text-white transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -278,6 +296,12 @@ export function OfferSummary({
                 ? "Bereite Angebot in Core vor…"
                 : "Angebot in Core vorbereiten"}
             </button>
+            {budgetBlocksPrepare ? (
+              <p className="text-center text-xs font-semibold text-danger" role="alert">
+                Personenzahl erforderlich, um das Pro-Person-Budget zu prüfen — Angebot kann
+                erst vorbereitet werden, wenn eine gültige Personenzahl eingetragen ist.
+              </p>
+            ) : null}
             {prepareMessage ? (
               <p
                 className={`text-center text-xs ${

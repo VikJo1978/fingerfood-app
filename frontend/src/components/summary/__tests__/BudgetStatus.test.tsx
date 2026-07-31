@@ -114,6 +114,60 @@ describe("BudgetStatus", () => {
     expect(screen.queryByText(/÷ .* Personen/)).toBeNull();
   });
 
+  it("shows 'Personenzahl erforderlich' and no fabricated Aktuell/Verfügbar/percentage for PER_PERSON with guest_count=0", () => {
+    const breakdown = computeBudgetBreakdown({
+      budgetType: "per_person",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: 25,
+      persons: 0,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    render(<BudgetStatus enabled breakdown={breakdown} />);
+    expect(screen.getAllByText("Personenzahl erforderlich").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("budget-aktuell").textContent).toBe("–");
+    expect(screen.getByTestId("budget-verfuegbar").textContent).toBe("–");
+    expect(screen.queryByText(/% des Budgets verwendet/)).toBeNull();
+    expect(screen.queryByText("Budget überschritten")).toBeNull();
+  });
+
+  it("shows 'Personenzahl erforderlich' for PER_PERSON with a missing (null) guest count", () => {
+    const breakdown = computeBudgetBreakdown({
+      budgetType: "per_person",
+      budgetBasis: "net",
+      budgetScope: "positions_only",
+      configuredAmount: 25,
+      persons: null,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    render(<BudgetStatus enabled breakdown={breakdown} />);
+    expect(screen.getAllByText("Personenzahl erforderlich").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("budget-aktuell").textContent).toBe("–");
+  });
+
+  it("TOTAL budgets never show 'Personenzahl erforderlich', even with persons=0", () => {
+    const breakdown = computeBudgetBreakdown({
+      budgetType: "total",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: 500,
+      persons: 0,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    render(<BudgetStatus enabled breakdown={breakdown} />);
+    expect(screen.queryByText("Personenzahl erforderlich")).toBeNull();
+    expect(screen.getByTestId("budget-aktuell").textContent).not.toBe("–");
+  });
+
   it("flags an over-budget total instead of showing a percentage", () => {
     const breakdown = computeBudgetBreakdown({
       budgetType: "total",

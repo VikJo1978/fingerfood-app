@@ -114,4 +114,44 @@ describe("HomePage — catalog/summary responsive layout", () => {
     expect(children.indexOf(rightColumn)).toBe(children.length - 1);
     expect(children[0].textContent).toContain("Angebotsbausteine auswählen");
   });
+
+  /** OFFER_PANE_DESKTOP_TOP_ALIGNMENT_V1 regression coverage: the Inquiry
+   * hero/context stack previously sat full-width *above* the two-column
+   * grid, so it pushed both columns — including the sticky Offer pane —
+   * down by its own height before the sticky column ever got a chance to
+   * pin. At 1440x900/scrollY=0 that left both final action buttons below
+   * the fold. jsdom can't measure real pixel layout, so this asserts the
+   * structural fix instead: the hero card must live *inside* the left
+   * column of the same grid the Offer pane's column belongs to, not in a
+   * sibling that precedes the grid. */
+  it("keeps the Inquiry hero card inside the left column of the same grid as the Offer pane (not nested above it)", async () => {
+    render(<HomePage />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Zum Konfigurator (Test)" }));
+    });
+    await screen.findByText("Testartikel");
+
+    const aside = screen.getByRole("complementary");
+    const rightColumn = aside.parentElement as HTMLElement;
+    const grid = rightColumn.parentElement as HTMLElement;
+    const leftColumn = grid.children[0] as HTMLElement;
+
+    const heroHeading = screen.getByRole("heading", { level: 1 });
+    // The hero heading's nearest grid ancestor must be the *left column*
+    // of the very same two-column grid the Offer pane's column belongs to
+    // — proving the hero is a sibling-in-a-column, not a full-width block
+    // stacked above the grid that would push the sticky column down.
+    expect(leftColumn.contains(heroHeading)).toBe(true);
+    expect(grid.contains(heroHeading)).toBe(true);
+
+    // No full-width sibling precedes the grid within the page content
+    // wrapper: whatever comes before the grid (if anything) must contain
+    // no heading of its own — a full-width hero/context block would.
+    const gridParent = grid.parentElement as HTMLElement;
+    const gridIndex = Array.from(gridParent.children).indexOf(grid);
+    for (let i = 0; i < gridIndex; i++) {
+      const preceding = gridParent.children[i] as HTMLElement;
+      expect(preceding.querySelector("h1, h2")).toBeNull();
+    }
+  });
 });
