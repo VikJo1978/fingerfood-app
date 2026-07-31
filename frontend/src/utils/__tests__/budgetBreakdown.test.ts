@@ -273,3 +273,112 @@ describe("computeBudgetBreakdown — budgetType affects units, not included/excl
     expect(Number.isFinite(r.remaining)).toBe(true);
   });
 });
+
+describe("computeBudgetBreakdown — exact-equality and rounding-boundary currency comparison", () => {
+  const persons = 20;
+  const { subtotal, pauschalen, vat } = computeAll(persons);
+
+  it("TOTAL: budget exactly equal to the comparison total shows remaining=0, not exceeded", () => {
+    const r = computeBudgetBreakdown({
+      budgetType: "total",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: vat.totalInclVat,
+      persons,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    expect(r.remaining).toBe(0);
+    expect(r.over).toBe(false);
+  });
+
+  it("PER_PERSON: budget exactly equal to the per-person comparison shows remaining=0, not exceeded", () => {
+    // Deliberately not a "nice" 2-decimal amount — a raw division result,
+    // to prove the comparison itself (not just a pre-rounded fixture) is
+    // what's being asserted as an exact match.
+    const perPersonExact = vat.totalInclVat / persons;
+    const r = computeBudgetBreakdown({
+      budgetType: "per_person",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: perPersonExact,
+      persons,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    expect(r.remaining).toBe(0);
+    expect(r.over).toBe(false);
+  });
+
+  it("a fraction-of-a-cent surplus rounds to 0,00 € remaining without flipping to exceeded", () => {
+    // 1/3 cent below the true total — well inside "this is really the
+    // same amount" territory for a currency display, must not read as
+    // exceeded purely from float residue.
+    const r = computeBudgetBreakdown({
+      budgetType: "total",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: vat.totalInclVat - 0.003,
+      persons,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    expect(r.remaining).toBe(0);
+    expect(r.over).toBe(false);
+  });
+
+  it("a fraction-of-a-cent shortfall rounds to 0,00 € and stays over (never masks a real shortfall)", () => {
+    const r = computeBudgetBreakdown({
+      budgetType: "total",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: vat.totalInclVat - 0.006,
+      persons,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    expect(r.remaining).toBe(-0.01);
+    expect(r.over).toBe(true);
+  });
+
+  it("remaining is always rounded to whole cents (deterministic currency comparison)", () => {
+    const r = computeBudgetBreakdown({
+      budgetType: "per_person",
+      budgetBasis: "net",
+      budgetScope: "positions_only",
+      configuredAmount: 17,
+      persons: 7, // deliberately a non-round divisor
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    const cents = Math.round(r.remaining * 100);
+    expect(cents / 100).toBeCloseTo(r.remaining, 10);
+  });
+
+  it("pctUsed/barPct are precomputed on the breakdown, not left for the component to derive", () => {
+    const r = computeBudgetBreakdown({
+      budgetType: "total",
+      budgetBasis: "gross",
+      budgetScope: "full_offer",
+      configuredAmount: 1000,
+      persons,
+      subtotal,
+      pauschalen,
+      vat,
+      formatCurrency,
+    });
+    expect(typeof r.pctUsed).toBe("number");
+    expect(r.barPct).toBeGreaterThanOrEqual(0);
+    expect(r.barPct).toBeLessThanOrEqual(100);
+  });
+});

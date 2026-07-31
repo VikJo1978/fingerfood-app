@@ -34,18 +34,21 @@ function ChevronDown() {
 export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
   if (!enabled) return null;
 
-  const { over, remaining, budgetType, comparisonLabel, comparisonAbsolute, comparisonPerPerson } =
-    breakdown;
+  const {
+    over,
+    remaining,
+    budgetType,
+    comparisonLabel,
+    comparisonAbsolute,
+    comparisonPerPerson,
+    pctUsed,
+    barPct,
+  } = breakdown;
 
   const headlineCurrent = budgetType === "per_person" ? comparisonPerPerson : comparisonAbsolute;
   const currentLabel =
     budgetType === "per_person" ? `${comparisonLabel} pro Person` : comparisonLabel;
   const availableLabel = budgetType === "per_person" ? "Verfügbar pro Person" : "Verfügbar";
-  const pctUsed =
-    breakdown.absoluteBudget > 0
-      ? Math.round((breakdown.comparisonAbsolute / breakdown.absoluteBudget) * 100)
-      : 0;
-  const barPct = Math.min(100, Math.max(0, pctUsed));
 
   return (
     <div className="rounded-control border border-line bg-canvas/60 p-2.5" role="status">

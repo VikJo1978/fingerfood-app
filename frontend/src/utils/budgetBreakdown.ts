@@ -32,7 +32,11 @@ export interface BudgetBreakdown {
   comparisonLabel: string;
   /** Remaining budget (positive) or amount exceeded (negative) — per
    * person when budgetType is "per_person", absolute otherwise, so it's
-   * always directly comparable to `configuredAmount`. */
+   * always directly comparable to `configuredAmount`. Rounded to the cent
+   * (the project's established currency-comparison policy, matching
+   * pricing.ts) before `over` is decided, so an operator-visible exact
+   * match (e.g. "0,00 €" available) is never reported as exceeded (or vice
+   * versa) purely from sub-cent floating-point residue. */
   remaining: number;
   over: boolean;
   included: BudgetComponentLine[];
@@ -40,6 +44,21 @@ export interface BudgetBreakdown {
   /** Concise always-visible formula text, e.g.
    * "35,00 € × 30 Personen = 1.050,00 €" (per_person) or "1.200,00 €" (total). */
   formulaText: string;
+  /** Progress-bar percentage (0–100, already clamped) — precomputed here
+   * so the component only renders it, never recomputes it. */
+  pctUsed: number;
+  barPct: number;
+}
+
+/** The project's established currency-comparison policy (matches
+ * pricing.ts): round to the nearest cent before comparing signs, so
+ * "over budget" is decided on the same precision the operator sees
+ * displayed, never on invisible sub-cent floating-point residue.
+ * `+ 0` normalizes a `-0` result (e.g. rounding -0.003) to plain `0` —
+ * Intl.NumberFormat renders `-0` as "-0,00 €", a real display bug for an
+ * exact-match budget otherwise. */
+function roundCents(value: number): number {
+  return Math.round(value * 100) / 100 + 0;
 }
 
 interface ComputeBudgetBreakdownInput {
@@ -120,16 +139,21 @@ export function computeBudgetBreakdown({
   }
 
   const comparisonPerPerson = comparisonAbsolute / safePersons;
-  const remaining =
+  const remaining = roundCents(
     budgetType === "per_person"
       ? configuredAmount - comparisonPerPerson
-      : absoluteBudget - comparisonAbsolute;
+      : absoluteBudget - comparisonAbsolute
+  );
   const over = remaining < 0;
 
   const formulaText =
     budgetType === "per_person"
       ? `${formatCurrency(configuredAmount)} × ${safePersons} Personen = ${formatCurrency(absoluteBudget)}`
       : formatCurrency(absoluteBudget);
+
+  const pctUsed =
+    absoluteBudget > 0 ? Math.round((comparisonAbsolute / absoluteBudget) * 100) : 0;
+  const barPct = Math.min(100, Math.max(0, pctUsed));
 
   return {
     budgetType,
@@ -146,5 +170,7 @@ export function computeBudgetBreakdown({
     included,
     excluded,
     formulaText,
+    pctUsed,
+    barPct,
   };
 }
