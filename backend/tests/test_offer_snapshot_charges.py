@@ -105,9 +105,9 @@ def _adapter(tmp_path: Path) -> CatalogAdapter:
     return CatalogAdapter(catalog_client, items_path=items_path)
 
 
-def _offer() -> OfferRequest:
+def _offer(*, persons: int = _GUEST_COUNT) -> OfferRequest:
     return OfferRequest(
-        persons=_GUEST_COUNT,
+        persons=persons,
         lines=[
             OfferLineIn(
                 item_id=_SOURCE_ID,
@@ -124,6 +124,7 @@ def _build(
     *,
     charges_definition: dict[str, object] | None,
     guest_count: int | None = _GUEST_COUNT,
+    persons: int = _GUEST_COUNT,
 ) -> dict[str, object]:
     return build_offer_snapshot_v2(
         adapter=_adapter(tmp_path),
@@ -145,7 +146,7 @@ def _build(
         },
         customer_text={"title": "Pasta", "introduction": "Intro", "notes": ""},
         payment_terms={"method": "RECHNUNG", "customer_visible_text": "Rechnung"},
-        offer=_offer(),
+        offer=_offer(persons=persons),
         charges_definition=charges_definition,
     )
 
@@ -383,3 +384,149 @@ def test_totals_include_all_charge_positions(tmp_path: Path) -> None:
     expected_gross = sum(cast(int, p["gross_total_cents"]) for p in positions)
     assert totals["net_cents"] == expected_net
     assert totals["gross_cents"] == expected_gross
+
+
+# --- guest-count consistency (offer.persons vs. event.guest_count) -----------------
+#
+# The request carries two independently client-supplied "guest count"
+# fields. Before this rule existed, catalog/surcharge/legacy-Pauschale
+# pricing used offer.persons while the new charges_definition Pauschale
+# math used event.guest_count — two calculation sources that could
+# silently diverge. build_offer_snapshot_v2 now requires them equal
+# whenever both are present, checked once before any pricing happens.
+
+
+def test_equal_offer_persons_and_event_guest_count_accepted(tmp_path: Path) -> None:
+    snapshot = _build(
+        tmp_path,
+        charges_definition=_charges(buffet_base_mode="PAUSCHALE"),
+        persons=80,
+        guest_count=80,
+    )
+    assert snapshot["event"]["guest_count"] == 80  # type: ignore[index]
+
+
+def test_equal_values_accepted_on_legacy_path_without_charges_definition(
+    tmp_path: Path,
+) -> None:
+    snapshot = _build(tmp_path, charges_definition=None, persons=80, guest_count=80)
+    assert "charges_definition" not in snapshot
+
+
+def test_omitted_event_guest_count_is_not_a_mismatch(tmp_path: Path) -> None:
+    """No comparison is possible (and none is made) when event.guest_count
+    is absent — offer.persons remains the sole guest count, exactly as
+    before this rule existed."""
+    snapshot = _build(
+        tmp_path,
+        charges_definition=_charges(dishware_base_mode="NONE", buffet_base_mode="NONE"),
+        persons=80,
+        guest_count=None,
+    )
+    assert snapshot["event"]["guest_count"] is None  # type: ignore[index]
+
+
+def test_mismatched_values_rejected_before_pricing(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="guest count mismatch"):
+        _build(
+            tmp_path,
+            charges_definition=_charges(),
+            persons=80,
+            guest_count=79,
+        )
+
+
+def test_mismatched_values_rejected_on_legacy_path_too(tmp_path: Path) -> None:
+    """The rule is unconditional — it applies even when charges_definition
+    is entirely omitted, because the bifurcation risk (two independent
+    "guest count" inputs) exists for legacy requests too."""
+    with pytest.raises(ValueError, match="guest count mismatch"):
+        _build(tmp_path, charges_definition=None, persons=80, guest_count=79)
+
+
+def test_mismatch_error_reports_both_values(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match=r"offer\.persons=80.*event\.guest_count=79"):
+        _build(tmp_path, charges_definition=_charges(), persons=80, guest_count=79)
+
+
+def test_zero_guest_count_with_pauschale_still_rejected_with_its_own_error(
+    tmp_path: Path,
+) -> None:
+    """Zero must be rejected as "not a positive integer", not silently
+    reinterpreted as a mismatch against offer.persons — the positivity
+    check runs first regardless of what offer.persons is."""
+    with pytest.raises(ValueError, match="must be a positive integer or null"):
+        _build(
+            tmp_path,
+            charges_definition=_charges(dishware_base_mode="PAUSCHALE"),
+            persons=10,
+            guest_count=0,
+        )
+
+
+def test_zero_guest_count_with_pauschale_rejected_even_when_matching_is_impossible(
+    tmp_path: Path,
+) -> None:
+    """offer.persons itself can never be 0 (OfferRequest enforces >= 1), so
+    this is the only reachable "zero guests" shape — event.guest_count=0
+    against a valid offer.persons. Still correctly rejected."""
+    with pytest.raises(ValueError, match="must be a positive integer or null"):
+        _build(
+            tmp_path,
+            charges_definition=_charges(buffet_base_mode="PAUSCHALE"),
+            persons=1,
+            guest_count=0,
+        )
+
+
+def test_all_per_person_calculations_use_the_same_authoritative_guest_count(
+    tmp_path: Path,
+) -> None:
+    """Catalog per-person pricing and charges_definition Pauschale math are
+    computed by completely different code paths (pricing_service vs.
+    offer_snapshot_service) — this proves both derive from the same N."""
+    guest_count = 42
+    snapshot = build_offer_snapshot_v2(
+        adapter=_adapter(tmp_path),
+        inquiry_id=str(uuid.uuid4()),
+        snapshot_id=str(uuid.uuid4()),
+        valid_until=date(2026, 7, 30),
+        recipient={
+            "company_name": "Example",
+            "contact_name": "Contact",
+            "email": "a@example.invalid",
+            "postal_address": "Address",
+        },
+        event={
+            "event_date": "2026-08-20",
+            "time_window_text": "18:00–22:00",
+            "location_text": "Hamburg",
+            "guest_count": guest_count,
+            "planning_mode": "caterer_suggestion",
+        },
+        customer_text={"title": "Pasta", "introduction": "Intro", "notes": ""},
+        payment_terms={"method": "RECHNUNG", "customer_visible_text": "Rechnung"},
+        offer=OfferRequest(
+            persons=guest_count,
+            lines=[
+                OfferLineIn(
+                    item_id=_SOURCE_ID,
+                    quantity_mode="per_person",
+                    quantity=1,
+                    surcharge_selected=False,
+                )
+            ],
+        ),
+        charges_definition=_charges(
+            dishware_base_mode="PAUSCHALE", buffet_base_mode="PAUSCHALE"
+        ),
+    )
+    positions = _positions(snapshot)
+    catalog = next(p for p in positions if p["kind"] == "catalog")
+    dishware = next(p for p in positions if p["kind"] == "dishware")
+    buffet = next(p for p in positions if p["kind"] == "buffet_fee")
+
+    # 12.00 € unit price (see _catalog_detail_response current_unit_net_cents)
+    assert catalog["net_total_cents"] == 1200 * guest_count
+    assert dishware["net_total_cents"] == 200 * guest_count
+    assert buffet["net_total_cents"] == 50 * guest_count

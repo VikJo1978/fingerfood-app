@@ -13,6 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # CONFIGURABLE_OFFER_CHARGES_V1 cross-repository contract: pinned to
+      # the exact approved Core PR #62 head, never a moving branch. Bump
+      # this SHA deliberately (and only) when a newer approved Core
+      # contract head needs to be validated against.
+      - name: Checkout Core contract (VikJo1978/silberloeffel-catering)
+        uses: actions/checkout@v7
+        with:
+          repository: VikJo1978/silberloeffel-catering
+          ref: 63e9515a165d8342d3ebb02e1ef435bff4a40195
+          path: core-contract
+      - name: Place Core checkout at the path expected by the cross-repository E2E tests
+        run: |
+          mkdir -p "$HOME/projects"
+          ln -s "$GITHUB_WORKSPACE/core-contract" "$HOME/projects/silberlöffelcatering"
+          test -d "$HOME/projects/silberlöffelcatering/src/catering_system"
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -32,7 +47,18 @@ jobs:
         run: mypy app
       - name: Test backend
         working-directory: backend
-        run: pytest -q
+        run: |
+          set -o pipefail
+          pytest -q -rs | tee /tmp/pytest-output.txt
+          # The only skip marker anywhere in this suite is
+          # test_prepare_offer_e2e.py's Core-checkout guard — any SKIPPED
+          # line here means the cross-repository contract tests didn't
+          # actually run, which must fail CI, not pass quietly.
+          if grep -q '^SKIPPED' /tmp/pytest-output.txt; then
+            echo "one or more tests were skipped — cross-repository contract tests must not skip in CI:" >&2
+            grep '^SKIPPED' /tmp/pytest-output.txt >&2
+            exit 1
+          fi
 
   frontend:
     runs-on: ubuntu-latest

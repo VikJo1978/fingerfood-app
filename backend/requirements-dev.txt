@@ -3,3 +3,8 @@ pytest==9.1.1
 httpx==0.28.1
 mypy==1.20.2
 ruff==0.15.21
+# Only needed by tests/test_prepare_offer_e2e.py's cross-repository E2E
+# suite, which imports catering_system (Core) directly against a real
+# Core checkout pinned in CI — never imported by production runtime code.
+# Pinned to match Core's own pyproject.toml dependency exactly.
+reportlab==5.0.0

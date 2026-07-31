@@ -182,12 +182,32 @@ def _parse_charges_definition(value: dict[str, object]) -> ChargesDefinitionIn:
         raise ValueError(f"invalid charges_definition: {exc}") from exc
 
 
-def _extract_guest_count(event: dict[str, object]) -> int | None:
-    """Guest count for CONFIGURABLE_OFFER_CHARGES_V1 Pauschale math is read
-    from `event.guest_count` — the same field Core's own consistency
-    validator checks against — deliberately not `offer.persons`, which is a
-    separate, independently client-supplied value that is not guaranteed to
-    match `event.guest_count` and is never seen by Core's cross-check."""
+def _authoritative_guest_count(
+    offer: OfferRequest, event: dict[str, object]
+) -> int | None:
+    """CONFIGURABLE_OFFER_CHARGES_V1 guest-count consistency rule.
+
+    The request carries two independently client-supplied "guest count"
+    fields: `offer.persons` (used today for catalog/surcharge pricing and
+    the legacy hardcoded Pauschale math) and `event.guest_count` (the field
+    Core's own consistency validator checks against, and the one this
+    module's charges_definition Pauschale math reads). Nothing in this
+    codebase enforces they agree — before this check, they could silently
+    diverge and each per-person calculation would use a different number
+    without anyone noticing.
+
+    Enforced here, once, before any pricing or snapshot materialization
+    happens: when `event.guest_count` is present it must equal
+    `offer.persons`, or the request is rejected outright. When
+    `event.guest_count` is absent (older/legacy callers), no comparison is
+    possible and none is made — `offer.persons` remains the sole guest
+    count used, exactly as before this rule existed.
+
+    This is intentionally unconditional — it applies to every snapshot
+    build, not only ones that send `charges_definition` — because the
+    bifurcation risk it closes (two independent "guest count" inputs to
+    the same request) exists for legacy requests too.
+    """
     value = event.get("guest_count")
     if value is None:
         return None
@@ -195,6 +215,12 @@ def _extract_guest_count(event: dict[str, object]) -> int | None:
         raise ValueError("event.guest_count must be a positive integer or null")
     if value < 1:
         raise ValueError("event.guest_count must be a positive integer or null")
+    if value != offer.persons:
+        raise ValueError(
+            "guest count mismatch: offer.persons and event.guest_count must "
+            f"be equal when both are present (offer.persons={offer.persons}, "
+            f"event.guest_count={value})"
+        )
     return value
 
 
@@ -274,20 +300,25 @@ def _build_buffet_position(
 
 
 def _build_charges_definition_positions(
-    charges: ChargesDefinitionIn, *, event: dict[str, object]
+    charges: ChargesDefinitionIn, *, guest_count: int | None
 ) -> list[dict[str, object]]:
     """Delivery is always materialized (see _build_delivery_position).
     Dishware Pauschale / buffet_fee are materialized only when their
     respective base_mode is PAUSCHALE — never added automatically for
     NONE. Additional dishware lines are independent of dishware.base_mode
-    and always materialized one-for-one."""
+    and always materialized one-for-one.
+
+    `guest_count` is the single authoritative value already computed once
+    by `_authoritative_guest_count` at the top of `build_offer_snapshot_v2`
+    — not re-derived here — so every per-person calculation in this
+    function is guaranteed consistent with `offer.persons` and with what
+    Core's own consistency validator will check against."""
     positions: list[dict[str, object]] = [_build_delivery_position(charges)]
 
     needs_guest_count = (
         charges.dishware.base_mode == "PAUSCHALE"
         or charges.buffet.base_mode == "PAUSCHALE"
     )
-    guest_count = _extract_guest_count(event)
     if needs_guest_count and guest_count is None:
         raise ValueError(
             "charges_definition requires event.guest_count when dishware or "
@@ -370,6 +401,11 @@ def build_offer_snapshot_v2(
     snapshot_created_at: datetime | None = None,
 ) -> dict[str, object]:
     """Compose OfferSnapshot V2 from resolved Catalog lines + pricing."""
+    # Guest-count consistency: computed once, before any pricing or
+    # materialization, unconditionally (not only for charges_definition
+    # requests — see _authoritative_guest_count).
+    guest_count = _authoritative_guest_count(offer, event)
+
     load = adapter.load_items_for_compose()
     priced = calculate_offer_cents(
         load.items,
@@ -417,7 +453,7 @@ def build_offer_snapshot_v2(
     if charges_definition is not None:
         parsed_charges = _parse_charges_definition(charges_definition)
         positions.extend(
-            _build_charges_definition_positions(parsed_charges, event=event)
+            _build_charges_definition_positions(parsed_charges, guest_count=guest_count)
         )
     else:
         positions.extend(_build_fee_positions(priced, persons=offer.persons))
