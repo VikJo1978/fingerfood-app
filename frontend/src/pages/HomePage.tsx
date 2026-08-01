@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppShell } from "../components/layout/AppShell";
 import { ConfiguratorShell } from "../components/layout/ConfiguratorShell";
-import { HeaderBar } from "../components/layout/HeaderBar";
 import { InquiryHeroCard } from "../components/InquiryHeroCard";
 import { InquiryIntake } from "../components/inquiry/InquiryIntake";
 import { OrderContextCard } from "../components/OrderContextCard";
@@ -597,21 +595,38 @@ export function HomePage() {
 
   if (pageMode === "inquiry") {
     return (
-      <AppShell>
-        <div className="space-y-8">
-          <HeaderBar
-            title="Neue Anfrage erfassen"
-            subtitle="Weiches Anfrage-Protokoll für die Akquise — ohne Speicherung. Anschließend starten Sie den Konfigurator mit den wichtigsten Standardwerten."
-          />
+      <ConfiguratorShell
+        crumb="Neue Anfrage erfassen"
+        activeLabel="Neue Anfrage erfassen"
+        footerTitle="Anfrage"
+        footerText="Neue Anfrage erfassen"
+      >
+        <div className="space-y-5">
+          <section className="rounded-card border border-line bg-white px-5 py-4 shadow-card sm:px-6">
+            <p className="text-[11px] font-extrabold uppercase tracking-[.08em] text-accent">
+              Anfrage
+            </p>
+            <h1 className="mt-1 text-[24px] font-extrabold leading-[1.12] text-ink sm:text-[30px]">
+              Neue Anfrage erfassen
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+              Weiches Anfrage-Protokoll für die Akquise ohne zentrale Speicherung. Danach
+              übernehmen wir die relevanten Standardwerte in den Konfigurator.
+            </p>
+          </section>
           {handoffError ? <WarningBanner message={handoffError} /> : null}
           <InquiryIntake onPrepareOffer={onManualPrepareOffer} />
         </div>
-      </AppShell>
+      </ConfiguratorShell>
     );
   }
 
   return (
-    <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
+    <ConfiguratorShell
+      onBack={() => setPageMode("inquiry")}
+      crumb={heroTitle}
+      activeLabel="Angebot vorbereiten"
+    >
       <div className="space-y-5">
         {/* OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: a real fixed-height,
             overflow:hidden split workspace on desktop — not sticky. Sticky

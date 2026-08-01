@@ -3,8 +3,11 @@ import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
 interface ConfiguratorShellProps {
-  onBack: () => void;
+  onBack?: () => void;
   crumb: string;
+  activeLabel?: string;
+  footerTitle?: string;
+  footerText?: string;
   children: ReactNode;
 }
 
@@ -16,10 +19,22 @@ interface ConfiguratorShellProps {
  * silberloeffel-catering's OFFICE_PANEL_STYLE: 248px sidebar, sticky top
  * bar, 1440px content max-width.
  */
-export function ConfiguratorShell({ onBack, crumb, children }: ConfiguratorShellProps) {
+export function ConfiguratorShell({
+  onBack,
+  crumb,
+  activeLabel = crumb,
+  footerTitle,
+  footerText,
+  children,
+}: ConfiguratorShellProps) {
   return (
     <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
-      <Sidebar onBack={onBack} activeLabel="Angebot vorbereiten" />
+      <Sidebar
+        onBack={onBack}
+        activeLabel={activeLabel}
+        footerTitle={footerTitle}
+        footerText={footerText}
+      />
       <div className="flex min-w-0 flex-col">
         <TopBar crumb={crumb} />
         <div className="mx-auto w-full max-w-content px-4 pb-16 pt-6 lg:px-[54px] lg:pt-[34px]">

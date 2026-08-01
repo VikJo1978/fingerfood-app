@@ -171,4 +171,19 @@ describe("HomePage — add item to offer", () => {
     expect(message.textContent).not.toContain("UuidGenerationError");
     expect(message.textContent).not.toContain("uuid_generation_unavailable");
   });
+
+  it("uses the approved shell already in inquiry mode", async () => {
+    render(<HomePage />);
+    await act(async () => {});
+
+    expect(screen.getByRole("navigation", { name: "Anwendungsnavigation" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Neue Anfrage erfassen" })
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "Weiches Anfrage-Protokoll für die Akquise — ohne Speicherung. Anschließend starten Sie den Konfigurator mit den wichtigsten Standardwerten."
+      )
+    ).toBeNull();
+  });
 });

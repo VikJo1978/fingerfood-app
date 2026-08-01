@@ -34,4 +34,19 @@ describe("Sidebar", () => {
     expect(screen.queryByText("Angebote")).toBeNull();
     expect(screen.queryByText("Kontakte")).toBeNull();
   });
+
+  it("supports an inquiry shell state with only the active destination visible", () => {
+    render(
+      <Sidebar
+        activeLabel="Neue Anfrage erfassen"
+        footerTitle="Anfrage"
+        footerText="Neue Anfrage erfassen"
+      />
+    );
+
+    expect(
+      screen.getByText("Neue Anfrage erfassen", { selector: '[aria-current="page"]' })
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Zurück zur Anfrage/ })).toBeNull();
+  });
 });

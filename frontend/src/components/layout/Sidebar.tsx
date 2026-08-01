@@ -1,8 +1,10 @@
 import logo from "../../assets/silberloeffel-logo.jpg";
 
 interface SidebarProps {
-  onBack: () => void;
+  onBack?: () => void;
   activeLabel: string;
+  footerTitle?: string;
+  footerText?: string;
 }
 
 /**
@@ -13,7 +15,12 @@ interface SidebarProps {
  * so no other Office Panel nav items are reproduced here (would be a
  * fabricated destination the app can't actually serve).
  */
-export function Sidebar({ onBack, activeLabel }: SidebarProps) {
+export function Sidebar({
+  onBack,
+  activeLabel,
+  footerTitle = "Konfigurator",
+  footerText = "Angebot vorbereiten",
+}: SidebarProps) {
   return (
     <nav
       aria-label="Anwendungsnavigation"
@@ -22,13 +29,17 @@ export function Sidebar({ onBack, activeLabel }: SidebarProps) {
       {/* Mobile / tablet: compact horizontal bar */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 lg:hidden">
         <img src={logo} alt="Silberlöffel Event Catering Service" className="h-9 w-auto" />
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1 text-xs font-bold text-muted transition hover:text-accent-deep"
-        >
-          <span aria-hidden="true">←</span> Zurück zur Anfrage
-        </button>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1 text-xs font-bold text-muted transition hover:text-accent-deep"
+          >
+            <span aria-hidden="true">←</span> Zurück zur Anfrage
+          </button>
+        ) : (
+          <span className="text-xs font-bold text-muted">{activeLabel}</span>
+        )}
       </div>
 
       {/* Desktop: full vertical nav rail */}
@@ -41,13 +52,15 @@ export function Sidebar({ onBack, activeLabel }: SidebarProps) {
           Navigation
         </p>
         <div className="grid gap-1">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex min-h-[44px] items-center gap-[11px] rounded-[11px] px-3 py-2.5 text-left text-[15px] text-muted transition hover:bg-canvas hover:text-accent-deep"
-          >
-            <span aria-hidden="true">←</span> Zurück zur Anfrage
-          </button>
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex min-h-[44px] items-center gap-[11px] rounded-[11px] px-3 py-2.5 text-left text-[15px] text-muted transition hover:bg-canvas hover:text-accent-deep"
+            >
+              <span aria-hidden="true">←</span> Zurück zur Anfrage
+            </button>
+          ) : null}
           <span
             aria-current="page"
             className="flex min-h-[44px] items-center gap-[11px] rounded-[11px] bg-accent-soft px-3 py-2.5 text-[15px] font-semibold text-accent-deep"
@@ -57,8 +70,8 @@ export function Sidebar({ onBack, activeLabel }: SidebarProps) {
         </div>
 
         <div className="mt-auto border-t border-line pt-3.5 text-[11px] text-muted">
-          <strong className="block text-xs text-ink">Konfigurator</strong>
-          Angebot vorbereiten
+          <strong className="block text-xs text-ink">{footerTitle}</strong>
+          {footerText}
         </div>
       </div>
     </nav>
