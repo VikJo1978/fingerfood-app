@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from app.core.employee_auth_config import normalize_employee_auth_mode
+
 _cors_default = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"
 
 
@@ -31,6 +33,18 @@ class Settings:
     frontend_dist_path: Path | None = _optional_path_env("FINGERFOOD_FRONTEND_DIST")
     catalog_adapter_strict: bool = (
         os.getenv("CATALOG_ADAPTER_STRICT", "").strip() == "1"
+    )
+    configurator_employee_auth_mode: str = normalize_employee_auth_mode(
+        os.getenv("CONFIGURATOR_EMPLOYEE_AUTH_MODE")
+    )
+    employee_introspection_service_token: str | None = _optional_env(
+        "EMPLOYEE_INTROSPECTION_SERVICE_TOKEN"
+    )
+    core_employee_introspection_url: str | None = _optional_env(
+        "CORE_EMPLOYEE_INTROSPECTION_URL"
+    )
+    configurator_csrf_cookie_secure: bool = (
+        os.getenv("CONFIGURATOR_CSRF_COOKIE_SECURE", "").strip() == "1"
     )
 
 

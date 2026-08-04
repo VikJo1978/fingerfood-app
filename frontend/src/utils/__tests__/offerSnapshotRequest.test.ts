@@ -9,6 +9,7 @@ import {
   prepareOfferErrorMessage,
   prepareOfferInCore,
 } from "../offerSnapshotRequest";
+import * as session from "../../services/session";
 import {
   CORE_INQUIRY_FRAGMENT_PREFIX,
   parseCoreInquiryHandoff,
@@ -54,6 +55,8 @@ function encode(value: unknown): string {
 describe("prepareOfferInCore", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    session.clearCsrfToken();
   });
 
   it("calls the UI BFF route without Authorization header", async () => {
@@ -69,7 +72,25 @@ describe("prepareOfferInCore", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/ui/offer/prepare");
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
+    expect(init.credentials).toBe("include");
     expect(JSON.stringify(init)).not.toContain("FINGERFOOD_API_TOKEN");
+  });
+
+  it("sends X-CSRF-Token when a csrf token is available in memory", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) =>
+      Response.json(validPrepareResponse)
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(session, "getCsrfToken").mockReturnValue("csrf-test-token");
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    await prepareOfferInCore(body);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(init.headers).toMatchObject({
+      "Content-Type": "application/json",
+      "X-CSRF-Token": "csrf-test-token",
+    });
   });
 
   it("accepts only a canonical offer id from the successful response", () => {

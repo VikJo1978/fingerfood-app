@@ -102,6 +102,25 @@ vi.mock("../../services/api", async () => {
   return { ...actual, fetchItems: vi.fn(async () => [testItem]) };
 });
 
+vi.mock("../../services/session", async () => {
+  const actual = await vi.importActual<typeof import("../../services/session")>(
+    "../../services/session"
+  );
+  return {
+    ...actual,
+    fetchUiSession: vi.fn(async () => ({
+      status: "disabled" as const,
+      state: {
+        employee_auth_mode: "disabled" as const,
+        authenticated: false,
+        application_access_allowed: false,
+        principal: null,
+        csrf_token: null,
+      },
+    })),
+  };
+});
+
 function enableBudgetAndSet(basis: string, scope: string, type: string, amount: string) {
   fireEvent.click(screen.getByRole("button", { name: "Mit Budget arbeiten" }));
   fireEvent.change(screen.getByLabelText("Budget-Typ"), { target: { value: type } });

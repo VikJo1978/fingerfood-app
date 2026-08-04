@@ -1,10 +1,29 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routes import drafts, frontend, items, offer, ui_offer
+from app.core.employee_auth_config import validate_employee_auth_settings
+from app.routes import drafts, frontend, items, offer, ui_offer, ui_session
 
-app = FastAPI(title="Fingerfood Angebote API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    validate_employee_auth_settings(
+        configurator_employee_auth_mode=settings.configurator_employee_auth_mode,
+        core_employee_introspection_url=settings.core_employee_introspection_url,
+        core_office_api_url=settings.core_office_api_url,
+        employee_introspection_service_token=settings.employee_introspection_service_token,
+    )
+    yield
+
+
+app = FastAPI(
+    title="Fingerfood Angebote API",
+    version="0.1.0",
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,6 +35,7 @@ app.add_middleware(
 
 app.include_router(items.router)
 app.include_router(offer.router)
+app.include_router(ui_session.router)
 app.include_router(ui_offer.router)
 app.include_router(drafts.router)
 

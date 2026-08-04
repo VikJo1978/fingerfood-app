@@ -1,5 +1,7 @@
 /** Map frontend OfferDraft to backend snapshot/prepare payloads. */
 
+import { getCsrfToken } from "../services/session";
+
 import type { ChargesDefinition, OfferDraft } from "../types";
 import { offerDraftToCalculateBody } from "../services/api";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
@@ -222,9 +224,15 @@ export async function prepareOfferInCore(
   body: OfferSnapshotRequestBody
 ): Promise<OfferPrepareResponse> {
   const baseUrl = import.meta.env.VITE_API_URL ?? "";
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const csrfToken = getCsrfToken();
+  if (csrfToken) {
+    headers["X-CSRF-Token"] = csrfToken;
+  }
   const res = await fetch(`${baseUrl}/api/ui/offer/prepare`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) {
