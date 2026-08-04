@@ -11,6 +11,11 @@ import { ItemCard } from "../components/results/ItemCard";
 import { OfferSummary } from "../components/summary/OfferSummary";
 import type { CatalogModuleFilter, PriceTypeFilter } from "../services/api";
 import { createDraft, fetchItems, updateDraft } from "../services/api";
+import {
+  fetchUiSession,
+  sessionStatusMessage,
+  type SessionBootstrapStatus,
+} from "../services/session";
 import type {
   CatalogItem,
   ChargesDefinition,
@@ -88,6 +93,9 @@ export function HomePage() {
   const [handoffError, setHandoffError] = useState<string | null>(null);
   const [prepareStatus, setPrepareStatus] = useState<PrepareStatus>("idle");
   const [prepareMessage, setPrepareMessage] = useState<string | null>(null);
+  const [sessionStatus, setSessionStatus] = useState<SessionBootstrapStatus>("loading");
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
+  const [sessionCsrfReady, setSessionCsrfReady] = useState(false);
 
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
@@ -119,6 +127,17 @@ export function HomePage() {
   useEffect(() => {
     void bootstrap();
   }, [bootstrap]);
+
+  useEffect(() => {
+    void (async () => {
+      const result = await fetchUiSession();
+      setSessionStatus(result.status);
+      setSessionNotice(sessionStatusMessage(result.status));
+      setSessionCsrfReady(
+        result.status === "authenticated" && !!result.state?.csrf_token
+      );
+    })();
+  }, []);
 
   useEffect(() => {
     setSection("");
@@ -492,6 +511,17 @@ export function HomePage() {
   }, [currentDraftId, offerDraft]);
 
   const onPrepareInCore = useCallback(async () => {
+    if (
+      sessionStatus === "loading" ||
+      sessionStatus === "not_authenticated"
+      || sessionStatus === "access_denied" ||
+      sessionStatus === "unavailable" ||
+      (sessionStatus === "authenticated" && !sessionCsrfReady)
+    ) {
+      setPrepareStatus("error");
+      setPrepareMessage(sessionNotice ?? "Mitarbeiteranmeldung erforderlich.");
+      return;
+    }
     if (!importedInquiryId) {
       setPrepareStatus("error");
       setPrepareMessage(
@@ -560,7 +590,22 @@ export function HomePage() {
       setPrepareStatus("error");
       setPrepareMessage(prepareOfferErrorMessage(error));
     }
-  }, [currentDraftId, draftScope, importedInquiryId, offerDraft]);
+  }, [
+    currentDraftId,
+    draftScope,
+    importedInquiryId,
+    offerDraft,
+    sessionCsrfReady,
+    sessionNotice,
+    sessionStatus,
+  ]);
+
+  const canPrepareInCore =
+    importedInquiryId !== null
+    && (
+      sessionStatus === "disabled" ||
+      (sessionStatus === "authenticated" && sessionCsrfReady)
+    );
 
   const onExportCsv = () => {
     const header =
@@ -654,6 +699,8 @@ export function HomePage() {
             ) : null}
 
             {loadError ? <WarningBanner tone="danger" message={loadError} /> : null}
+
+            {sessionNotice ? <WarningBanner message={sessionNotice} /> : null}
 
             {addItemError ? <WarningBanner tone="danger" message={addItemError} /> : null}
 
@@ -754,7 +801,7 @@ export function HomePage() {
               onSaveDraft={onSaveDraft}
               prepareStatus={prepareStatus}
               prepareMessage={prepareMessage}
-              canPrepareInCore={importedInquiryId !== null}
+              canPrepareInCore={canPrepareInCore}
               onPrepareInCore={onPrepareInCore}
             />
           </div>

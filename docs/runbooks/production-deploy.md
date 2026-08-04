@@ -37,6 +37,24 @@ git -C /home/viktor/projects/silberloeffel-catering log -1 --oneline
 If Core has not yet been redeployed with the matching change, **stop** —
 do not proceed with the Configurator backend restart below.
 
+### AUTH-2E2 employee auth (when enabling `CONFIGURATOR_EMPLOYEE_AUTH_MODE=employee`)
+
+Rollout order:
+
+1. Deploy Core with AUTH-2E1 introspection and configure
+   `EMPLOYEE_INTROSPECTION_SERVICE_TOKENS_JSON` on `catering-office-api`.
+2. Add matching `EMPLOYEE_INTROSPECTION_SERVICE_TOKEN` to
+   `/etc/fingerfood-app.env`.
+3. Set `CONFIGURATOR_EMPLOYEE_AUTH_MODE=employee` and restart
+   `fingerfood-app`.
+
+Do **not** enable employee mode before Core introspection is live. Rollback:
+set `CONFIGURATOR_EMPLOYEE_AUTH_MODE=disabled` and restart — this restores
+the legacy Tailnet-only boundary but removes employee authorization.
+
+See `infra/systemd/BFF_ACCESS_BOUNDARY.md` for cookie topology and AUTH-2E3
+handoff requirements on split-host deployments.
+
 ## 1. Record the starting production SHA
 
 ```bash
