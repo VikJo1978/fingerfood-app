@@ -6,10 +6,47 @@ import {
   sessionStatusMessage,
 } from "../session";
 
+type FetchMock = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
 describe("fetchUiSession", () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     clearCsrfToken();
+  });
+
+  it("uses same-origin /api/ui/session when no API base is configured", async () => {
+    vi.stubEnv("VITE_API_URL", "");
+    vi.stubEnv("VITE_API_BASE_URL", "");
+    const fetchMock = vi.fn<FetchMock>(async () => new Response("upstream down", { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchUiSession();
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.lastCall?.[0]).toBe("/api/ui/session");
+  });
+
+  it("uses a configured API base URL without adding or removing path separators", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://configurator.example.test");
+    const fetchMock = vi.fn<FetchMock>(async () => new Response("upstream down", { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchUiSession();
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.lastCall?.[0]).toBe("https://configurator.example.test/api/ui/session");
+  });
+
+  it("normalizes trailing slashes on a configured API base URL", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://configurator.example.test///");
+    const fetchMock = vi.fn<FetchMock>(async () => new Response("upstream down", { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchUiSession();
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.lastCall?.[0]).toBe("https://configurator.example.test/api/ui/session");
   });
 
   it("stores csrf token in memory for authenticated employee mode", async () => {

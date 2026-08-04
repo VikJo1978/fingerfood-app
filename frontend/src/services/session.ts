@@ -36,12 +36,10 @@ export function clearCsrfToken(): void {
 }
 
 function resolveBaseUrl(): string {
-  const configured = import.meta.env.VITE_API_URL ?? "";
-  if (configured) return configured.replace(/\/$/, "");
-  if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin;
-  }
-  return "http://localhost";
+  const env = import.meta.env as ImportMetaEnv & Record<string, string | undefined>;
+  const configured = (env.VITE_API_BASE_URL ?? env.VITE_API_URL ?? "").trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  return "";
 }
 
 function parseSessionPayload(value: unknown): UiSessionState | null {
