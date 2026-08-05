@@ -62,12 +62,19 @@ def reject_browser_actor_fields(body: dict[str, object]) -> None:
 
 
 def resolve_employee_principal(request: Request) -> AuthenticatedEmployeePrincipal:
-    session_token = parse_employee_session_cookie(request.headers.getlist("cookie"))
-    if session_token is None or session_token == "malformed":
+    session_token = resolve_employee_session_token(request)
+    if session_token is None:
         raise employee_authentication_required()
 
     result = build_introspection_client().introspect(session_token)
     return _principal_from_introspection(result)
+
+
+def resolve_employee_session_token(request: Request) -> str | None:
+    session_token = parse_employee_session_cookie(request.headers.getlist("cookie"))
+    if session_token is None or session_token == "malformed":
+        return None
+    return session_token
 
 
 def require_authenticated_employee(request: Request) -> AuthenticatedEmployeePrincipal:

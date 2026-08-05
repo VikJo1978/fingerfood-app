@@ -23,6 +23,7 @@ from app.core.employee_session_cookie import (
 )
 from app.main import app
 from app.routes import ui_offer as ui_offer_routes
+from app.services.configurator_handoff_context import ConfiguratorPrepareContextStore
 from app.services.employee_introspection_client import EmployeeIntrospectionClient
 from tests.test_offer_api_auth import _PREPARE_URL, _prepare_body, _TOKEN
 
@@ -115,7 +116,9 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
 
 
 @pytest.fixture
-def employee_client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
+def employee_client(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
+) -> TestClient:
     monkeypatch.setattr(
         settings,
         "core_office_panel_url",
@@ -126,6 +129,11 @@ def employee_client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
         settings, "employee_introspection_service_token", _INTROSPECT_TOKEN
     )
     monkeypatch.setattr(settings, "core_employee_introspection_url", _INTROSPECT_URL)
+    monkeypatch.setattr(
+        settings,
+        "configurator_handoff_context_db",
+        tmp_path / "employee-auth-bff-handoff.sqlite3",
+    )
     return TestClient(app)
 
 
@@ -159,12 +167,50 @@ def _csrf_headers(token: str) -> dict[str, str]:
     return {CSRF_HEADER_NAME: token}
 
 
+def _employee_prepare_body() -> dict[str, object]:
+    context = ConfiguratorPrepareContextStore(
+        settings.configurator_handoff_context_db
+    ).create(
+        account_id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        operation="prepare_first_offer",
+        inquiry_id=_INQUIRY_ID,
+        trusted_transfer={
+            "planning": {
+                "persons": 10,
+                "budget": None,
+                "budgetEnabled": False,
+                "desiredModules": [],
+                "dietaryRequirements": "",
+                "eventType": "",
+                "serviceStyle": "",
+            },
+            "orderContextPrefill": {
+                "companyName": "Example GmbH",
+                "contactPerson": "Contact",
+                "email": "a@example.invalid",
+                "phone": "",
+                "eventDate": "2026-08-20",
+                "eventTime": "18:00–22:00",
+                "location": "Hamburg",
+                "billingAddress": "Street 1",
+                "remarks": "",
+            },
+        },
+    )
+    body = _prepare_body()
+    body["context_id"] = context.context_id
+    body.pop("inquiry_id", None)
+    return body
+
+
 def test_disabled_mode_starts_without_introspection_token(client: TestClient) -> None:
     validate_employee_auth_settings(
         configurator_employee_auth_mode=settings.configurator_employee_auth_mode,
         core_employee_introspection_url=settings.core_employee_introspection_url,
         core_office_api_url=settings.core_office_api_url,
         employee_introspection_service_token=settings.employee_introspection_service_token,
+        configurator_handoff_service_token=settings.configurator_handoff_service_token,
+        core_office_api_token=settings.core_office_api_token,
     )
     response = client.get(_UI_SESSION_URL)
     assert response.status_code == 200
@@ -183,6 +229,8 @@ def test_employee_mode_missing_token_fails_startup(
             core_employee_introspection_url=_INTROSPECT_URL,
             core_office_api_url=None,
             employee_introspection_service_token=None,
+            configurator_handoff_service_token=None,
+            core_office_api_token=None,
         )
 
 
@@ -200,7 +248,35 @@ def test_employee_mode_missing_url_fails_startup(
             core_employee_introspection_url=None,
             core_office_api_url=None,
             employee_introspection_service_token=_INTROSPECT_TOKEN,
+            configurator_handoff_service_token=None,
+            core_office_api_token=None,
         )
+
+
+def test_equal_handoff_and_core_tokens_fail_startup() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match="CONFIGURATOR_HANDOFF_SERVICE_TOKEN must differ from CORE_OFFICE_API_TOKEN",
+    ):
+        validate_employee_auth_settings(
+            configurator_employee_auth_mode="employee",
+            core_employee_introspection_url=_INTROSPECT_URL,
+            core_office_api_url=None,
+            employee_introspection_service_token=_INTROSPECT_TOKEN,
+            configurator_handoff_service_token=" shared-token ",
+            core_office_api_token="shared-token",
+        )
+
+
+def test_distinct_handoff_and_core_tokens_allowed() -> None:
+    validate_employee_auth_settings(
+        configurator_employee_auth_mode="employee",
+        core_employee_introspection_url=_INTROSPECT_URL,
+        core_office_api_url=None,
+        employee_introspection_service_token=_INTROSPECT_TOKEN,
+        configurator_handoff_service_token="handoff-token",
+        core_office_api_token="core-token",
+    )
 
 
 def test_invalid_mode_rejected() -> None:
@@ -458,7 +534,7 @@ def test_authenticated_valid_prepare_allowed(
     csrf = generate_csrf_token()
     response = employee_client.post(
         _UI_PREPARE_URL,
-        json=_prepare_body(),
+        json=_employee_prepare_body(),
         cookies={**_session_cookies(), CSRF_COOKIE_NAME: csrf},
         headers=_csrf_headers(csrf),
     )
@@ -507,7 +583,7 @@ def test_missing_offers_prepare_returns_403(
     csrf = generate_csrf_token()
     response = employee_client.post(
         _UI_PREPARE_URL,
-        json=_prepare_body(),
+        json=_employee_prepare_body(),
         cookies={**_session_cookies(), CSRF_COOKIE_NAME: csrf},
         headers=_csrf_headers(csrf),
     )
@@ -534,7 +610,7 @@ def test_superadmin_allowed_without_explicit_permission(
     csrf = generate_csrf_token()
     response = employee_client.post(
         _UI_PREPARE_URL,
-        json=_prepare_body(),
+        json=_employee_prepare_body(),
         cookies={**_session_cookies(), CSRF_COOKIE_NAME: csrf},
         headers=_csrf_headers(csrf),
     )
@@ -862,7 +938,7 @@ def test_valid_csrf_allows_prepare(
     csrf = generate_csrf_token()
     response = employee_client.post(
         _UI_PREPARE_URL,
-        json=_prepare_body(),
+        json=_employee_prepare_body(),
         cookies={**_session_cookies(), CSRF_COOKIE_NAME: csrf},
         headers=_csrf_headers(csrf),
     )

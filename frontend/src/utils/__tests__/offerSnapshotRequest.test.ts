@@ -287,6 +287,19 @@ describe("prepareOfferInCore", () => {
       inquiryId
     );
   });
+
+  it("builds a same-authority prepare payload from context_id without inquiry_id", () => {
+    const body = buildOfferSnapshotRequest(
+      draft,
+      null,
+      "draft-1",
+      "trusted-context-1"
+    );
+
+    expect(body.context_id).toBe("trusted-context-1");
+    expect(body).not.toHaveProperty("inquiry_id");
+    expect(body.source_draft_id).toBe("draft-1");
+  });
 });
 
 describe("budget_definition in the Core snapshot payload", () => {

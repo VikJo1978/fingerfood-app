@@ -43,9 +43,15 @@ class Settings:
     core_employee_introspection_url: str | None = _optional_env(
         "CORE_EMPLOYEE_INTROSPECTION_URL"
     )
+    configurator_handoff_service_token: str | None = _optional_env(
+        "CONFIGURATOR_HANDOFF_SERVICE_TOKEN"
+    )
     configurator_csrf_cookie_secure: bool = (
         os.getenv("CONFIGURATOR_CSRF_COOKIE_SECURE", "").strip() == "1"
     )
+    configurator_handoff_context_db: Path = _optional_path_env(
+        "CONFIGURATOR_HANDOFF_CONTEXT_DB"
+    ) or (Path(__file__).resolve().parent.parent / "data" / "handoff_context.sqlite3")
 
 
 settings = Settings()
