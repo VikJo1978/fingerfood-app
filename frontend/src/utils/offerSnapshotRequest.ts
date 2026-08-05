@@ -72,7 +72,8 @@ export function buildChargesDefinition(
 }
 
 export interface OfferSnapshotRequestBody {
-  inquiry_id: string;
+  inquiry_id?: string;
+  context_id?: string;
   snapshot_id: string;
   valid_until: string;
   source_draft_id?: string | null;
@@ -119,8 +120,9 @@ function defaultValidUntil(eventDate: string): string {
 
 export function buildOfferSnapshotRequest(
   draft: OfferDraft,
-  inquiryId: string,
-  draftId: string | null
+  inquiryId: string | null,
+  draftId: string | null,
+  contextId: string | null = null
 ): OfferSnapshotRequestBody {
   const ctx = draft.orderContext;
   const company = ctx.companyName.trim() || "Angebot";
@@ -132,7 +134,7 @@ export function buildOfferSnapshotRequest(
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
   return {
-    inquiry_id: inquiryId,
+    ...(contextId ? { context_id: contextId } : { inquiry_id: inquiryId ?? "" }),
     snapshot_id: generateUuidV4(),
     valid_until: defaultValidUntil(ctx.eventDate),
     ...(draftId ? { source_draft_id: draftId } : {}),

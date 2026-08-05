@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "../components/layout/AppShell";
 import { ConfiguratorShell } from "../components/layout/ConfiguratorShell";
 import { HeaderBar } from "../components/layout/HeaderBar";
@@ -16,6 +16,7 @@ import {
   sessionStatusMessage,
   type SessionBootstrapStatus,
 } from "../services/session";
+import { exchangeCoreHandoff } from "../services/handoff";
 import type {
   CatalogItem,
   ChargesDefinition,
@@ -45,7 +46,9 @@ import {
   readCoreInquiryHandoffHistoryMarker,
   readStoredCoreInquiryHandoff,
   storeCoreInquiryHandoff,
+  CORE_INQUIRY_FRAGMENT_PREFIX,
 } from "../utils/coreInquiryHandoff";
+import { consumeCoreHandoffCode } from "../utils/coreEmployeeHandoff";
 import {
   clearDraftFromSession,
   readDraftFromSession,
@@ -91,11 +94,14 @@ export function HomePage() {
   // / OfferDraft, so it never reaches the Core prepare-offer payload.
   const [inquiryEventType, setInquiryEventType] = useState("");
   const [handoffError, setHandoffError] = useState<string | null>(null);
+  const [handoffExchangePending, setHandoffExchangePending] = useState(false);
   const [prepareStatus, setPrepareStatus] = useState<PrepareStatus>("idle");
   const [prepareMessage, setPrepareMessage] = useState<string | null>(null);
   const [sessionStatus, setSessionStatus] = useState<SessionBootstrapStatus>("loading");
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [sessionCsrfReady, setSessionCsrfReady] = useState(false);
+  const [prepareContextId, setPrepareContextId] = useState<string | null>(null);
+  const handoffBootstrapStarted = useRef(false);
 
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("");
@@ -256,6 +262,7 @@ export function HomePage() {
       clearDraftFromSession({ kind: "manual" });
       setOfferDraft(createInitialOfferDraft());
       setImportedInquiryId(null);
+      setPrepareContextId(null);
       setDraftScope({ kind: "manual" });
       writeManualDraftHistoryMarker(window.location, window.history);
       handlePrepareOffer(transfer);
@@ -264,6 +271,12 @@ export function HomePage() {
   );
 
   useEffect(() => {
+    if (sessionStatus === "loading" || handoffBootstrapStarted.current) {
+      return;
+    }
+    handoffBootstrapStarted.current = true;
+    let cancelled = false;
+
     /** Persisted-draft restore is a pure convenience layered on top of the
      * existing Core-handoff prefill: it never runs instead of
      * handlePrepareOffer, only after it, and — when a matching persisted
@@ -280,48 +293,98 @@ export function HomePage() {
       setDraftScope(scope);
     }
 
-    const result = consumeCoreInquiryHandoff(window.location, window.history);
-    if (result.present) {
-      if (result.handoff === null) {
-        setHandoffError("Anfragedaten konnten nicht sicher übernommen werden.");
+    async function bootstrapHandoff(): Promise<void> {
+      if (sessionStatus === "disabled") {
+        const result = consumeCoreInquiryHandoff(window.location, window.history);
+        if (result.present) {
+          if (result.handoff === null) {
+            setHandoffError("Anfragedaten konnten nicht sicher übernommen werden.");
+            return;
+          }
+          handlePrepareOffer(result.handoff.transfer);
+          setImportedInquiryId(result.handoff.inquiry_id);
+          setPrepareContextId(null);
+          storeCoreInquiryHandoff(result.handoff);
+          restoreScopedDraft({ kind: "inquiry", inquiryId: result.handoff.inquiry_id });
+          return;
+        }
+        const marker = readCoreInquiryHandoffHistoryMarker(window.history);
+        if (marker !== null) {
+          const restored = readStoredCoreInquiryHandoff(marker.inquiry_id);
+          if (restored !== null) {
+            handlePrepareOffer(restored.transfer);
+            setImportedInquiryId(restored.inquiry_id);
+            setPrepareContextId(null);
+            restoreScopedDraft({ kind: "inquiry", inquiryId: restored.inquiry_id });
+          }
+          return;
+        }
+        const manualMarker = readManualDraftHistoryMarker(window.history);
+        if (manualMarker === null) return;
+        const restoredManual = readDraftFromSession({ kind: "manual" });
+        if (restoredManual !== null) {
+          setOfferDraft(restoredManual);
+          setDraftScope({ kind: "manual" });
+          setPageMode("configurator");
+        }
         return;
       }
-      handlePrepareOffer(result.handoff.transfer);
-      setImportedInquiryId(result.handoff.inquiry_id);
-      storeCoreInquiryHandoff(result.handoff);
-      restoreScopedDraft({ kind: "inquiry", inquiryId: result.handoff.inquiry_id });
-      return;
-    }
-    // No fragment in this load's URL. Only restore a stored handoff if
-    // *this exact history entry* itself carries evidence of having
-    // consumed one before (a reload re-uses the same entry and its
-    // history.state) — never merely because sessionStorage still holds
-    // data from an earlier, unrelated direct visit in the same tab. That
-    // distinction matters: without it, opening the Configurator fresh in a
-    // tab that previously handled a different customer's Inquiry would
-    // silently reuse that customer's contact/address/event data.
-    const marker = readCoreInquiryHandoffHistoryMarker(window.history);
-    if (marker !== null) {
-      const restored = readStoredCoreInquiryHandoff(marker.inquiry_id);
-      if (restored !== null) {
-        handlePrepareOffer(restored.transfer);
-        setImportedInquiryId(restored.inquiry_id);
-        restoreScopedDraft({ kind: "inquiry", inquiryId: restored.inquiry_id });
+
+      clearStoredCoreInquiryHandoff();
+
+      if (window.location.hash.startsWith(CORE_INQUIRY_FRAGMENT_PREFIX)) {
+        consumeCoreInquiryHandoff(window.location, window.history);
+        setHandoffError("Unsigned Core-Handoff wird im Mitarbeiter-Modus abgewiesen.");
+        return;
       }
-      return;
+
+      const result = consumeCoreHandoffCode(window.location, window.history);
+      if (!result.present) {
+        const manualMarker = readManualDraftHistoryMarker(window.history);
+        if (manualMarker === null) return;
+        const restoredManual = readDraftFromSession({ kind: "manual" });
+        if (restoredManual !== null) {
+          setOfferDraft(restoredManual);
+          setDraftScope({ kind: "manual" });
+          setPageMode("configurator");
+        }
+        return;
+      }
+      if (result.code === null) {
+        setHandoffError("Core-Handoff konnte nicht sicher übernommen werden.");
+        return;
+      }
+      if (sessionStatus !== "authenticated" || !sessionCsrfReady) {
+        setHandoffError(sessionNotice ?? "Core-Handoff konnte nicht autorisiert werden.");
+        return;
+      }
+      setHandoffExchangePending(true);
+      setHandoffError(null);
+      try {
+        const exchanged = await exchangeCoreHandoff(result.code);
+        if (cancelled) return;
+        handlePrepareOffer(exchanged.transfer);
+        setImportedInquiryId(null);
+        setPrepareContextId(exchanged.context_id);
+        restoreScopedDraft({ kind: "handoff", contextId: exchanged.context_id });
+      } catch {
+        if (!cancelled) {
+          setHandoffError(
+            "Core-Handoff konnte nicht bestätigt werden. Angebotsvorbereitung bleibt deaktiviert."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setHandoffExchangePending(false);
+        }
+      }
     }
-    // Same reload-restore idea for the manual flow's own history marker —
-    // no Core handoff involved, so nothing to re-validate beyond the
-    // persisted draft's own shape (see readDraftFromSession).
-    const manualMarker = readManualDraftHistoryMarker(window.history);
-    if (manualMarker === null) return;
-    const restoredManual = readDraftFromSession({ kind: "manual" });
-    if (restoredManual !== null) {
-      setOfferDraft(restoredManual);
-      setDraftScope({ kind: "manual" });
-      setPageMode("configurator");
-    }
-  }, [handlePrepareOffer]);
+
+    void bootstrapHandoff();
+    return () => {
+      cancelled = true;
+    };
+  }, [handlePrepareOffer, sessionCsrfReady, sessionNotice, sessionStatus]);
 
   // Persist the active draft on every change while in the Configurator —
   // the one place all seven required fields (positions, quantities, guest
@@ -522,13 +585,6 @@ export function HomePage() {
       setPrepareMessage(sessionNotice ?? "Mitarbeiteranmeldung erforderlich.");
       return;
     }
-    if (!importedInquiryId) {
-      setPrepareStatus("error");
-      setPrepareMessage(
-        "Angebot vorbereiten erfordert eine Core-Anfrage (Handoff aus dem Büro)."
-      );
-      return;
-    }
     if (!offerDraft.orderContext.eventDate) {
       setPrepareStatus("error");
       setPrepareMessage("Bitte zuerst ein Eventdatum im Auftragskontext setzen.");
@@ -565,11 +621,19 @@ export function HomePage() {
     setPrepareStatus("preparing");
     setPrepareMessage(null);
     try {
-      const body = buildOfferSnapshotRequest(
-        offerDraft,
-        importedInquiryId,
-        currentDraftId
-      );
+      const body =
+        sessionStatus === "disabled"
+          ? buildOfferSnapshotRequest(
+              offerDraft,
+              importedInquiryId,
+              currentDraftId
+            )
+          : buildOfferSnapshotRequest(
+              offerDraft,
+              null,
+              currentDraftId,
+              prepareContextId
+            );
       await prepareAndNavigateToCoreOffer(body, {
         onPrepared: (result) => {
           // Prepared successfully and about to navigate away to Core — the
@@ -580,6 +644,7 @@ export function HomePage() {
           // restoring for it later.
           clearStoredCoreInquiryHandoff();
           clearDraftFromSession(draftScope);
+          setPrepareContextId(null);
           setPrepareStatus("done");
           setPrepareMessage(
             `Angebot in Core vorbereitet (${result.offer_id.slice(0, 8)}).`
@@ -595,17 +660,17 @@ export function HomePage() {
     draftScope,
     importedInquiryId,
     offerDraft,
+    prepareContextId,
     sessionCsrfReady,
     sessionNotice,
     sessionStatus,
   ]);
 
   const canPrepareInCore =
-    importedInquiryId !== null
-    && (
-      sessionStatus === "disabled" ||
-      (sessionStatus === "authenticated" && sessionCsrfReady)
-    );
+    (
+      (sessionStatus === "disabled" && importedInquiryId !== null) ||
+      (sessionStatus === "authenticated" && sessionCsrfReady && prepareContextId !== null)
+    ) && !handoffExchangePending;
 
   const onExportCsv = () => {
     const header =
@@ -648,6 +713,9 @@ export function HomePage() {
             title="Neue Anfrage erfassen"
             subtitle="Weiches Anfrage-Protokoll für die Akquise — ohne Speicherung. Anschließend starten Sie den Konfigurator mit den wichtigsten Standardwerten."
           />
+          {handoffExchangePending ? (
+            <WarningBanner message="Core-Handoff wird geprüft…" />
+          ) : null}
           {handoffError ? <WarningBanner message={handoffError} /> : null}
           <InquiryIntake onPrepareOffer={onManualPrepareOffer} />
         </div>
@@ -680,9 +748,13 @@ export function HomePage() {
             none of this applies below the breakpoint. */}
         <div className="grid gap-[22px] lg:h-[calc(100dvh-110px)] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:overflow-hidden">
           <div className="grid content-start gap-[22px] lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
-            {importedInquiryId ? (
+            {importedInquiryId || prepareContextId ? (
               <WarningBanner
-                message={`Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`}
+                message={
+                  importedInquiryId
+                    ? `Aus Core-Anfrage ${importedInquiryId.slice(0, 8)} vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung.`
+                    : "Aus verifiziertem Core-Handoff vorbefüllt. Bitte alle Angaben prüfen — noch kein Auftrag und keine Kundenbenachrichtigung."
+                }
               />
             ) : null}
 

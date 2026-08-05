@@ -16,6 +16,7 @@ const MAX_STORED_CHARS = 2_000_000;
 
 export type DraftPersistenceScope =
   | { kind: "inquiry"; inquiryId: string }
+  | { kind: "handoff"; contextId: string }
   | { kind: "manual" };
 
 /** One sessionStorage key per Inquiry identity (isolates different
@@ -24,6 +25,9 @@ export type DraftPersistenceScope =
 export function draftStorageKey(scope: DraftPersistenceScope): string {
   if (scope.kind === "inquiry") {
     return `${DRAFT_STORAGE_PREFIX}:inquiry:${scope.inquiryId}`;
+  }
+  if (scope.kind === "handoff") {
+    return `${DRAFT_STORAGE_PREFIX}:handoff:${scope.contextId}`;
   }
   return `${DRAFT_STORAGE_PREFIX}:manual`;
 }

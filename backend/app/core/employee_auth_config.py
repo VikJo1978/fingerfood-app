@@ -72,6 +72,8 @@ def validate_employee_auth_settings(
     core_employee_introspection_url: str | None,
     core_office_api_url: str | None,
     employee_introspection_service_token: str | None,
+    configurator_handoff_service_token: str | None = None,
+    core_office_api_token: str | None = None,
 ) -> None:
     if configurator_employee_auth_mode != "employee":
         return
@@ -87,4 +89,10 @@ def validate_employee_auth_settings(
     if not employee_introspection_service_token:
         raise RuntimeError(
             "employee auth mode requires EMPLOYEE_INTROSPECTION_SERVICE_TOKEN"
+        )
+    handoff_token = (configurator_handoff_service_token or "").strip()
+    office_token = (core_office_api_token or "").strip()
+    if handoff_token and office_token and handoff_token == office_token:
+        raise RuntimeError(
+            "CONFIGURATOR_HANDOFF_SERVICE_TOKEN must differ from CORE_OFFICE_API_TOKEN"
         )
