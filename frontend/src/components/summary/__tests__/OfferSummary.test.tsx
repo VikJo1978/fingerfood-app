@@ -46,7 +46,6 @@ function renderSummary(overrides: {
       createChargeLineId={() => "charge-line-1"}
       onExportJson={noop}
       onExportCsv={noop}
-      onExportProposalJson={noop}
       draftSaveStatus="idle"
       draftSaveMessage={null}
       onSaveDraft={noop}
@@ -440,7 +439,6 @@ describe("OfferSummary — secondary actions disclosure", () => {
     expect(screen.getByRole("button", { name: "Entwurf speichern" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Export JSON" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Export fürs Büro (JSON)" })).toBeTruthy();
   });
 });
 

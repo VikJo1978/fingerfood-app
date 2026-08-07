@@ -25,7 +25,6 @@ interface OfferSummaryProps {
   createChargeLineId: () => string;
   onExportJson: () => void;
   onExportCsv: () => void;
-  onExportProposalJson: () => void;
   draftSaveStatus: DraftSaveStatus;
   draftSaveMessage: string | null;
   onSaveDraft: () => void | Promise<void>;
@@ -60,7 +59,6 @@ export function OfferSummary({
   createChargeLineId,
   onExportJson,
   onExportCsv,
-  onExportProposalJson,
   draftSaveStatus,
   draftSaveMessage,
   onSaveDraft,
@@ -287,18 +285,6 @@ export function OfferSummary({
                   Export CSV
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={onExportProposalJson}
-                className="inline-flex h-9 w-full items-center justify-center rounded-control border border-line bg-white px-3 text-xs font-medium text-ink transition hover:border-accent hover:bg-accent-soft"
-              >
-                Export fürs Büro (JSON)
-              </button>
-              <p className="text-center text-[11px] leading-relaxed text-muted">
-                Büro-Export (proposal_payload_v1): nur Vorschau-Daten für das Office Panel —
-                erzeugt keinen Auftrag. Export für spätere Anbindung an Buchhaltung oder E-Mail.
-              </p>
             </div>
           </details>
         </div>
