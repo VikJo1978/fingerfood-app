@@ -155,10 +155,11 @@ export function computeChargesCents(
       ? charges.dishware.pauschalePerPersonCents * persons
       : 0;
   const fulfillmentMode = charges.delivery.fulfillment?.fulfillmentMode;
+  // UNKNOWN keeps the configured delivery amount visible while the operator
+  // decides. PICKUP is the only mode that explicitly removes the charge.
+  // The BFF refuses UNKNOWN before any offer can be prepared in Core.
   const deliveryCents =
-    fulfillmentMode === undefined || fulfillmentMode === "DELIVERY"
-      ? charges.delivery.amountCents
-      : 0;
+    fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents;
   const dishwareAdditionalCents = additionalDishwareCents(charges.dishware.additionalLines);
   return {
     buffetCents,
