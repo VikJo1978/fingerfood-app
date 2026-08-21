@@ -80,7 +80,9 @@ class UiOfferPrepareRequest(BaseModel):
     customer_text: dict[str, str]
     payment_terms: dict[str, str]
     offer: dict[str, object]
-    fulfillment: UiFulfillmentContext
+    # Optional only for a rolling deploy: old browser builds may omit it.
+    # The new configurator always sends it and gets strict validation below.
+    fulfillment: UiFulfillmentContext | None = None
     source_draft_id: str | None = None
     budget_definition: dict[str, object] | None = None
     charges_definition: dict[str, object] | None = None
@@ -127,7 +129,8 @@ def _parse_prepare_request(body_bytes: bytes) -> UiOfferPrepareRequest:
         parsed = UiOfferPrepareRequest.model_validate(raw_body)
     except ValidationError as exc:
         raise _invalid_request(status_code=422) from exc
-    _validate_fulfillment_context(parsed.fulfillment)
+    if parsed.fulfillment is not None:
+        _validate_fulfillment_context(parsed.fulfillment)
     return parsed
 
 
@@ -391,8 +394,39 @@ async def ui_prepare_offer(request: Request) -> dict[str, object]:
             ),
         ) from exc
 
+    # Preserve the legacy workflow-validation lookup for non-handoff callers.
+    if trusted_context is None:
+        core = build_core_office_client()
+        if not core.is_configured():
+            raise HTTPException(
+                status_code=503,
+                detail=safe_error_detail(
+                    "core_office_not_configured",
+                    "Core Office API is not configured.",
+                ),
+            )
+        try:
+            inquiry = core.get_inquiry(body.inquiry_id)
+        except CoreOfficeClientError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=safe_error_detail(
+                    "core_inquiry_lookup_failed",
+                    "Core inquiry lookup failed.",
+                ),
+            ) from exc
+        if inquiry is None:
+            raise HTTPException(
+                status_code=404,
+                detail=safe_error_detail(
+                    "inquiry_not_found",
+                    "Inquiry was not found.",
+                ),
+            )
+
     try:
-        _persist_fulfillment(inquiry_id=inquiry_id, fulfillment=parsed.fulfillment)
+        if parsed.fulfillment is not None:
+            _persist_fulfillment(inquiry_id=inquiry_id, fulfillment=parsed.fulfillment)
         result = execute_prepare_offer(body)
     except Exception:
         if trusted_claim is not None:
