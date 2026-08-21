@@ -108,8 +108,11 @@ export function buildChargesDefinition(
   const current = normalizedFulfillment(charges);
   return {
     delivery: {
+      // Keep the operator's configured amount while fulfillment is still
+      // undecided. PICKUP is the explicit instruction that zeroes it. The
+      // BFF refuses UNKNOWN before Core can persist an OfferVersion.
       amount_cents:
-        current.fulfillmentMode === "DELIVERY" ? charges.delivery.amountCents : 0,
+        current.fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents,
     },
     dishware: {
       base_mode: charges.dishware.baseMode,
