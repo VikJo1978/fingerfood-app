@@ -175,7 +175,8 @@ export interface ChargesDefinition {
   };
   delivery: {
     amountCents: number;
-    fulfillment: DeliveryFulfillmentDefinition;
+    /** Optional only for backward-compatible restore of drafts created before #150. */
+    fulfillment?: DeliveryFulfillmentDefinition;
   };
   dishware: {
     baseMode: ChargeBaseMode;
