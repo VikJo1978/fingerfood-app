@@ -29,7 +29,7 @@ function renderSection() {
 describe("DeliveryFulfillmentSection", () => {
   it("starts unresolved and lets the operator choose pickup", () => {
     const state = renderSection();
-    expect(screen.getByLabelText("Erfüllung")).toHaveValue("UNKNOWN");
+    expect((screen.getByLabelText("Erfüllung") as HTMLSelectElement).value).toBe("UNKNOWN");
 
     fireEvent.change(screen.getByLabelText("Erfüllung"), {
       target: { value: "PICKUP" },
