@@ -191,17 +191,20 @@ export function ChargeConfiguratorModal({
 
           <section className="grid gap-3 border-b border-line pb-5">
             <DeliveryFulfillmentSection charges={charges} onChange={onChange} />
-            {charges.delivery.fulfillment?.fulfillmentMode === "DELIVERY" ? (
-              <MoneyField
-                label="Anlieferung netto"
-                valueCents={charges.delivery.amountCents}
-                onValidChange={(cents) =>
-                  onChange({
-                    ...charges,
-                    delivery: { ...charges.delivery, amountCents: cents },
-                  })
-                }
-              />
+            <MoneyField
+              label="Anlieferung netto"
+              valueCents={charges.delivery.amountCents}
+              onValidChange={(cents) =>
+                onChange({
+                  ...charges,
+                  delivery: { ...charges.delivery, amountCents: cents },
+                })
+              }
+            />
+            {charges.delivery.fulfillment?.fulfillmentMode === "PICKUP" ? (
+              <p className="text-xs text-muted">
+                Bei Selbstabholung bleibt der hinterlegte Lieferpreis erhalten, wird aber nicht berechnet.
+              </p>
             ) : null}
           </section>
 
