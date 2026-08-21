@@ -154,7 +154,11 @@ export function computeChargesCents(
     charges.dishware.baseMode === "PAUSCHALE" && validPersons
       ? charges.dishware.pauschalePerPersonCents * persons
       : 0;
-  const deliveryCents = charges.delivery.amountCents;
+  const fulfillmentMode = charges.delivery.fulfillment?.fulfillmentMode;
+  const deliveryCents =
+    fulfillmentMode === undefined || fulfillmentMode === "DELIVERY"
+      ? charges.delivery.amountCents
+      : 0;
   const dishwareAdditionalCents = additionalDishwareCents(charges.dishware.additionalLines);
   return {
     buffetCents,
