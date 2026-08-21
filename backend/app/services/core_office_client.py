@@ -1,4 +1,4 @@
-"""Write-side Core Office API client — prepare-offer only."""
+"""Write-side Core Office API client for Configurator handoff and offer preparation."""
 
 from __future__ import annotations
 
@@ -97,6 +97,77 @@ class CoreOfficeClient:
         raise CoreOfficeClientError(
             code="inquiry_lookup_failed",
             status_code=response.status_code,
+        )
+
+    def _post_inquiry_command(
+        self,
+        inquiry_id: str,
+        command: str,
+        *,
+        args: dict[str, object],
+        updated_at: str,
+    ) -> dict[str, Any]:
+        if not self.is_configured():
+            raise CoreOfficeClientError(code="core_office_not_configured")
+        url = f"{self._base_url}/office/v1/inquiries/{inquiry_id}/{command}"
+        body = {
+            "command_id": str(uuid.uuid4()),
+            "expect": {"updated_at": updated_at},
+            "args": args,
+        }
+        try:
+            with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
+                response = client.post(url, json=body, headers=self._auth_headers())
+        except httpx.HTTPError as exc:
+            raise CoreOfficeClientError(code=f"{command}_transport_error") from exc
+        if response.status_code != 200:
+            raise CoreOfficeClientError(
+                code=f"{command}_failed",
+                status_code=response.status_code,
+            )
+        payload = _response_payload(response)
+        if payload is None or not isinstance(payload.get("updated_at"), str):
+            raise CoreOfficeClientError(
+                code=f"{command}_invalid_response",
+                status_code=response.status_code,
+            )
+        return payload
+
+    def persist_fulfillment_context(
+        self,
+        inquiry_id: str,
+        *,
+        fulfillment_mode: str,
+        delivery_address_mode: str,
+        invoice_address: dict[str, object] | None,
+        delivery_address: dict[str, object] | None,
+    ) -> None:
+        inquiry = self.get_inquiry(inquiry_id)
+        if inquiry is None:
+            raise CoreOfficeClientError(code="inquiry_not_found", status_code=404)
+        updated_at = inquiry.get("updated_at")
+        if not isinstance(updated_at, str) or not updated_at:
+            raise CoreOfficeClientError(code="inquiry_lookup_invalid_response", status_code=200)
+
+        address_result = self._post_inquiry_command(
+            inquiry_id,
+            "customer-addresses",
+            args={
+                "invoice_address": invoice_address,
+                "delivery_address_mode": delivery_address_mode,
+                "delivery_address": delivery_address,
+            },
+            updated_at=updated_at,
+        )
+        address_updated_at = address_result["updated_at"]
+        if not isinstance(address_updated_at, str):
+            raise CoreOfficeClientError(code="customer-addresses_invalid_response", status_code=200)
+
+        self._post_inquiry_command(
+            inquiry_id,
+            "fulfillment-mode",
+            args={"fulfillment_mode": fulfillment_mode},
+            updated_at=address_updated_at,
         )
 
     def prepare_offer(
