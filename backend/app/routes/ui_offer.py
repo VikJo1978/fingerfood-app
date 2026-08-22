@@ -15,8 +15,8 @@ the prepare targets a real Core inquiry, not that the caller is authorized.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, date
-from typing import Any
+from datetime import UTC, date, datetime
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -56,6 +56,20 @@ router = APIRouter(prefix="/api/ui/offer", tags=["ui-offer"])
 _MAX_UI_PREPARE_BODY_BYTES = 64 * 1024
 
 
+class UiCustomerAddress(BaseModel):
+    street: str
+    postal_code: str
+    city: str
+    country: str
+
+
+class UiFulfillmentContext(BaseModel):
+    fulfillment_mode: Literal["UNKNOWN", "PICKUP", "DELIVERY"]
+    delivery_address_mode: Literal["UNKNOWN", "SAME_AS_INVOICE", "SEPARATE"]
+    invoice_address: UiCustomerAddress | None = None
+    delivery_address: UiCustomerAddress | None = None
+
+
 class UiOfferPrepareRequest(BaseModel):
     inquiry_id: str | None = None
     context_id: str | None = None
@@ -66,6 +80,9 @@ class UiOfferPrepareRequest(BaseModel):
     customer_text: dict[str, str]
     payment_terms: dict[str, str]
     offer: dict[str, object]
+    # Optional only for a rolling deploy: old browser builds may omit it.
+    # The new configurator always sends it and gets strict validation below.
+    fulfillment: UiFulfillmentContext | None = None
     source_draft_id: str | None = None
     budget_definition: dict[str, object] | None = None
     charges_definition: dict[str, object] | None = None
@@ -109,9 +126,36 @@ def _parse_prepare_request(body_bytes: bytes) -> UiOfferPrepareRequest:
         raise _invalid_request()
     reject_browser_actor_fields(raw_body)
     try:
-        return UiOfferPrepareRequest.model_validate(raw_body)
+        parsed = UiOfferPrepareRequest.model_validate(raw_body)
     except ValidationError as exc:
         raise _invalid_request(status_code=422) from exc
+    if parsed.fulfillment is not None:
+        _validate_fulfillment_context(parsed.fulfillment)
+    return parsed
+
+
+def _validate_fulfillment_context(fulfillment: UiFulfillmentContext) -> None:
+    if fulfillment.fulfillment_mode == "UNKNOWN":
+        raise _invalid_request(status_code=422, code="fulfillment_mode_required")
+    if fulfillment.fulfillment_mode == "PICKUP":
+        if fulfillment.delivery_address_mode != "UNKNOWN":
+            raise _invalid_request(status_code=422, code="pickup_delivery_address_invalid")
+        return
+    if fulfillment.delivery_address_mode == "SAME_AS_INVOICE":
+        if fulfillment.invoice_address is None:
+            raise _invalid_request(status_code=422, code="invoice_address_required")
+        return
+    if fulfillment.delivery_address_mode == "SEPARATE":
+        if fulfillment.delivery_address is None:
+            raise _invalid_request(status_code=422, code="delivery_address_required")
+        return
+    raise _invalid_request(status_code=422, code="delivery_address_mode_required")
+
+
+def _address_mapping(address: UiCustomerAddress | None) -> dict[str, object] | None:
+    if address is None:
+        return None
+    return address.model_dump()
 
 
 def _context_http_error(status_code: int, code: str, message: str) -> HTTPException:
@@ -242,6 +286,7 @@ def _trusted_prepare_body(
 
     payload: dict[str, Any] = request_body.model_dump(exclude_none=True)
     payload.pop("context_id", None)
+    payload.pop("fulfillment", None)
     payload["inquiry_id"] = context.inquiry_id
     company_name = _as_text(prefill.get("companyName"), "Angebot")
     contact_name = _as_text(prefill.get("contactPerson"), company_name)
@@ -273,9 +318,51 @@ def _trusted_prepare_body(
         raise _invalid_request(status_code=422) from exc
 
 
+def _untrusted_prepare_body(request_body: UiOfferPrepareRequest) -> OfferSnapshotBuildRequest:
+    payload = request_body.model_dump(exclude_none=True)
+    payload.pop("fulfillment", None)
+    try:
+        return OfferSnapshotBuildRequest.model_validate(payload)
+    except ValidationError as exc:
+        raise _invalid_request(status_code=422) from exc
+
+
+def _persist_fulfillment(
+    *,
+    inquiry_id: str,
+    fulfillment: UiFulfillmentContext,
+) -> None:
+    core = build_core_office_client()
+    if not core.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail=safe_error_detail(
+                "core_office_not_configured",
+                "Core Office API is not configured.",
+            ),
+        )
+    try:
+        core.persist_fulfillment_context(
+            inquiry_id,
+            fulfillment_mode=fulfillment.fulfillment_mode,
+            delivery_address_mode=fulfillment.delivery_address_mode,
+            invoice_address=_address_mapping(fulfillment.invoice_address),
+            delivery_address=_address_mapping(fulfillment.delivery_address),
+        )
+    except CoreOfficeClientError as exc:
+        status = 409 if exc.status_code == 409 else 502
+        raise HTTPException(
+            status_code=status,
+            detail=safe_error_detail(
+                "core_fulfillment_persist_failed",
+                "Fulfillment and delivery address could not be persisted in Core.",
+            ),
+        ) from exc
+
+
 @router.post("/prepare")
 async def ui_prepare_offer(request: Request) -> dict[str, object]:
-    """Browser BFF: prepare offer in Core without browser machine token."""
+    """Browser BFF: persist fulfillment facts, then prepare the offer in Core."""
     trusted_context: ConfiguratorPrepareContext | None = None
     trusted_claim: ConfiguratorPrepareContextClaim | None = None
     if employee_auth_enabled():
@@ -287,14 +374,14 @@ async def ui_prepare_offer(request: Request) -> dict[str, object]:
             context_id=parsed.context_id,
             current_account_id=principal.account_id,
         )
+        inquiry_id = trusted_context.inquiry_id
         body = _trusted_prepare_body(parsed, trusted_context)
     else:
         parsed = _parse_prepare_request(await _read_prepare_body(request))
         if parsed.inquiry_id is None:
             raise _invalid_request(status_code=422)
-        body = OfferSnapshotBuildRequest.model_validate(
-            parsed.model_dump(exclude_none=True)
-        )
+        inquiry_id = parsed.inquiry_id
+        body = _untrusted_prepare_body(parsed)
 
     try:
         normalize_core_office_panel_url(settings.core_office_panel_url)
@@ -306,6 +393,8 @@ async def ui_prepare_offer(request: Request) -> dict[str, object]:
                 "Core Office Panel return URL is not configured.",
             ),
         ) from exc
+
+    # Preserve the legacy workflow-validation lookup for non-handoff callers.
     if trusted_context is None:
         core = build_core_office_client()
         if not core.is_configured():
@@ -334,7 +423,10 @@ async def ui_prepare_offer(request: Request) -> dict[str, object]:
                     "Inquiry was not found.",
                 ),
             )
+
     try:
+        if parsed.fulfillment is not None:
+            _persist_fulfillment(inquiry_id=inquiry_id, fulfillment=parsed.fulfillment)
         result = execute_prepare_offer(body)
     except Exception:
         if trusted_claim is not None:
@@ -343,6 +435,7 @@ async def ui_prepare_offer(request: Request) -> dict[str, object]:
                 claim_id=trusted_claim.claim_id,
             )
         raise
+
     if trusted_claim is not None:
         consumed = build_configurator_prepare_context_store().consume(
             context_id=trusted_claim.context_id,

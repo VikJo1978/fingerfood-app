@@ -2,7 +2,13 @@
 
 import { getCsrfToken } from "../services/session";
 
-import type { ChargesDefinition, OfferDraft } from "../types";
+import type {
+  ChargesDefinition,
+  CustomerAddressInput,
+  DeliveryFulfillmentDefinition,
+  OfferDraft,
+} from "../types";
+import { createInitialDeliveryFulfillmentDefinition } from "../types";
 import { offerDraftToCalculateBody } from "../services/api";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
@@ -36,6 +42,54 @@ export interface OfferSnapshotChargesDefinition {
   };
 }
 
+export interface OfferPrepareAddress {
+  street: string;
+  postal_code: string;
+  city: string;
+  country: string;
+}
+
+export interface OfferPrepareFulfillment {
+  fulfillment_mode: DeliveryFulfillmentDefinition["fulfillmentMode"];
+  delivery_address_mode: DeliveryFulfillmentDefinition["deliveryAddressMode"];
+  invoice_address: OfferPrepareAddress | null;
+  delivery_address: OfferPrepareAddress | null;
+}
+
+function normalizedFulfillment(charges: ChargesDefinition): DeliveryFulfillmentDefinition {
+  return charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
+}
+
+function addressToWire(address: CustomerAddressInput): OfferPrepareAddress | null {
+  const street = address.street.trim();
+  const postalCode = address.postalCode.trim();
+  const city = address.city.trim();
+  const country = address.country.trim();
+  if (!street && !postalCode && !city && !country) return null;
+  return {
+    street,
+    postal_code: postalCode,
+    city,
+    country,
+  };
+}
+
+export function buildPrepareFulfillment(
+  charges: ChargesDefinition
+): OfferPrepareFulfillment {
+  const current = normalizedFulfillment(charges);
+  return {
+    fulfillment_mode: current.fulfillmentMode,
+    delivery_address_mode:
+      current.fulfillmentMode === "DELIVERY" ? current.deliveryAddressMode : "UNKNOWN",
+    invoice_address: addressToWire(current.invoiceAddress),
+    delivery_address:
+      current.fulfillmentMode === "DELIVERY" && current.deliveryAddressMode === "SEPARATE"
+        ? addressToWire(current.deliveryAddress)
+        : null,
+  };
+}
+
 export function buildBudgetDefinition(
   draft: OfferDraft
 ): OfferSnapshotBudgetDefinition | undefined {
@@ -51,9 +105,14 @@ export function buildBudgetDefinition(
 export function buildChargesDefinition(
   charges: ChargesDefinition
 ): OfferSnapshotChargesDefinition {
+  const current = normalizedFulfillment(charges);
   return {
     delivery: {
-      amount_cents: charges.delivery.amountCents,
+      // Keep the operator's configured amount while fulfillment is still
+      // undecided. PICKUP is the explicit instruction that zeroes it. The
+      // BFF refuses UNKNOWN before Core can persist an OfferVersion.
+      amount_cents:
+        current.fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents,
     },
     dishware: {
       base_mode: charges.dishware.baseMode,
@@ -100,6 +159,7 @@ export interface OfferSnapshotRequestBody {
     customer_visible_text: string;
   };
   offer: ReturnType<typeof offerDraftToCalculateBody>;
+  fulfillment: OfferPrepareFulfillment;
   /** Present only when the operator enabled budget tracking for this
    * draft — omitted entirely (not null/undefined-valued) otherwise, so no
    * unsupported/empty field ever reaches Core. */
@@ -162,6 +222,7 @@ export function buildOfferSnapshotRequest(
       customer_visible_text: "Zahlung per Rechnung",
     },
     offer: { ...offerDraftToCalculateBody(draft), persons: guestCount },
+    fulfillment: buildPrepareFulfillment(draft.chargesDefinition),
     charges_definition: buildChargesDefinition(draft.chargesDefinition),
   };
 }

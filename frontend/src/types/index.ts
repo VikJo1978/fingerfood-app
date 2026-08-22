@@ -127,11 +127,9 @@ export interface OrderContextV1 {
   phone?: string;
   eventDate: string;
   eventTime: string;
-  /** Lieferadresse / Veranstaltungsort — this is what the driver needs, always shown prominently. */
+  /** Veranstaltungsort. Delivery address is modeled separately below. */
   location: string;
-  /** Rechnungsadresse, only set if it differs from location. Kept deliberately
-   * secondary in the UI/print layout (see OfferPreview) — drivers historically
-   * misread a same-priority billing address and delivered to the wrong place. */
+  /** Legacy free-text billing address kept for the existing offer recipient snapshot. */
   billingAddress?: string;
   remarks?: string;
 }
@@ -146,6 +144,22 @@ export type BudgetBasis = "net" | "gross";
 export type BudgetScope = "full_offer" | "positions_only";
 
 export type ChargeBaseMode = "NONE" | "PAUSCHALE";
+export type FulfillmentMode = "UNKNOWN" | "PICKUP" | "DELIVERY";
+export type DeliveryAddressMode = "UNKNOWN" | "SAME_AS_INVOICE" | "SEPARATE";
+
+export interface CustomerAddressInput {
+  street: string;
+  postalCode: string;
+  city: string;
+  country: string;
+}
+
+export interface DeliveryFulfillmentDefinition {
+  fulfillmentMode: FulfillmentMode;
+  deliveryAddressMode: DeliveryAddressMode;
+  invoiceAddress: CustomerAddressInput;
+  deliveryAddress: CustomerAddressInput;
+}
 
 export interface DishwareAdditionalLine {
   lineId: string;
@@ -161,6 +175,8 @@ export interface ChargesDefinition {
   };
   delivery: {
     amountCents: number;
+    /** Optional only for backward-compatible restore of drafts created before #150. */
+    fulfillment?: DeliveryFulfillmentDefinition;
   };
   dishware: {
     baseMode: ChargeBaseMode;
@@ -265,6 +281,24 @@ export function createInitialOrderContextV1(): OrderContextV1 {
   };
 }
 
+export function createInitialCustomerAddressInput(): CustomerAddressInput {
+  return {
+    street: "",
+    postalCode: "",
+    city: "",
+    country: "",
+  };
+}
+
+export function createInitialDeliveryFulfillmentDefinition(): DeliveryFulfillmentDefinition {
+  return {
+    fulfillmentMode: "UNKNOWN",
+    deliveryAddressMode: "UNKNOWN",
+    invoiceAddress: createInitialCustomerAddressInput(),
+    deliveryAddress: createInitialCustomerAddressInput(),
+  };
+}
+
 export function createInitialOfferDraft(): OfferDraft {
   return {
     orderContext: createInitialOrderContextV1(),
@@ -289,6 +323,7 @@ export function createInitialChargesDefinition(): ChargesDefinition {
     },
     delivery: {
       amountCents: 3500,
+      fulfillment: createInitialDeliveryFulfillmentDefinition(),
     },
     dishware: {
       baseMode: "NONE",

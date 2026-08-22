@@ -3,6 +3,7 @@ import type { ChargesDefinition, DishwareAdditionalLine } from "../../types";
 import { formatCurrency } from "../../utils/pricing";
 import { formatCentsInput, parseGermanMoneyToCents } from "../../utils/money";
 import { IntegerField } from "../ui/IntegerField";
+import { DeliveryFulfillmentSection } from "./DeliveryFulfillmentSection";
 
 const DESCRIPTION_MAX = 500;
 
@@ -189,13 +190,22 @@ export function ChargeConfiguratorModal({
           </section>
 
           <section className="grid gap-3 border-b border-line pb-5">
+            <DeliveryFulfillmentSection charges={charges} onChange={onChange} />
             <MoneyField
               label="Anlieferung netto"
               valueCents={charges.delivery.amountCents}
               onValidChange={(cents) =>
-                onChange({ ...charges, delivery: { amountCents: cents } })
+                onChange({
+                  ...charges,
+                  delivery: { ...charges.delivery, amountCents: cents },
+                })
               }
             />
+            {charges.delivery.fulfillment?.fulfillmentMode === "PICKUP" ? (
+              <p className="text-xs text-muted">
+                Bei Selbstabholung bleibt der hinterlegte Lieferpreis erhalten, wird aber nicht berechnet.
+              </p>
+            ) : null}
           </section>
 
           <section className="grid gap-3">
