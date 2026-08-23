@@ -12,6 +12,7 @@ import {
   generateRecommendations,
   type FulfillmentMode,
   type RecommendationGenerateResponse,
+  type RecommendationVariant,
 } from "../../services/recommendations";
 import type { CatalogItem } from "../../types";
 import { formatCurrency } from "../../utils/pricing";
@@ -21,6 +22,7 @@ interface RecommendationPanelProps {
   eventDate: string;
   guestCount: number;
   catalog: CatalogItem[];
+  onApplyVariant?: (variant: RecommendationVariant) => void;
 }
 
 type CateringFormat = "fingerfood" | "buffet" | "mixed" | "other";
@@ -29,7 +31,12 @@ const fieldClass =
   "rounded-control border border-line bg-white px-3 py-2 text-sm text-ink transition focus:border-accent";
 const labelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
 
-export function RecommendationPanel({ eventDate, guestCount, catalog }: RecommendationPanelProps) {
+export function RecommendationPanel({
+  eventDate,
+  guestCount,
+  catalog,
+  onApplyVariant,
+}: RecommendationPanelProps) {
   const [cateringFormat, setCateringFormat] = useState<CateringFormat>("fingerfood");
   const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>("DELIVERY");
   const [dietType, setDietType] = useState<DietType | "">("");
@@ -258,6 +265,15 @@ export function RecommendationPanel({ eventDate, guestCount, catalog }: Recommen
                 </ul>
                 {variant.explanations.length > 0 ? (
                   <p className="mt-3 text-xs text-muted">{variant.explanations.join(" · ")}</p>
+                ) : null}
+                {onApplyVariant ? (
+                  <button
+                    type="button"
+                    onClick={() => onApplyVariant(variant)}
+                    className="mt-3 w-full rounded-control border border-accent bg-white px-3 py-2 text-sm font-bold text-accent-deep transition hover:bg-accent-soft"
+                  >
+                    Variante in Entwurf übernehmen
+                  </button>
                 ) : null}
               </article>
             ))}
