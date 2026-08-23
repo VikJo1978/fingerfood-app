@@ -4,6 +4,7 @@ import { ConfiguratorShell } from "../components/layout/ConfiguratorShell";
 import { HeaderBar } from "../components/layout/HeaderBar";
 import { InquiryHeroCard } from "../components/InquiryHeroCard";
 import { InquiryIntake } from "../components/inquiry/InquiryIntake";
+import { RecommendationLauncher } from "../components/recommendations/RecommendationLauncher";
 import { OrderContextCard } from "../components/OrderContextCard";
 import { TopControls } from "../components/TopControls";
 import { SearchFilters } from "../components/filters/SearchFilters";
@@ -17,6 +18,7 @@ import {
   type SessionBootstrapStatus,
 } from "../services/session";
 import { exchangeCoreHandoff } from "../services/handoff";
+import type { RecommendationVariant } from "../services/recommendations";
 import type {
   CatalogItem,
   ChargesDefinition,
@@ -82,15 +84,9 @@ export function HomePage() {
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSaveMessage, setDraftSaveMessage] = useState<string | null>(null);
   const [importedInquiryId, setImportedInquiryId] = useState<string | null>(null);
-  // Which sessionStorage key the active draft persists under — resolved
-  // once we know whether this is a Core-Inquiry session or a manual one
-  // (see utils/draftPersistence.ts). Starts "manual" since that's the
-  // scope for a fresh, not-yet-resolved intake session.
   const [draftScope, setDraftScope] = useState<DraftPersistenceScope>({
     kind: "manual",
   });
-  // Hero-card display only (see InquiryHeroCard) — not part of OrderContextV1
-  // / OfferDraft, so it never reaches the Core prepare-offer payload.
   const [inquiryEventType, setInquiryEventType] = useState("");
   const [handoffError, setHandoffError] = useState<string | null>(null);
   const [handoffExchangePending, setHandoffExchangePending] = useState(false);
@@ -246,15 +242,6 @@ export function HomePage() {
     setPageMode("configurator");
   }, []);
 
-  /** InquiryIntake's own manual "weak protocol" form — an explicit,
-   * standalone new draft, not a Core handoff. Clears any handoff still
-   * cached in sessionStorage from a previous customer's Inquiry in this
-   * tab before applying the manually-entered data, so it can never bleed
-   * into (or later resurface for) this unrelated draft. Also: explicitly
-   * starting a new draft here — resets to a fresh OfferDraft (not whatever
-   * lines/budget a previous draft in this tab left behind) and clears any
-   * persisted manual-scope draft, per the same "never bleed into an
-   * unrelated draft" rule applied to sessionStorage persistence. */
   const onManualPrepareOffer = useCallback(
     (transfer: InquiryToConfiguratorTransferV1) => {
       clearStoredCoreInquiryHandoff();
@@ -276,14 +263,6 @@ export function HomePage() {
     handoffBootstrapStarted.current = true;
     let cancelled = false;
 
-    /** Persisted-draft restore is a pure convenience layered on top of the
-     * existing Core-handoff prefill: it never runs instead of
-     * handlePrepareOffer, only after it, and — when a matching persisted
-     * draft exists for the resolved scope — replaces the whole draft
-     * wholesale with the operator's own more-complete in-progress editing
-     * state (added lines, configured budget) rather than merging field by
-     * field. Scope keying alone (see draftStorageKey) is what guarantees
-     * this can never pull one Inquiry's saved state into another. */
     function restoreScopedDraft(scope: DraftPersistenceScope): void {
       const restored = readDraftFromSession(scope);
       if (restored !== null) {
@@ -385,10 +364,6 @@ export function HomePage() {
     };
   }, [handlePrepareOffer, sessionCsrfReady, sessionNotice, sessionStatus]);
 
-  // Persist the active draft on every change while in the Configurator —
-  // the one place all seven required fields (positions, quantities, guest
-  // count, budget amount/type/basis/scope) live together. Best-effort; see
-  // saveDraftToSession.
   useEffect(() => {
     if (pageMode !== "configurator") return;
     saveDraftToSession(draftScope, offerDraft);
@@ -419,7 +394,6 @@ export function HomePage() {
       itemId: item.id,
       quantityMode: mode,
       quantity,
-      // Both preserved for export/API; line totals use `price_type` + `chosen_price` (unit basis).
       snapshot: {
         title: item.name,
         source_type: item.source_type,
@@ -427,8 +401,6 @@ export function HomePage() {
         price_type: item.price_type,
         chosen_price: item.price,
         item_kind: item.item_kind,
-        // Frozen even when the item has no surcharge (undefined) or wasn't
-        // selected (false) — keeps the audit trail of what was offered.
         ...(hasSurcharge
           ? {
               surchargeSelected,
@@ -440,6 +412,47 @@ export function HomePage() {
     };
     setOfferDraft((d) => ({ ...d, lines: [...d.lines, line] }));
   };
+
+  const onApplyRecommendationVariant = useCallback(
+    (variant: RecommendationVariant) => {
+      const nextLines: OfferLine[] = [];
+      for (const recommendedLine of variant.lines) {
+        const item = itemsById[recommendedLine.item_id];
+        if (!item) {
+          setAddItemError(
+            `Vorschlag konnte nicht übernommen werden: Katalogposition ${recommendedLine.item_id} fehlt.`
+          );
+          return;
+        }
+        let lineId: string;
+        try {
+          lineId = generateUuidV4();
+        } catch {
+          setAddItemError(
+            "Vorschlag konnte nicht übernommen werden: kein sicherer Zufallsgenerator verfügbar."
+          );
+          return;
+        }
+        nextLines.push({
+          lineId,
+          itemId: item.id,
+          quantityMode: "total",
+          quantity: Math.max(1, Math.round(recommendedLine.quantity)),
+          snapshot: {
+            title: item.name,
+            source_type: item.source_type,
+            pricing_mode: item.pricing_mode,
+            price_type: item.price_type,
+            chosen_price: item.price,
+            item_kind: item.item_kind,
+          },
+        });
+      }
+      setAddItemError(null);
+      setOfferDraft((draft) => ({ ...draft, lines: nextLines }));
+    },
+    [itemsById]
+  );
 
   const onRemoveLine = (lineId: string) => {
     setOfferDraft((d) => ({ ...d, lines: d.lines.filter((l) => l.lineId !== lineId) }));
@@ -549,8 +562,8 @@ export function HomePage() {
   const onPrepareInCore = useCallback(async () => {
     if (
       sessionStatus === "loading" ||
-      sessionStatus === "not_authenticated"
-      || sessionStatus === "access_denied" ||
+      sessionStatus === "not_authenticated" ||
+      sessionStatus === "access_denied" ||
       sessionStatus === "unavailable" ||
       (sessionStatus === "authenticated" && !sessionCsrfReady)
     ) {
@@ -609,12 +622,6 @@ export function HomePage() {
             );
       await prepareAndNavigateToCoreOffer(body, {
         onPrepared: (result) => {
-          // Prepared successfully and about to navigate away to Core — the
-          // handoff has done its job; clear it so it can't resurface for a
-          // later, unrelated Configurator visit in this tab. Same for the
-          // persisted draft: this Inquiry's Offer now exists in Core, so
-          // there is nothing left in this Configurator session worth
-          // restoring for it later.
           clearStoredCoreInquiryHandoff();
           clearDraftFromSession(draftScope);
           setPrepareContextId(null);
@@ -699,26 +706,6 @@ export function HomePage() {
   return (
     <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
       <div className="space-y-5">
-        {/* OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: a real fixed-height,
-            overflow:hidden split workspace on desktop — not sticky. Sticky
-            (the previous approach here) only pins *after* the page has
-            been scrolled past its natural in-flow position, so the pane
-            visibly travels with the document until that point; it also
-            made the pane's height a guess (`max-h`) tuned for one specific
-            scroll offset. Here the workspace itself is the fixed-size box
-            (viewport height minus the TopBar (76px) and the content area's
-            top padding (34px) = 110px, using 100dvh so mobile Safari's
-            dynamic toolbar doesn't leave a stale gap), `overflow-hidden`
-            so it is never itself a scroll container, and each column
-            declares its own scroll region inside that fixed box: the left
-            column (catalog/context) via `overflow-y-auto`, the right
-            column (Offer pane) via `h-full` feeding OfferSummary's own
-            existing fixed-header/scrollable-middle/fixed-footer structure.
-            The document/body is never the scroll container for either —
-            scrolling the catalog cannot move the Offer pane, because the
-            Offer pane isn't positioned relative to document scroll at all
-            anymore. Mobile/tablet (below `lg:`) keeps normal page flow —
-            none of this applies below the breakpoint. */}
         <div className="grid gap-[22px] lg:h-[calc(100dvh-110px)] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:overflow-hidden">
           <div className="grid content-start gap-[22px] lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             {importedInquiryId || prepareContextId ? (
@@ -856,6 +843,11 @@ export function HomePage() {
           Entwurf
         </footer>
       </div>
+      <RecommendationLauncher
+        initialEventDate={offerDraft.orderContext.eventDate}
+        initialGuestCount={offerDraft.persons}
+        onApplyVariant={onApplyRecommendationVariant}
+      />
     </ConfiguratorShell>
   );
 }

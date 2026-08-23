@@ -5,7 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.employee_auth_config import validate_employee_auth_settings
-from app.routes import drafts, frontend, items, offer, ui_handoff, ui_offer, ui_session
+from app.routes import (
+    drafts,
+    frontend,
+    items,
+    offer,
+    ui_handoff,
+    ui_offer,
+    ui_recommendation,
+    ui_session,
+)
 
 
 @asynccontextmanager
@@ -40,6 +49,7 @@ app.include_router(offer.router)
 app.include_router(ui_session.router)
 app.include_router(ui_handoff.router)
 app.include_router(ui_offer.router)
+app.include_router(ui_recommendation.router)
 app.include_router(drafts.router)
 
 
