@@ -1,15 +1,32 @@
 import { useEffect, useState } from "react";
 
 import { fetchItems } from "../../services/api";
+import type { RecommendationVariant } from "../../services/recommendations";
 import type { CatalogItem } from "../../types";
 import { RecommendationPanel } from "./RecommendationPanel";
 
-export function RecommendationLauncher() {
+interface RecommendationLauncherProps {
+  initialEventDate?: string;
+  initialGuestCount?: number;
+  onApplyVariant?: (variant: RecommendationVariant) => void;
+}
+
+export function RecommendationLauncher({
+  initialEventDate = "",
+  initialGuestCount = 10,
+  onApplyVariant,
+}: RecommendationLauncherProps) {
   const [open, setOpen] = useState(false);
-  const [eventDate, setEventDate] = useState("");
-  const [guestCount, setGuestCount] = useState(10);
+  const [eventDate, setEventDate] = useState(initialEventDate);
+  const [guestCount, setGuestCount] = useState(initialGuestCount);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  function openWithCurrentContext() {
+    setEventDate(initialEventDate);
+    setGuestCount(Math.min(5000, Math.max(1, Math.round(initialGuestCount) || 1)));
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open || catalog.length > 0 || catalogError !== null) return;
@@ -30,7 +47,7 @@ export function RecommendationLauncher() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openWithCurrentContext}
         className="fixed bottom-5 left-5 z-40 rounded-full bg-accent px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-accent-deep"
       >
         Caterer-Vorschläge
@@ -92,7 +109,15 @@ export function RecommendationLauncher() {
                 {catalogError}
               </p>
             ) : (
-              <RecommendationPanel eventDate={eventDate} guestCount={guestCount} catalog={catalog} />
+              <RecommendationPanel
+                eventDate={eventDate}
+                guestCount={guestCount}
+                catalog={catalog}
+                onApplyVariant={(variant) => {
+                  onApplyVariant?.(variant);
+                  setOpen(false);
+                }}
+              />
             )}
           </div>
         </div>
