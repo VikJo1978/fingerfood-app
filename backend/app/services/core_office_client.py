@@ -1,11 +1,21 @@
-"""Write-side Core Office API client for Configurator handoff and offer preparation."""
+"""Core Office API client for Configurator reads and offer preparation writes."""
 
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from datetime import date
+from typing import Any, cast
 
 import httpx
+
+from app.services.core_production_signal_adapter import (
+    CoreDemandState,
+    CoreSameDayDemandRow,
+)
+
+_CORE_RECOMMENDATION_DEMAND_STATES = frozenset(
+    {"CONFIRMED_ORDER", "ACCEPTED_ORDER", "SENT_OFFER"}
+)
 
 
 class CoreOfficeClientError(Exception):
@@ -99,6 +109,69 @@ class CoreOfficeClient:
             status_code=response.status_code,
         )
 
+    def get_recommendation_demand(
+        self, event_date: date
+    ) -> tuple[CoreSameDayDemandRow, ...]:
+        """Read PII-free same-day production demand from Core and fail closed."""
+
+        if not self.is_configured():
+            raise CoreOfficeClientError(code="core_office_not_configured")
+        url = f"{self._base_url}/office/v1/recommendation-demand"
+        try:
+            with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
+                response = client.get(
+                    url,
+                    params={"date": event_date.isoformat()},
+                    headers=self._auth_headers(),
+                )
+        except httpx.HTTPError as exc:
+            raise CoreOfficeClientError(
+                code="recommendation_demand_transport_error"
+            ) from exc
+        if response.status_code != 200:
+            raise CoreOfficeClientError(
+                code="recommendation_demand_failed",
+                status_code=response.status_code,
+            )
+        payload = _response_payload(response)
+        if payload is None or payload.get("event_date") != event_date.isoformat():
+            raise CoreOfficeClientError(
+                code="recommendation_demand_invalid_response",
+                status_code=response.status_code,
+            )
+        raw_rows = payload.get("rows")
+        if not isinstance(raw_rows, list):
+            raise CoreOfficeClientError(
+                code="recommendation_demand_invalid_response",
+                status_code=response.status_code,
+            )
+        rows: list[CoreSameDayDemandRow] = []
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                raise CoreOfficeClientError(
+                    code="recommendation_demand_invalid_response",
+                    status_code=response.status_code,
+                )
+            item_id = raw_row.get("catalog_item_id")
+            lifecycle = raw_row.get("lifecycle")
+            if (
+                not isinstance(item_id, str)
+                or not item_id.strip()
+                or not isinstance(lifecycle, str)
+                or lifecycle not in _CORE_RECOMMENDATION_DEMAND_STATES
+            ):
+                raise CoreOfficeClientError(
+                    code="recommendation_demand_invalid_response",
+                    status_code=response.status_code,
+                )
+            rows.append(
+                CoreSameDayDemandRow(
+                    item_id=item_id,
+                    state=cast(CoreDemandState, lifecycle),
+                )
+            )
+        return tuple(rows)
+
     def _post_inquiry_command(
         self,
         inquiry_id: str,
@@ -147,7 +220,9 @@ class CoreOfficeClient:
             raise CoreOfficeClientError(code="inquiry_not_found", status_code=404)
         updated_at = inquiry.get("updated_at")
         if not isinstance(updated_at, str) or not updated_at:
-            raise CoreOfficeClientError(code="inquiry_lookup_invalid_response", status_code=200)
+            raise CoreOfficeClientError(
+                code="inquiry_lookup_invalid_response", status_code=200
+            )
 
         address_result = self._post_inquiry_command(
             inquiry_id,
@@ -161,7 +236,9 @@ class CoreOfficeClient:
         )
         address_updated_at = address_result["updated_at"]
         if not isinstance(address_updated_at, str):
-            raise CoreOfficeClientError(code="customer-addresses_invalid_response", status_code=200)
+            raise CoreOfficeClientError(
+                code="customer-addresses_invalid_response", status_code=200
+            )
 
         self._post_inquiry_command(
             inquiry_id,
