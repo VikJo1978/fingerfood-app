@@ -239,6 +239,9 @@ export function RecommendationPanel({
           {result.warnings.length > 0 ? (
             <WarningBanner message={result.warnings.join(" · ")} />
           ) : null}
+          {onApplyVariant ? (
+            <WarningBanner message="Beim Übernehmen einer Variante werden die aktuellen Angebotspositionen ersetzt. Auftragskontext, Personenzahl, Budget und Pauschalen bleiben erhalten." />
+          ) : null}
           <div className="grid gap-3 xl:grid-cols-3">
             {result.variants.map((variant) => (
               <article key={variant.kind} className="rounded-card border border-line bg-canvas/40 p-4">
@@ -272,7 +275,7 @@ export function RecommendationPanel({
                     onClick={() => onApplyVariant(variant)}
                     className="mt-3 w-full rounded-control border border-accent bg-white px-3 py-2 text-sm font-bold text-accent-deep transition hover:bg-accent-soft"
                   >
-                    Variante in Entwurf übernehmen
+                    Aktuelle Positionen durch Variante ersetzen
                   </button>
                 ) : null}
               </article>
