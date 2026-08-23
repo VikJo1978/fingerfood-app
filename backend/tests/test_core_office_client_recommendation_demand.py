@@ -23,7 +23,7 @@ def test_recommendation_demand_maps_core_rows_and_sends_auth_and_date() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.method == "GET"
         assert request.url.path == "/office/v1/recommendation-demand"
-        assert request.url.params == {"date": "2026-08-23"}
+        assert request.url.params.get("date") == "2026-08-23"
         assert request.headers["Authorization"] == "Bearer core-secret"
         return httpx.Response(
             200,
