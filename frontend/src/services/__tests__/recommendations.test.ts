@@ -10,7 +10,7 @@ describe("recommendation API client", () => {
 
   it("posts the structured questionnaire to the same-origin BFF", async () => {
     vi.stubEnv("VITE_API_URL", "");
-    const fetchMock = vi.fn(async (_url: string) =>
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
       Response.json({
         event_date: "2026-08-30",
         guest_count: 40,
