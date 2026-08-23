@@ -13,15 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # CONFIGURABLE_OFFER_CHARGES_V1 cross-repository contract: pinned to
-      # the exact approved Core PR #62 head, never a moving branch. Bump
-      # this SHA deliberately (and only) when a newer approved Core
-      # contract head needs to be validated against.
+      # Cross-repository contract: pin to the exact merged Core commit that
+      # provides /office/v1/recommendation-demand for issue #151. Never use
+      # a moving branch here; bump deliberately when the approved Core
+      # contract changes.
       - name: Checkout Core contract (VikJo1978/silberloeffel-catering)
         uses: actions/checkout@v7
         with:
           repository: VikJo1978/silberloeffel-catering
-          ref: 63e9515a165d8342d3ebb02e1ef435bff4a40195
+          ref: 2a768fe775112baefe4348019ca91df766ec81aa
           path: core-contract
       - name: Place Core checkout at the path expected by the cross-repository E2E tests
         run: |
