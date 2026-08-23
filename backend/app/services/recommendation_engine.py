@@ -36,6 +36,17 @@ class ProductionSignal:
 
 
 @dataclass(frozen=True)
+class CapacitySignal:
+    item_id: str
+    feasible: bool = True
+    overload_penalty: int = 0
+
+    def __post_init__(self) -> None:
+        if self.overload_penalty < 0:
+            raise ValueError("overload_penalty must be non-negative")
+
+
+@dataclass(frozen=True)
 class RecommendationCandidate:
     item_id: str
     score: int
@@ -60,20 +71,19 @@ def rank_items(
     request: RecommendationRequest,
     *,
     production_signals: tuple[ProductionSignal, ...] = (),
+    capacity_signals: tuple[CapacitySignal, ...] = (),
 ) -> list[RecommendationCandidate]:
-    """Rank items deterministically and return rejected candidates last.
-
-    Tie-breaking is stable by item id, which makes recommendations reproducible
-    for the same structured inputs.
-    """
+    """Rank items deterministically and return rejected candidates last."""
 
     production_bonus = _production_bonus_by_item(production_signals)
+    capacity_by_item = {signal.item_id: signal for signal in capacity_signals}
     candidates = [
         _score_item(
             item,
             unit_net_cents_by_item_id.get(item.id),
             request,
             production_bonus.get(item.id, 0),
+            capacity_by_item.get(item.id),
         )
         for item in items
     ]
@@ -92,6 +102,7 @@ def _score_item(
     unit_net_cents: int | None,
     request: RecommendationRequest,
     production_bonus: int,
+    capacity_signal: CapacitySignal | None,
 ) -> RecommendationCandidate:
     rejects: list[str] = []
     explanations: list[str] = []
@@ -122,6 +133,9 @@ def _score_item(
     ):
         rejects.append("over_unit_budget")
 
+    if capacity_signal is not None and not capacity_signal.feasible:
+        rejects.append("capacity_unavailable")
+
     if rejects:
         return RecommendationCandidate(
             item_id=item.id,
@@ -142,6 +156,9 @@ def _score_item(
     if production_bonus:
         score += production_bonus
         explanations.append(f"same-day production +{production_bonus}")
+    if capacity_signal is not None and capacity_signal.overload_penalty:
+        score -= capacity_signal.overload_penalty
+        explanations.append(f"capacity pressure -{capacity_signal.overload_penalty}")
 
     assert unit_net_cents is not None
     if request.profile == "ECONOMIC":
