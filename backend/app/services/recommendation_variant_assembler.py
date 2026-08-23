@@ -50,17 +50,19 @@ def assemble_variant(
     unit_net_cents_by_item_id: dict[str, int],
     *,
     guest_count: int,
+    piece_quantity_by_item_id: dict[str, int] | None = None,
     max_variant_net_cents: int | None = None,
 ) -> RecommendationVariant | None:
     """Assemble one variant from candidates already ranked for ``kind``.
 
-    The supplied ranking is authoritative. This is important because the scoring
-    engine applies different weights for ECONOMIC, RECOMMENDED and PREMIUM.
-    Assembly only enforces eligibility, quantity and complete-variant budget.
+    Per-person positions scale with guest count. Piece positions use explicit demand
+    when supplied and otherwise fall back to the catalog minimum. The fallback is
+    exposed in line explanations so it cannot masquerade as a serving estimate.
     """
 
     if guest_count <= 0:
         raise ValueError("guest_count must be positive")
+    piece_quantities = _validated_piece_quantities(piece_quantity_by_item_id)
 
     item_by_id = {item.id: item for item in items}
     eligible = [candidate for candidate in ranked_candidates if candidate.eligible]
@@ -70,6 +72,7 @@ def assemble_variant(
         eligible,
         unit_net_cents_by_item_id,
         guest_count=guest_count,
+        piece_quantity_by_item_id=piece_quantities,
         max_variant_net_cents=max_variant_net_cents,
     )
 
@@ -80,6 +83,7 @@ def assemble_variants(
     unit_net_cents_by_item_id: dict[str, int],
     *,
     guest_count: int,
+    piece_quantity_by_item_id: dict[str, int] | None = None,
     max_variant_net_cents: int | None = None,
 ) -> tuple[RecommendationVariant, ...]:
     """Legacy helper building three variants from one ranking.
@@ -91,6 +95,7 @@ def assemble_variants(
 
     if guest_count <= 0:
         raise ValueError("guest_count must be positive")
+    piece_quantities = _validated_piece_quantities(piece_quantity_by_item_id)
 
     item_by_id = {item.id: item for item in items}
     eligible = [candidate for candidate in ranked_candidates if candidate.eligible]
@@ -103,6 +108,7 @@ def assemble_variants(
             ordered,
             unit_net_cents_by_item_id,
             guest_count=guest_count,
+            piece_quantity_by_item_id=piece_quantities,
             max_variant_net_cents=max_variant_net_cents,
         )
         if variant is not None:
@@ -117,6 +123,7 @@ def _assemble_one(
     unit_net_cents_by_item_id: dict[str, int],
     *,
     guest_count: int,
+    piece_quantity_by_item_id: dict[str, int],
     max_variant_net_cents: int | None,
 ) -> RecommendationVariant | None:
     lines: list[RecommendationVariantLine] = []
@@ -130,7 +137,11 @@ def _assemble_one(
         unit_net_cents = unit_net_cents_by_item_id.get(candidate.item_id)
         if item is None or unit_net_cents is None:
             continue
-        quantity = _quantity_for_item(item, guest_count)
+        quantity, quantity_explanations = _quantity_for_item(
+            item,
+            guest_count,
+            piece_quantity_by_item_id,
+        )
         line_total = quantity * unit_net_cents
         if (
             max_variant_net_cents is not None
@@ -144,7 +155,7 @@ def _assemble_one(
                 unit_net_cents=unit_net_cents,
                 net_total_cents=line_total,
                 score=candidate.score,
-                explanations=candidate.explanations,
+                explanations=candidate.explanations + quantity_explanations,
             )
         )
         running_total += line_total
@@ -179,7 +190,30 @@ def _ordered_for_variant(
     return sorted(candidates, key=lambda c: (-c.score, price(c), c.item_id))
 
 
-def _quantity_for_item(item: Item, guest_count: int) -> int:
+def _validated_piece_quantities(
+    values: dict[str, int] | None,
+) -> dict[str, int]:
+    quantities = dict(values or {})
+    if any(quantity <= 0 for quantity in quantities.values()):
+        raise ValueError("piece quantities must be positive")
+    return quantities
+
+
+def _quantity_for_item(
+    item: Item,
+    guest_count: int,
+    piece_quantity_by_item_id: dict[str, int],
+) -> tuple[int, tuple[str, ...]]:
     if item.price_type == "person":
-        return max(item.min_order, guest_count)
-    return item.min_order
+        quantity = max(item.min_order, guest_count)
+        return quantity, ("quantity from guest count",)
+
+    requested = piece_quantity_by_item_id.get(item.id)
+    if requested is None:
+        return item.min_order, ("quantity uses catalog minimum fallback",)
+
+    quantity = max(item.min_order, requested)
+    explanations = ["quantity from explicit piece demand"]
+    if quantity != requested:
+        explanations.append("catalog minimum applied")
+    return quantity, tuple(explanations)
