@@ -43,6 +43,37 @@ _LABELS: dict[VariantKind, str] = {
 }
 
 
+def assemble_variant(
+    kind: VariantKind,
+    items: list[Item],
+    ranked_candidates: list[RecommendationCandidate],
+    unit_net_cents_by_item_id: dict[str, int],
+    *,
+    guest_count: int,
+    max_variant_net_cents: int | None = None,
+) -> RecommendationVariant | None:
+    """Assemble one variant from candidates already ranked for ``kind``.
+
+    The supplied ranking is authoritative. This is important because the scoring
+    engine applies different weights for ECONOMIC, RECOMMENDED and PREMIUM.
+    Assembly only enforces eligibility, quantity and complete-variant budget.
+    """
+
+    if guest_count <= 0:
+        raise ValueError("guest_count must be positive")
+
+    item_by_id = {item.id: item for item in items}
+    eligible = [candidate for candidate in ranked_candidates if candidate.eligible]
+    return _assemble_one(
+        kind,
+        item_by_id,
+        eligible,
+        unit_net_cents_by_item_id,
+        guest_count=guest_count,
+        max_variant_net_cents=max_variant_net_cents,
+    )
+
+
 def assemble_variants(
     items: list[Item],
     ranked_candidates: list[RecommendationCandidate],
@@ -51,12 +82,11 @@ def assemble_variants(
     guest_count: int,
     max_variant_net_cents: int | None = None,
 ) -> tuple[RecommendationVariant, ...]:
-    """Build the three deterministic v1 variants from already-ranked candidates.
+    """Legacy helper building three variants from one ranking.
 
-    Only eligible candidates can enter a variant. Budget is enforced on the complete
-    variant, never by admitting a hard-rejected item. The function deliberately uses
-    simple quantity rules in v1: per-person items scale with guest count, piece items
-    use at least their minimum order.
+    New recommendation orchestration must rank each profile independently and call
+    :func:`assemble_variant`. This helper remains for compatibility with existing
+    callers and tests while that migration is completed.
     """
 
     if guest_count <= 0:
@@ -66,10 +96,11 @@ def assemble_variants(
     eligible = [candidate for candidate in ranked_candidates if candidate.eligible]
     variants: list[RecommendationVariant] = []
     for kind in ("ECONOMIC", "RECOMMENDED", "PREMIUM"):
+        ordered = _ordered_for_variant(kind, eligible, unit_net_cents_by_item_id)
         variant = _assemble_one(
             kind,
             item_by_id,
-            eligible,
+            ordered,
             unit_net_cents_by_item_id,
             guest_count=guest_count,
             max_variant_net_cents=max_variant_net_cents,
@@ -88,12 +119,11 @@ def _assemble_one(
     guest_count: int,
     max_variant_net_cents: int | None,
 ) -> RecommendationVariant | None:
-    ordered = _ordered_for_variant(kind, candidates, unit_net_cents_by_item_id)
     lines: list[RecommendationVariantLine] = []
     running_total = 0
     target = _TARGET_LINE_COUNT[kind]
 
-    for candidate in ordered:
+    for candidate in candidates:
         if len(lines) >= target:
             break
         item = item_by_id.get(candidate.item_id)
