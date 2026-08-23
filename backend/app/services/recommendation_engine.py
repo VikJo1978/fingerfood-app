@@ -127,6 +127,8 @@ def _score_item(
 
     if unit_net_cents is None:
         rejects.append("price_missing")
+    elif unit_net_cents <= 0:
+        rejects.append("non_positive_price")
     elif (
         request.max_unit_net_cents is not None
         and unit_net_cents > request.max_unit_net_cents
