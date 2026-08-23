@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatalogItem } from "../../../types";
 import { RecommendationPanel } from "../RecommendationPanel";
 
-const generateRecommendationsMock = vi.fn();
+const { generateRecommendationsMock } = vi.hoisted(() => ({
+  generateRecommendationsMock: vi.fn(),
+}));
 
 vi.mock("../../../services/recommendations", async () => {
   const actual = await vi.importActual<typeof import("../../../services/recommendations")>(
