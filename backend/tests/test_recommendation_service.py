@@ -61,6 +61,22 @@ def test_hard_constraints_are_reapplied_for_every_profile() -> None:
     )
 
 
+def test_generation_passes_explicit_piece_demand_into_all_profiles() -> None:
+    item = _item("canape")
+
+    variants = generate_recommendation_variants(
+        [item],
+        {"canape": 250},
+        RecommendationRequest(),
+        guest_count=40,
+        piece_quantity_by_item_id={"canape": 80},
+    )
+
+    assert variants
+    assert all(variant.lines[0].quantity == 80 for variant in variants)
+    assert all(variant.lines[0].net_total_cents == 20000 for variant in variants)
+
+
 def test_generation_is_reproducible() -> None:
     items = [_item("b"), _item("a"), _item("c")]
     prices = {"a": 500, "b": 500, "c": 500}
