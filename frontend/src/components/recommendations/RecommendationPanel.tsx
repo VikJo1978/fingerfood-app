@@ -95,7 +95,7 @@ export function RecommendationPanel({
         no_pork: noPork,
         preferred_categories: preferredCategories,
         max_variant_net_cents:
-          parsedBudget === null ? null : Math.round(parsedBudget * 100),
+          parsedBudget === null ? null : Math.round(parsedBudget * guestCount * 100),
       });
       setResult(response);
       setStatus("idle");
@@ -164,7 +164,7 @@ export function RecommendationPanel({
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className={labelClass}>Max. Netto-Budget</span>
+          <span className={labelClass}>Max. Netto-Budget / Person</span>
           <input
             className={fieldClass}
             type="number"
@@ -239,7 +239,10 @@ export function RecommendationPanel({
           {result.warnings.length > 0 ? (
             <WarningBanner message={result.warnings.join(" · ")} />
           ) : null}
-          {onApplyVariant ? (
+          {result.variants.length === 0 ? (
+            <WarningBanner message="Keine passende Variante innerhalb der gewählten Kriterien und des Budgets gefunden." />
+          ) : null}
+          {onApplyVariant && result.variants.length > 0 ? (
             <WarningBanner message="Beim Übernehmen einer Variante werden die aktuellen Angebotspositionen ersetzt. Auftragskontext, Personenzahl, Budget und Pauschalen bleiben erhalten." />
           ) : null}
           <div className="grid gap-3 xl:grid-cols-3">
