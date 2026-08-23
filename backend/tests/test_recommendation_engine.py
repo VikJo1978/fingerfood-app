@@ -1,6 +1,7 @@
 from app.models.classification import Allergen, DietType, IngredientFlags
 from app.models.item import Item
 from app.services.recommendation_engine import (
+    CapacitySignal,
     ProductionSignal,
     RecommendationRequest,
     rank_items,
@@ -123,3 +124,31 @@ def test_ranking_is_reproducible_with_item_id_tie_break() -> None:
     )
 
     assert [candidate.item_id for candidate in ranked] == ["a", "b"]
+
+
+def test_impossible_capacity_is_a_hard_reject() -> None:
+    item = _item("blocked")
+
+    ranked = rank_items(
+        [item],
+        {item.id: 500},
+        RecommendationRequest(),
+        capacity_signals=(CapacitySignal(item.id, feasible=False),),
+    )
+
+    assert ranked[0].eligible is False
+    assert ranked[0].hard_reject_reasons == ("capacity_unavailable",)
+
+
+def test_capacity_pressure_is_a_soft_penalty() -> None:
+    items = [_item("free"), _item("busy")]
+
+    ranked = rank_items(
+        items,
+        {"free": 500, "busy": 500},
+        RecommendationRequest(),
+        capacity_signals=(CapacitySignal("busy", overload_penalty=15),),
+    )
+
+    assert [candidate.item_id for candidate in ranked] == ["free", "busy"]
+    assert "capacity pressure -15" in ranked[1].explanations
