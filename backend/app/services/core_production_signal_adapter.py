@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from app.services.recommendation_engine import ProductionSignal
+from app.services.recommendation_engine import ProductionConfidence, ProductionSignal
 
 CoreDemandState = Literal[
     "CONFIRMED_ORDER",
@@ -26,7 +26,7 @@ class CoreSameDayDemandRow:
     state: CoreDemandState
 
 
-_CONFIDENCE_BY_STATE = {
+_CONFIDENCE_BY_STATE: dict[CoreDemandState, ProductionConfidence] = {
     "CONFIRMED_ORDER": "CONFIRMED",
     "ACCEPTED_ORDER": "LIKELY",
     "SENT_OFFER": "OPEN_OFFER",
@@ -38,7 +38,11 @@ def production_signals_from_core_rows(
 ) -> tuple[ProductionSignal, ...]:
     """Return one strongest signal per item, ignoring rejected/cancelled demand."""
 
-    strength = {"OPEN_OFFER": 1, "LIKELY": 2, "CONFIRMED": 3}
+    strength: dict[ProductionConfidence, int] = {
+        "OPEN_OFFER": 1,
+        "LIKELY": 2,
+        "CONFIRMED": 3,
+    }
     strongest: dict[str, ProductionSignal] = {}
     for row in rows:
         confidence = _CONFIDENCE_BY_STATE.get(row.state)
