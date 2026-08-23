@@ -30,6 +30,7 @@ def generate_recommendation_variants(
     request: RecommendationRequest,
     *,
     guest_count: int,
+    piece_quantity_by_item_id: dict[str, int] | None = None,
     production_signals: tuple[ProductionSignal, ...] = (),
     capacity_signals: tuple[CapacitySignal, ...] = (),
     max_variant_net_cents: int | None = None,
@@ -37,8 +38,9 @@ def generate_recommendation_variants(
     """Generate Wirtschaftlich, Empfohlen and Premium from independent rankings.
 
     Every profile gets its own scoring pass over the same hard constraints and
-    operational signals. This prevents one profile's ordering from leaking into
-    the other variants while keeping the result deterministic and explainable.
+    operational signals. Piece-priced positions may receive explicit demand so
+    variant totals reflect intended quantities instead of pretending that the
+    catalog minimum is a serving recommendation.
     """
 
     variants: list[RecommendationVariant] = []
@@ -57,6 +59,7 @@ def generate_recommendation_variants(
             ranked,
             unit_net_cents_by_item_id,
             guest_count=guest_count,
+            piece_quantity_by_item_id=piece_quantity_by_item_id,
             max_variant_net_cents=max_variant_net_cents,
         )
         if variant is not None:
