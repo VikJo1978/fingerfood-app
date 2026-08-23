@@ -101,11 +101,13 @@ def test_per_person_quantity_scales_with_guest_count() -> None:
         guest_count=23,
     )
 
-    assert variants[0].lines[0].quantity == 23
-    assert variants[0].lines[0].net_total_cents == 27600
+    line = variants[0].lines[0]
+    assert line.quantity == 23
+    assert line.net_total_cents == 27600
+    assert "quantity from guest count" in line.explanations
 
 
-def test_piece_quantity_keeps_catalog_minimum_order() -> None:
+def test_piece_quantity_without_demand_is_explicitly_a_minimum_fallback() -> None:
     item = _item("canape", price_type="piece", min_order=12)
 
     variants = assemble_variants(
@@ -115,8 +117,70 @@ def test_piece_quantity_keeps_catalog_minimum_order() -> None:
         guest_count=80,
     )
 
-    assert variants[0].lines[0].quantity == 12
-    assert variants[0].lines[0].net_total_cents == 3000
+    line = variants[0].lines[0]
+    assert line.quantity == 12
+    assert line.net_total_cents == 3000
+    assert "quantity uses catalog minimum fallback" in line.explanations
+
+
+def test_explicit_piece_demand_drives_quantity_and_budget() -> None:
+    item = _item("canape", price_type="piece", min_order=12)
+
+    variants = assemble_variants(
+        [item],
+        [_candidate("canape", 10)],
+        {"canape": 250},
+        guest_count=80,
+        piece_quantity_by_item_id={"canape": 80},
+        max_variant_net_cents=20000,
+    )
+
+    assert variants[0].lines[0].quantity == 80
+    assert variants[0].lines[0].net_total_cents == 20000
+    assert "quantity from explicit piece demand" in variants[0].lines[0].explanations
+
+    over_budget = assemble_variants(
+        [item],
+        [_candidate("canape", 10)],
+        {"canape": 250},
+        guest_count=80,
+        piece_quantity_by_item_id={"canape": 81},
+        max_variant_net_cents=20000,
+    )
+    assert over_budget == ()
+
+
+def test_explicit_piece_demand_respects_catalog_minimum() -> None:
+    item = _item("canape", price_type="piece", min_order=12)
+
+    variants = assemble_variants(
+        [item],
+        [_candidate("canape", 10)],
+        {"canape": 250},
+        guest_count=20,
+        piece_quantity_by_item_id={"canape": 5},
+    )
+
+    line = variants[0].lines[0]
+    assert line.quantity == 12
+    assert "catalog minimum applied" in line.explanations
+
+
+def test_non_positive_piece_demand_is_rejected() -> None:
+    item = _item("canape", price_type="piece", min_order=12)
+
+    try:
+        assemble_variants(
+            [item],
+            [_candidate("canape", 10)],
+            {"canape": 250},
+            guest_count=20,
+            piece_quantity_by_item_id={"canape": 0},
+        )
+    except ValueError as exc:
+        assert str(exc) == "piece quantities must be positive"
+    else:
+        raise AssertionError("expected invalid piece quantity to fail")
 
 
 def test_variant_ordering_is_deterministic_per_profile() -> None:
