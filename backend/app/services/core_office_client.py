@@ -8,6 +8,7 @@ from typing import Any, cast
 
 import httpx
 
+from app.services.core_capacity_signal_adapter import CoreCapacityRow
 from app.services.core_production_signal_adapter import (
     CoreDemandState,
     CoreSameDayDemandRow,
@@ -168,6 +169,77 @@ class CoreOfficeClient:
                 CoreSameDayDemandRow(
                     item_id=item_id,
                     state=cast(CoreDemandState, lifecycle),
+                )
+            )
+        return tuple(rows)
+
+    def get_recommendation_capacity(
+        self, event_date: date
+    ) -> tuple[CoreCapacityRow, ...]:
+        """Read PII-free item capacity projection from Core and fail closed."""
+
+        if not self.is_configured():
+            raise CoreOfficeClientError(code="core_office_not_configured")
+        url = f"{self._base_url}/office/v1/recommendation-capacity"
+        try:
+            with httpx.Client(timeout=self._timeout, transport=self._transport) as client:
+                response = client.get(
+                    url,
+                    params={"date": event_date.isoformat()},
+                    headers=self._auth_headers(),
+                )
+        except httpx.HTTPError as exc:
+            raise CoreOfficeClientError(
+                code="recommendation_capacity_transport_error"
+            ) from exc
+        if response.status_code != 200:
+            raise CoreOfficeClientError(
+                code="recommendation_capacity_failed",
+                status_code=response.status_code,
+            )
+        payload = _response_payload(response)
+        if payload is None or payload.get("event_date") != event_date.isoformat():
+            raise CoreOfficeClientError(
+                code="recommendation_capacity_invalid_response",
+                status_code=response.status_code,
+            )
+        raw_rows = payload.get("rows")
+        if not isinstance(raw_rows, list):
+            raise CoreOfficeClientError(
+                code="recommendation_capacity_invalid_response",
+                status_code=response.status_code,
+            )
+        rows: list[CoreCapacityRow] = []
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                raise CoreOfficeClientError(
+                    code="recommendation_capacity_invalid_response",
+                    status_code=response.status_code,
+                )
+            item_id = raw_row.get("catalog_item_id")
+            feasible = raw_row.get("feasible")
+            overload_penalty = raw_row.get("overload_penalty")
+            reason_code = raw_row.get("reason_code")
+            if (
+                not isinstance(item_id, str)
+                or not item_id.strip()
+                or not isinstance(feasible, bool)
+                or not isinstance(overload_penalty, int)
+                or isinstance(overload_penalty, bool)
+                or overload_penalty < 0
+                or overload_penalty > 100
+                or (reason_code is not None and not isinstance(reason_code, str))
+            ):
+                raise CoreOfficeClientError(
+                    code="recommendation_capacity_invalid_response",
+                    status_code=response.status_code,
+                )
+            rows.append(
+                CoreCapacityRow(
+                    item_id=item_id,
+                    feasible=feasible,
+                    overload_penalty=overload_penalty,
+                    reason_code=reason_code,
                 )
             )
         return tuple(rows)
