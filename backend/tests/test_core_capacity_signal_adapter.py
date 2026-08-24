@@ -3,6 +3,7 @@ from app.services.core_capacity_signal_adapter import (
     CoreCapacityRow,
     capacity_signals_from_core_rows,
 )
+from app.services.recommendation_engine import CapacitySignal
 
 
 def test_capacity_rows_map_back_to_configurator_item_ids() -> None:
@@ -19,9 +20,7 @@ def test_capacity_rows_map_back_to_configurator_item_ids() -> None:
         rows,
         configurator_item_ids=(item_id,),
     ) == (
-        __import__(
-            "app.services.recommendation_engine", fromlist=["CapacitySignal"]
-        ).CapacitySignal(item_id=item_id, feasible=True, overload_penalty=35),
+        CapacitySignal(item_id=item_id, feasible=True, overload_penalty=35),
     )
 
 
@@ -41,7 +40,6 @@ def test_capacity_rows_ignore_unknown_core_ids_and_preserve_hard_reject() -> Non
         configurator_item_ids=("D2",),
     )
 
-    assert len(signals) == 1
-    assert signals[0].item_id == "D2"
-    assert signals[0].feasible is False
-    assert signals[0].overload_penalty == 100
+    assert signals == (
+        CapacitySignal(item_id="D2", feasible=False, overload_penalty=100),
+    )
