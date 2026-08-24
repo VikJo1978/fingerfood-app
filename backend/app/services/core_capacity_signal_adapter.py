@@ -1,4 +1,8 @@
-"""Translate Core recommendation-capacity rows into configurator capacity signals."""
+"""Translate Core recommendation-capacity rows into configurator capacity signals.
+
+The adapter deliberately carries only the item-level feasibility and pressure
+facts exposed by Core; quantity-aware capacity remains outside this v1 contract.
+"""
 
 from __future__ import annotations
 
