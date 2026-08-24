@@ -17,6 +17,7 @@ from app.models.classification import Allergen, DietType
 from app.routes.offer import safe_error_detail
 from app.services.catalog_client import CatalogClientError
 from app.services.catalog_factory import build_catalog_adapter, build_core_office_client
+from app.services.core_capacity_signal_adapter import capacity_signals_from_core_rows
 from app.services.core_office_client import CoreOfficeClientError
 from app.services.core_production_signal_adapter import production_signals_from_core_rows
 from app.services.recommendation_engine import RecommendationRequest
@@ -49,7 +50,7 @@ def generate_ui_recommendations(
     payload: UiRecommendationGenerateRequest,
     request: Request,
 ) -> dict[str, object]:
-    """Generate explainable variants from questionnaire + current Core demand."""
+    """Generate explainable variants from questionnaire + current Core signals."""
 
     principal = require_authenticated_employee(request)
     require_employee_permission(principal, "offers.prepare")
@@ -70,19 +71,32 @@ def generate_ui_recommendations(
     core = build_core_office_client()
     try:
         core_rows = core.get_recommendation_demand(payload.event_date)
+        core_capacity_rows = core.get_recommendation_capacity(payload.event_date)
     except CoreOfficeClientError as exc:
+        code = (
+            "recommendation_capacity_unavailable"
+            if exc.code.startswith("recommendation_capacity")
+            else "recommendation_demand_unavailable"
+        )
+        message = (
+            "Production capacity is unavailable."
+            if code == "recommendation_capacity_unavailable"
+            else "Same-day production demand is unavailable."
+        )
         raise HTTPException(
             status_code=503,
-            detail=safe_error_detail(
-                "recommendation_demand_unavailable",
-                "Same-day production demand is unavailable.",
-            ),
+            detail=safe_error_detail(code, message),
         ) from exc
 
     items = list(catalog.items.values())
+    configurator_item_ids = tuple(catalog.items.keys())
     production_signals = production_signals_from_core_rows(
         core_rows,
-        configurator_item_ids=tuple(catalog.items.keys()),
+        configurator_item_ids=configurator_item_ids,
+    )
+    capacity_signals = capacity_signals_from_core_rows(
+        core_capacity_rows,
+        configurator_item_ids=configurator_item_ids,
     )
     recommendation_request = RecommendationRequest(
         diet_type=payload.diet_type,
@@ -99,6 +113,7 @@ def generate_ui_recommendations(
         recommendation_request,
         guest_count=payload.guest_count,
         production_signals=production_signals,
+        capacity_signals=capacity_signals,
         max_variant_net_cents=payload.max_variant_net_cents,
         piece_quantity_by_item_id=payload.piece_quantity_by_item_id,
     )
@@ -110,6 +125,7 @@ def generate_ui_recommendations(
         "catalog_source": catalog.source,
         "warnings": list(catalog.warnings),
         "production_signal_count": len(production_signals),
+        "capacity_signal_count": len(capacity_signals),
         "variants": [
             {
                 "kind": variant.kind,
