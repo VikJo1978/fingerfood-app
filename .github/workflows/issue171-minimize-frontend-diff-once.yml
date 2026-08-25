@@ -1,0 +1,67 @@
+name: Minimize issue 171 frontend diff once
+
+on:
+  push:
+    branches:
+      - issue-171-return-logistics-configurator
+    paths:
+      - .github/workflows/issue171-minimize-frontend-diff-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: issue-171-return-logistics-configurator
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Reapply only semantic frontend changes
+        run: |
+          git fetch origin main
+          files=(
+            frontend/src/types/index.ts
+            frontend/src/utils/offerSnapshotRequest.ts
+            frontend/src/utils/draftPersistence.ts
+            frontend/src/utils/pricing.ts
+            frontend/src/components/summary/ChargeConfiguratorModal.tsx
+            frontend/src/components/summary/OfferSummary.tsx
+            frontend/src/components/summary/OfferPreview.tsx
+          )
+          git diff -w origin/main...HEAD -- "${files[@]}" > /tmp/issue171-semantic.patch
+          test -s /tmp/issue171-semantic.patch
+          git checkout origin/main -- "${files[@]}"
+          git apply --ignore-space-change --ignore-whitespace /tmp/issue171-semantic.patch
+
+      - name: Validate frontend after diff cleanup
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Commit minimized frontend diff
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            frontend/src/types/index.ts \
+            frontend/src/utils/offerSnapshotRequest.ts \
+            frontend/src/utils/draftPersistence.ts \
+            frontend/src/utils/pricing.ts \
+            frontend/src/components/summary/ChargeConfiguratorModal.tsx \
+            frontend/src/components/summary/OfferSummary.tsx \
+            frontend/src/components/summary/OfferPreview.tsx
+          git commit -m "Issue #171: minimize frontend diff"
+          git push origin HEAD:issue-171-return-logistics-configurator
