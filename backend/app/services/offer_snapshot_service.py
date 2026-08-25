@@ -9,7 +9,11 @@ from typing import Literal
 
 from pydantic import ValidationError as PydanticValidationError
 
-from app.models.charges_definition import ChargesDefinitionIn, DishwareAdditionalLineIn
+from app.models.charges_definition import (
+    ChargesDefinitionIn,
+    DishwareAdditionalLineIn,
+    ReturnLogisticsIn,
+)
 from app.models.offer import OfferLineIn, OfferRequest
 from app.models.resolved_catalog import ResolvedCatalogLine
 from app.services.catalog_adapter import CatalogAdapter
@@ -299,6 +303,22 @@ def _build_buffet_position(
     )
 
 
+def _build_return_pickup_position(
+    return_logistics: ReturnLogisticsIn,
+) -> dict[str, object]:
+    amount = return_logistics.same_day_fee_cents
+    return _build_charge_position(
+        kind="fee",
+        name="Rückholung am Veranstaltungstag",
+        quantity_mode="total",
+        quantity="1",
+        unit_label="Pauschale",
+        unit_net_cents=amount,
+        net_total_cents=amount,
+        vat_rate_percent=PAUSCHALEN_VAT_RATE_PERCENT,
+    )
+
+
 def _build_charges_definition_positions(
     charges: ChargesDefinitionIn, *, guest_count: int | None
 ) -> list[dict[str, object]]:
@@ -335,6 +355,8 @@ def _build_charges_definition_positions(
     if charges.buffet.base_mode == "PAUSCHALE":
         assert guest_count is not None
         positions.append(_build_buffet_position(charges, guest_count=guest_count))
+    if charges.return_logistics.mode == "SAME_DAY":
+        positions.append(_build_return_pickup_position(charges.return_logistics))
 
     return positions
 

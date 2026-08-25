@@ -530,3 +530,73 @@ def test_all_per_person_calculations_use_the_same_authoritative_guest_count(
     assert catalog["net_total_cents"] == 1200 * guest_count
     assert dishware["net_total_cents"] == 200 * guest_count
     assert buffet["net_total_cents"] == 50 * guest_count
+
+
+# --- issue #171: reusable dishware/equipment return ---------------------------------
+
+
+def test_next_working_day_return_adds_no_separate_fee(tmp_path: Path) -> None:
+    charges = _charges()
+    charges["return_logistics"] = {
+        "mode": "NEXT_WORKING_DAY",
+        "pickup_window_text": None,
+        "same_day_fee_cents": 4500,
+    }
+    snapshot = _build(tmp_path, charges_definition=charges)
+    returns = [
+        position
+        for position in _positions(snapshot)
+        if position["kind"] == "fee"
+        and position["name"] == "Rückholung am Veranstaltungstag"
+    ]
+    assert returns == []
+
+
+def test_same_day_return_materializes_exact_fee_and_totals(tmp_path: Path) -> None:
+    charges = _charges()
+    charges["return_logistics"] = {
+        "mode": "SAME_DAY",
+        "pickup_window_text": "22:00-23:00",
+        "same_day_fee_cents": 4500,
+    }
+    snapshot = _build(tmp_path, charges_definition=charges)
+    returns = [
+        position
+        for position in _positions(snapshot)
+        if position["kind"] == "fee"
+        and position["name"] == "Rückholung am Veranstaltungstag"
+    ]
+    assert len(returns) == 1
+    assert returns[0]["quantity_mode"] == "total"
+    assert returns[0]["quantity"] == "1"
+    assert returns[0]["unit_net_cents"] == 4500
+    assert returns[0]["net_total_cents"] == 4500
+    variants = cast(list[dict[str, object]], snapshot["variants"])
+    totals = cast(dict[str, int], variants[0]["totals"])
+    assert totals["net_cents"] == sum(
+        cast(int, position["net_total_cents"]) for position in _positions(snapshot)
+    )
+
+
+def test_same_day_return_requires_pickup_window(tmp_path: Path) -> None:
+    charges = _charges()
+    charges["return_logistics"] = {
+        "mode": "SAME_DAY",
+        "pickup_window_text": None,
+        "same_day_fee_cents": 4500,
+    }
+    with pytest.raises(ValueError, match="SAME_DAY return requires pickup_window_text"):
+        _build(tmp_path, charges_definition=charges)
+
+
+def test_next_working_day_return_rejects_pickup_window(tmp_path: Path) -> None:
+    charges = _charges()
+    charges["return_logistics"] = {
+        "mode": "NEXT_WORKING_DAY",
+        "pickup_window_text": "22:00-23:00",
+        "same_day_fee_cents": 4500,
+    }
+    with pytest.raises(
+        ValueError, match="NEXT_WORKING_DAY return must not specify pickup_window_text"
+    ):
+        _build(tmp_path, charges_definition=charges)

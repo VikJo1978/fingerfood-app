@@ -1,12 +1,12 @@
 import type {
-  CatalogItem,
-  ChargesDefinition,
-  DishwareAdditionalLine,
-  OfferDraft,
-  OfferLine,
-  OfferWarning,
-  PriceType,
-  QuantityMode,
+	CatalogItem,
+	ChargesDefinition,
+	DishwareAdditionalLine,
+	OfferDraft,
+	OfferLine,
+	OfferWarning,
+	PriceType,
+	QuantityMode,
 } from "../types";
 
 /**
@@ -16,7 +16,7 @@ import type {
 
 /** True when `price` applies per catalog piece (`Stück`); false = per person (`Person`). */
 export function isPieceUnitBasis(priceType: PriceType): boolean {
-  return priceType === "piece";
+	return priceType === "piece";
 }
 
 /**
@@ -28,33 +28,43 @@ export function isPieceUnitBasis(priceType: PriceType): boolean {
  * pricing_service.py `_line_total` + `_surcharge_total`).
  */
 export function computeLineTotalFromPrice(
-  unitPrice: number,
-  unitBasis: PriceType,
-  persons: number,
-  mode: QuantityMode,
-  quantity: number,
-  surchargeAmount = 0
+	unitPrice: number,
+	unitBasis: PriceType,
+	persons: number,
+	mode: QuantityMode,
+	quantity: number,
+	surchargeAmount = 0,
 ): number {
-  const base = isPieceUnitBasis(unitBasis)
-    ? mode === "total"
-      ? unitPrice * quantity
-      : unitPrice * quantity * persons
-    : mode === "total"
-      ? unitPrice * quantity
-      : unitPrice * quantity * persons;
-  const surcharge = mode === "total" ? surchargeAmount * quantity : surchargeAmount * quantity * persons;
-  return base + surcharge;
+	const base = isPieceUnitBasis(unitBasis)
+		? mode === "total"
+			? unitPrice * quantity
+			: unitPrice * quantity * persons
+		: mode === "total"
+			? unitPrice * quantity
+			: unitPrice * quantity * persons;
+	const surcharge =
+		mode === "total"
+			? surchargeAmount * quantity
+			: surchargeAmount * quantity * persons;
+	return base + surcharge;
 }
 
 export function computeLineTotal(
-  item: CatalogItem,
-  persons: number,
-  mode: QuantityMode,
-  quantity: number,
-  surchargeSelected = false
+	item: CatalogItem,
+	persons: number,
+	mode: QuantityMode,
+	quantity: number,
+	surchargeSelected = false,
 ): number {
-  const surchargeAmount = surchargeSelected ? (item.surcharge_amount ?? 0) : 0;
-  return computeLineTotalFromPrice(item.price, item.price_type, persons, mode, quantity, surchargeAmount);
+	const surchargeAmount = surchargeSelected ? (item.surcharge_amount ?? 0) : 0;
+	return computeLineTotalFromPrice(
+		item.price,
+		item.price_type,
+		persons,
+		mode,
+		quantity,
+		surchargeAmount,
+	);
 }
 
 /**
@@ -62,52 +72,67 @@ export function computeLineTotal(
  * Uses snapshot `price_type` (unit basis), not `pricing_mode`.
  * Kein Live-Katalog nötig.
  */
-export function computeOfferLineTotal(line: OfferLine, persons: number): number {
-  const surchargeAmount = line.snapshot.surchargeSelected ? (line.snapshot.surchargeAmount ?? 0) : 0;
-  return computeLineTotalFromPrice(
-    line.snapshot.chosen_price,
-    line.snapshot.price_type,
-    persons,
-    line.quantityMode,
-    line.quantity,
-    surchargeAmount
-  );
+export function computeOfferLineTotal(
+	line: OfferLine,
+	persons: number,
+): number {
+	const surchargeAmount = line.snapshot.surchargeSelected
+		? (line.snapshot.surchargeAmount ?? 0)
+		: 0;
+	return computeLineTotalFromPrice(
+		line.snapshot.chosen_price,
+		line.snapshot.price_type,
+		persons,
+		line.quantityMode,
+		line.quantity,
+		surchargeAmount,
+	);
 }
 
 export function lineWarnings(
-  item: CatalogItem,
-  persons: number,
-  mode: QuantityMode,
-  quantity: number
+	item: CatalogItem,
+	persons: number,
+	mode: QuantityMode,
+	quantity: number,
 ): OfferWarning[] {
-  const w: OfferWarning[] = [];
-  if (mode === "total" && isPieceUnitBasis(item.price_type) && quantity < item.min_order) {
-    w.push({
-      code: "MIN_ORDER_PIECE",
-      severity: "warning",
-      message: `Hinweis: Diese Position wird normalerweise ab ${item.min_order} ${item.unit_label} bestellt.`,
-    });
-  }
-  if (mode === "per_person" && persons < 10) {
-    w.push({
-      code: "PER_PERSON_BELOW_USUAL_MIN_PERSONS",
-      severity: "warning",
-      message:
-        "Hinweis: Diese Konfiguration liegt unter dem üblichen Mindest-Personenzahl (10).",
-    });
-  }
-  if (mode === "total" && !isPieceUnitBasis(item.price_type) && quantity < item.min_order) {
-    w.push({
-      code: "MIN_ORDER_PERSON",
-      severity: "warning",
-      message: `Hinweis: Übliches Minimum: ${item.min_order} Personen für diese Position.`,
-    });
-  }
-  return w;
+	const w: OfferWarning[] = [];
+	if (
+		mode === "total" &&
+		isPieceUnitBasis(item.price_type) &&
+		quantity < item.min_order
+	) {
+		w.push({
+			code: "MIN_ORDER_PIECE",
+			severity: "warning",
+			message: `Hinweis: Diese Position wird normalerweise ab ${item.min_order} ${item.unit_label} bestellt.`,
+		});
+	}
+	if (mode === "per_person" && persons < 10) {
+		w.push({
+			code: "PER_PERSON_BELOW_USUAL_MIN_PERSONS",
+			severity: "warning",
+			message:
+				"Hinweis: Diese Konfiguration liegt unter dem üblichen Mindest-Personenzahl (10).",
+		});
+	}
+	if (
+		mode === "total" &&
+		!isPieceUnitBasis(item.price_type) &&
+		quantity < item.min_order
+	) {
+		w.push({
+			code: "MIN_ORDER_PERSON",
+			severity: "warning",
+			message: `Hinweis: Übliches Minimum: ${item.min_order} Personen für diese Position.`,
+		});
+	}
+	return w;
 }
 
 export const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+	new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(
+		n,
+	);
 
 /**
  * Real Silberlöffel V1 flat fees — MUST mirror backend/app/services/pricing_service.py
@@ -120,54 +145,72 @@ export const PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON = 2.0;
 export const PAUSCHALE_ANLIEFERUNG_FLAT = 35.0;
 
 export interface PauschalenBreakdown {
-  buffetpauschale: number;
-  geschirrpauschale: number;
-  anlieferung: number;
-  dishwareAdditional: number;
-  grandTotal: number;
+	buffetpauschale: number;
+	geschirrpauschale: number;
+	anlieferung: number;
+	dishwareAdditional: number;
+	/** Separate net surcharge only for SAME_DAY return. */
+	returnPickup?: number;
+	grandTotal: number;
 }
 
 export function centsToEuros(cents: number): number {
-  return cents / 100;
+	return cents / 100;
 }
 
 function additionalDishwareCents(lines: DishwareAdditionalLine[]): number {
-  return lines.reduce((sum, line) => sum + line.quantity * line.unitNetCents, 0);
+	return lines.reduce(
+		(sum, line) => sum + line.quantity * line.unitNetCents,
+		0,
+	);
 }
 
 export function computeChargesCents(
-  charges: ChargesDefinition,
-  persons: number
+	charges: ChargesDefinition,
+	persons: number,
 ): {
-  buffetCents: number;
-  dishwarePauschaleCents: number;
-  deliveryCents: number;
-  dishwareAdditionalCents: number;
-  totalCents: number;
+	buffetCents: number;
+	dishwarePauschaleCents: number;
+	deliveryCents: number;
+	dishwareAdditionalCents: number;
+	returnPickupCents: number;
+	totalCents: number;
 } {
-  const validPersons = Number.isInteger(persons) && persons > 0;
-  const buffetCents =
-    charges.buffet.baseMode === "PAUSCHALE" && validPersons
-      ? charges.buffet.pauschalePerPersonCents * persons
-      : 0;
-  const dishwarePauschaleCents =
-    charges.dishware.baseMode === "PAUSCHALE" && validPersons
-      ? charges.dishware.pauschalePerPersonCents * persons
-      : 0;
-  const fulfillmentMode = charges.delivery.fulfillment?.fulfillmentMode;
-  // UNKNOWN keeps the configured delivery amount visible while the operator
-  // decides. PICKUP is the only mode that explicitly removes the charge.
-  // The BFF refuses UNKNOWN before any offer can be prepared in Core.
-  const deliveryCents =
-    fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents;
-  const dishwareAdditionalCents = additionalDishwareCents(charges.dishware.additionalLines);
-  return {
-    buffetCents,
-    dishwarePauschaleCents,
-    deliveryCents,
-    dishwareAdditionalCents,
-    totalCents: buffetCents + dishwarePauschaleCents + deliveryCents + dishwareAdditionalCents,
-  };
+	const validPersons = Number.isInteger(persons) && persons > 0;
+	const buffetCents =
+		charges.buffet.baseMode === "PAUSCHALE" && validPersons
+			? charges.buffet.pauschalePerPersonCents * persons
+			: 0;
+	const dishwarePauschaleCents =
+		charges.dishware.baseMode === "PAUSCHALE" && validPersons
+			? charges.dishware.pauschalePerPersonCents * persons
+			: 0;
+	const fulfillmentMode = charges.delivery.fulfillment?.fulfillmentMode;
+	// UNKNOWN keeps the configured delivery amount visible while the operator
+	// decides. PICKUP is the only mode that explicitly removes the charge.
+	// The BFF refuses UNKNOWN before any offer can be prepared in Core.
+	const deliveryCents =
+		fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents;
+	const dishwareAdditionalCents = additionalDishwareCents(
+		charges.dishware.additionalLines,
+	);
+	const returnPickupCents =
+		charges.returnLogistics?.mode === "SAME_DAY"
+			? charges.returnLogistics.sameDayFeeCents
+			: 0;
+	return {
+		buffetCents,
+		dishwarePauschaleCents,
+		deliveryCents,
+		dishwareAdditionalCents,
+		returnPickupCents,
+		totalCents:
+			buffetCents +
+			dishwarePauschaleCents +
+			deliveryCents +
+			dishwareAdditionalCents +
+			returnPickupCents,
+	};
 }
 
 /**
@@ -177,35 +220,50 @@ export function computeChargesCents(
  * empty draft already showed 60,00 € before anything was added.
  */
 export function computePauschalen(
-  subtotal: number,
-  persons: number,
-  hasLines: boolean,
-  charges?: ChargesDefinition
+	subtotal: number,
+	persons: number,
+	hasLines: boolean,
+	charges?: ChargesDefinition,
 ): PauschalenBreakdown {
-  if (charges) {
-    const c = computeChargesCents(charges, persons);
-    return {
-      buffetpauschale: centsToEuros(c.buffetCents),
-      geschirrpauschale: centsToEuros(c.dishwarePauschaleCents),
-      anlieferung: centsToEuros(c.deliveryCents),
-      dishwareAdditional: centsToEuros(c.dishwareAdditionalCents),
-      grandTotal: Math.round((subtotal + centsToEuros(c.totalCents)) * 100) / 100,
-    };
-  }
-  if (!hasLines) {
-    return {
-      buffetpauschale: 0,
-      geschirrpauschale: 0,
-      anlieferung: 0,
-      dishwareAdditional: 0,
-      grandTotal: 0,
-    };
-  }
-  const buffetpauschale = Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
-  const geschirrpauschale = Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
-  const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;
-  const grandTotal = Math.round((subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100) / 100;
-  return { buffetpauschale, geschirrpauschale, anlieferung, dishwareAdditional: 0, grandTotal };
+	if (charges) {
+		const c = computeChargesCents(charges, persons);
+		return {
+			buffetpauschale: centsToEuros(c.buffetCents),
+			geschirrpauschale: centsToEuros(c.dishwarePauschaleCents),
+			anlieferung: centsToEuros(c.deliveryCents),
+			dishwareAdditional: centsToEuros(c.dishwareAdditionalCents),
+			returnPickup: centsToEuros(c.returnPickupCents),
+			grandTotal:
+				Math.round((subtotal + centsToEuros(c.totalCents)) * 100) / 100,
+		};
+	}
+	if (!hasLines) {
+		return {
+			buffetpauschale: 0,
+			geschirrpauschale: 0,
+			anlieferung: 0,
+			dishwareAdditional: 0,
+			returnPickup: 0,
+			grandTotal: 0,
+		};
+	}
+	const buffetpauschale =
+		Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
+	const geschirrpauschale =
+		Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
+	const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;
+	const grandTotal =
+		Math.round(
+			(subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100,
+		) / 100;
+	return {
+		buffetpauschale,
+		geschirrpauschale,
+		anlieferung,
+		dishwareAdditional: 0,
+		returnPickup: 0,
+		grandTotal,
+	};
 }
 
 /**
@@ -219,41 +277,43 @@ export function computePauschalen(
 export const PAUSCHALEN_VAT_RATE_PERCENT = 19;
 
 export interface VatBreakdown {
-  vat7Base: number;
-  vat7Amount: number;
-  vat19Base: number;
-  vat19Amount: number;
-  totalInclVat: number;
+	vat7Base: number;
+	vat7Amount: number;
+	vat19Base: number;
+	vat19Amount: number;
+	totalInclVat: number;
 }
 
 export function computeVatBreakdown(
-  draft: Pick<OfferDraft, "lines" | "persons">,
-  itemsById: Record<string, CatalogItem>,
-  pauschalen: PauschalenBreakdown
+	draft: Pick<OfferDraft, "lines" | "persons">,
+	itemsById: Record<string, CatalogItem>,
+	pauschalen: PauschalenBreakdown,
 ): VatBreakdown {
-  let vat7Base = 0;
-  let vat19Base = 0;
-  for (const line of draft.lines) {
-    const total = computeOfferLineTotal(line, draft.persons);
-    const rate = itemsById[line.itemId]?.vat_rate_percent ?? 19;
-    if (rate === 7) vat7Base += total;
-    else vat19Base += total;
-  }
-  vat19Base +=
-    pauschalen.buffetpauschale +
-    pauschalen.geschirrpauschale +
-    pauschalen.anlieferung +
-    pauschalen.dishwareAdditional;
-  const vat7Amount = Math.round(vat7Base * 0.07 * 100) / 100;
-  const vat19Amount = Math.round(vat19Base * 0.19 * 100) / 100;
-  const totalInclVat = Math.round((pauschalen.grandTotal + vat7Amount + vat19Amount) * 100) / 100;
-  return {
-    vat7Base: Math.round(vat7Base * 100) / 100,
-    vat7Amount,
-    vat19Base: Math.round(vat19Base * 100) / 100,
-    vat19Amount,
-    totalInclVat,
-  };
+	let vat7Base = 0;
+	let vat19Base = 0;
+	for (const line of draft.lines) {
+		const total = computeOfferLineTotal(line, draft.persons);
+		const rate = itemsById[line.itemId]?.vat_rate_percent ?? 19;
+		if (rate === 7) vat7Base += total;
+		else vat19Base += total;
+	}
+	vat19Base +=
+		pauschalen.buffetpauschale +
+		pauschalen.geschirrpauschale +
+		pauschalen.anlieferung +
+		pauschalen.dishwareAdditional +
+		(pauschalen.returnPickup ?? 0);
+	const vat7Amount = Math.round(vat7Base * 0.07 * 100) / 100;
+	const vat19Amount = Math.round(vat19Base * 0.19 * 100) / 100;
+	const totalInclVat =
+		Math.round((pauschalen.grandTotal + vat7Amount + vat19Amount) * 100) / 100;
+	return {
+		vat7Base: Math.round(vat7Base * 100) / 100,
+		vat7Amount,
+		vat19Base: Math.round(vat19Base * 100) / 100,
+		vat19Amount,
+		totalInclVat,
+	};
 }
 
 /**
@@ -269,17 +329,21 @@ export function computeVatBreakdown(
  * already uses.
  */
 export function computePositionsOnlyGross(
-  subtotal: number,
-  vat: VatBreakdown,
-  pauschalen: PauschalenBreakdown
+	subtotal: number,
+	vat: VatBreakdown,
+	pauschalen: PauschalenBreakdown,
 ): number {
-  const pauschalenBeforeVat =
-    pauschalen.buffetpauschale +
-    pauschalen.geschirrpauschale +
-    pauschalen.anlieferung +
-    pauschalen.dishwareAdditional;
-  const itemsOnly19Base = Math.max(0, vat.vat19Base - pauschalenBeforeVat);
-  const itemsOnly19Amount =
-    Math.round(itemsOnly19Base * (PAUSCHALEN_VAT_RATE_PERCENT / 100) * 100) / 100;
-  return Math.round((subtotal + vat.vat7Amount + itemsOnly19Amount) * 100) / 100;
+	const pauschalenBeforeVat =
+		pauschalen.buffetpauschale +
+		pauschalen.geschirrpauschale +
+		pauschalen.anlieferung +
+		pauschalen.dishwareAdditional +
+		(pauschalen.returnPickup ?? 0);
+	const itemsOnly19Base = Math.max(0, vat.vat19Base - pauschalenBeforeVat);
+	const itemsOnly19Amount =
+		Math.round(itemsOnly19Base * (PAUSCHALEN_VAT_RATE_PERCENT / 100) * 100) /
+		100;
+	return (
+		Math.round((subtotal + vat.vat7Amount + itemsOnly19Amount) * 100) / 100
+	);
 }
