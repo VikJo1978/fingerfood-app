@@ -16,10 +16,7 @@ function noop() {
   /* no-op */
 }
 
-function renderSummary(overrides: {
-  draft?: OfferDraft;
-  canPrepareInCore?: boolean;
-}) {
+function renderSummary(overrides: { draft?: OfferDraft; canPrepareInCore?: boolean }) {
   const draft = overrides.draft ?? createInitialOfferDraft();
   const itemsById = {};
   const subtotal = 0;
@@ -444,7 +441,11 @@ describe("OfferSummary — secondary actions disclosure", () => {
 
 describe("OfferSummary — Budget stat card position", () => {
   it("shows the Budget/Aktuell/Verfügbar card in the fixed header, above the item list", () => {
-    const draft: OfferDraft = { ...createInitialOfferDraft(), budgetEnabled: true, totalBudget: 1200 };
+    const draft: OfferDraft = {
+      ...createInitialOfferDraft(),
+      budgetEnabled: true,
+      totalBudget: 1200,
+    };
     renderSummary({ draft });
     const region = screen.getByTestId("offer-summary-scroll-region");
     const budgetLabel = screen.getByText("Budget");

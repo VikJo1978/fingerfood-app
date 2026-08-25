@@ -4,16 +4,9 @@ import { getCsrfToken } from "./session";
 export type RecommendationVariantKind = "ECONOMIC" | "RECOMMENDED" | "PREMIUM";
 export type FulfillmentMode = "PICKUP" | "DELIVERY";
 export type RecommendationCateringFormat = "fingerfood" | "buffet" | "mixed" | "other";
-export type RecommendationEventType =
-  | "business"
-  | "private"
-  | "wedding"
-  | "reception"
-  | "other";
+export type RecommendationEventType = "business" | "private" | "wedding" | "reception" | "other";
 
-export function recommendationEventTypeFromInquiry(
-  value: string
-): RecommendationEventType | "" {
+export function recommendationEventTypeFromInquiry(value: string): RecommendationEventType | "" {
   const text = value.trim().toLocaleLowerCase("de-DE");
   if (!text) return "";
 
@@ -28,11 +21,7 @@ export function recommendationEventTypeFromInquiry(
   }
   if (text.includes("hochzeit")) return "wedding";
   if (text.includes("empfang") || text.includes("reception")) return "reception";
-  if (
-    text.includes("privat") ||
-    text.includes("geburtstag") ||
-    text.includes("familienfeier")
-  ) {
+  if (text.includes("privat") || text.includes("geburtstag") || text.includes("familienfeier")) {
     return "private";
   }
   if (text === "sonstiges" || text === "other") return "other";
@@ -115,13 +104,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function parseResponse(value: unknown): RecommendationGenerateResponse | null {
   if (!isRecord(value)) return null;
   if (typeof value.event_date !== "string" || typeof value.guest_count !== "number") return null;
-  if (typeof value.catalog_revision !== "string" || typeof value.catalog_source !== "string") return null;
-  if (!Array.isArray(value.warnings) || !value.warnings.every((item) => typeof item === "string")) return null;
+  if (typeof value.catalog_revision !== "string" || typeof value.catalog_source !== "string")
+    return null;
+  if (!Array.isArray(value.warnings) || !value.warnings.every((item) => typeof item === "string"))
+    return null;
   if (
     typeof value.production_signal_count !== "number" ||
     typeof value.customer_history_signal_count !== "number" ||
     !Array.isArray(value.variants)
-  ) return null;
+  )
+    return null;
 
   const variants: RecommendationVariant[] = [];
   for (const rawVariant of value.variants) {

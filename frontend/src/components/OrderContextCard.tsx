@@ -11,15 +11,15 @@ interface OrderContextCardProps {
   onOrderContextChange: (patch: Partial<OrderContextV1>) => void;
 }
 
-export function OrderContextCard({
-  orderContext,
-  onOrderContextChange,
-}: OrderContextCardProps) {
+export function OrderContextCard({ orderContext, onOrderContextChange }: OrderContextCardProps) {
   const oc = orderContext;
 
   const remarksTrimmed = (oc.remarks ?? "").trim();
   const inquiryContextBlocks = remarksTrimmed
-    ? remarksTrimmed.split(/\n\n+/).map((b) => b.trim()).filter(Boolean)
+    ? remarksTrimmed
+        .split(/\n\n+/)
+        .map((b) => b.trim())
+        .filter(Boolean)
     : [];
 
   return (
@@ -99,8 +99,9 @@ export function OrderContextCard({
         <div className="mb-2">
           <span className={fieldLabelClass}>Lieferfenster · Logistikplanung</span>
           <p className="mt-1 text-xs text-muted">
-            Strukturierte Zeitangabe für die Kapazitätsplanung. Leer lassen, wenn noch nicht festgelegt.
-            Das freie Feld „Uhrzeit / Zeitfenster“ oben wird daraus nicht automatisch abgeleitet.
+            Strukturierte Zeitangabe für die Kapazitätsplanung. Leer lassen, wenn noch nicht
+            festgelegt. Das freie Feld „Uhrzeit / Zeitfenster“ oben wird daraus nicht automatisch
+            abgeleitet.
           </p>
         </div>
         <div className="grid gap-2.5 sm:grid-cols-3">

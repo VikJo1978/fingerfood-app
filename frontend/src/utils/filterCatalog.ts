@@ -53,7 +53,12 @@ export function filterCatalog(all: CatalogItem[], opts: CatalogFilterOpts): Cata
   if (opts.priceType === "piece" || opts.priceType === "person") {
     out = out.filter((i) => i.price_type === opts.priceType);
   }
-  if (opts.diet === "vegetarian" || opts.diet === "vegan" || opts.diet === "pescetarian" || opts.diet === "omnivore") {
+  if (
+    opts.diet === "vegetarian" ||
+    opts.diet === "vegan" ||
+    opts.diet === "pescetarian" ||
+    opts.diet === "omnivore"
+  ) {
     out = out.filter((i) => i.diet_type != null && i.diet_type === opts.diet);
   }
 

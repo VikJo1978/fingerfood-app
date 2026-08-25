@@ -1,9 +1,5 @@
 import type { BudgetBasis, BudgetScope, BudgetType } from "../types";
-import {
-  computePositionsOnlyGross,
-  type PauschalenBreakdown,
-  type VatBreakdown,
-} from "./pricing";
+import { computePositionsOnlyGross, type PauschalenBreakdown, type VatBreakdown } from "./pricing";
 
 export interface BudgetComponentLine {
   label: string;
@@ -123,7 +119,8 @@ export function computeBudgetBreakdown({
   vat,
   formatCurrency,
 }: ComputeBudgetBreakdownInput): BudgetBreakdown {
-  const personsRequired = budgetType === "per_person" && !(typeof persons === "number" && persons > 0);
+  const personsRequired =
+    budgetType === "per_person" && !(typeof persons === "number" && persons > 0);
 
   const absoluteBudget =
     budgetType === "per_person"

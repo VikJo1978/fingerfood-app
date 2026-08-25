@@ -55,10 +55,10 @@ function parseSessionPayload(value: unknown): UiSessionState | null {
     if (typeof principalRaw !== "object" || principalRaw === null) return null;
     const p = principalRaw as Record<string, unknown>;
     if (
-      typeof p.account_id !== "string"
-      || typeof p.username !== "string"
-      || typeof p.display_name !== "string"
-      || typeof p.role !== "string"
+      typeof p.account_id !== "string" ||
+      typeof p.username !== "string" ||
+      typeof p.display_name !== "string" ||
+      typeof p.role !== "string"
     ) {
       return null;
     }

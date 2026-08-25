@@ -34,7 +34,11 @@ export function Sidebar({ onBack, activeLabel }: SidebarProps) {
       {/* Desktop: full vertical nav rail */}
       <div className="hidden lg:flex lg:h-full lg:flex-col lg:px-[18px] lg:pb-5 lg:pt-6">
         <div className="mx-[10px] mb-7">
-          <img src={logo} alt="Silberlöffel Event Catering Service" className="block h-auto w-[174px]" />
+          <img
+            src={logo}
+            alt="Silberlöffel Event Catering Service"
+            className="block h-auto w-[174px]"
+          />
         </div>
 
         <p className="mx-3 mb-2 text-[10px] font-extrabold uppercase tracking-[.1em] text-muted">

@@ -129,7 +129,9 @@ export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
           </div>
           {breakdown.excluded.length ? (
             <div>
-              <p className="font-bold uppercase tracking-[.05em] text-muted">Nicht berücksichtigt</p>
+              <p className="font-bold uppercase tracking-[.05em] text-muted">
+                Nicht berücksichtigt
+              </p>
               <ul className="mt-1 space-y-0.5 text-muted">
                 {breakdown.excluded.map((line) => (
                   <li key={line.label}>{line.label}</li>
@@ -150,7 +152,9 @@ export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
                 </div>
               ) : (
                 <div className="flex items-baseline justify-between gap-3 text-muted">
-                  <span>{breakdown.comparisonLabel} ÷ {breakdown.persons} Personen</span>
+                  <span>
+                    {breakdown.comparisonLabel} ÷ {breakdown.persons} Personen
+                  </span>
                   <span>{formatCurrency(breakdown.comparisonPerPerson as number)}</span>
                 </div>
               )
@@ -164,7 +168,10 @@ export function BudgetStatus({ enabled, breakdown }: BudgetStatusProps) {
               <div
                 className={`flex items-baseline justify-between gap-3 font-bold ${over ? "text-danger" : "text-accent-deep"}`}
               >
-                <span>{over ? "Überschritten" : "Verfügbar"}{budgetType === "per_person" ? " pro Person" : ""}</span>
+                <span>
+                  {over ? "Überschritten" : "Verfügbar"}
+                  {budgetType === "per_person" ? " pro Person" : ""}
+                </span>
                 <span>{formatCurrency(Math.abs(remaining as number))}</span>
               </div>
             )}

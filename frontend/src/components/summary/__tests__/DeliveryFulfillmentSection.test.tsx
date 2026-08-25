@@ -46,9 +46,7 @@ describe("DeliveryFulfillmentSection", () => {
       charges = next;
       view.rerender(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
     };
-    const view = render(
-      <DeliveryFulfillmentSection charges={charges} onChange={onChange} />
-    );
+    const view = render(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
 
     fireEvent.change(screen.getByLabelText("Erfüllung"), {
       target: { value: "DELIVERY" },

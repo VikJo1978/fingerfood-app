@@ -98,10 +98,7 @@ function decodeBase64Url(encoded: string): string {
 }
 
 export function parseCoreInquiryHandoff(fragment: string): CoreInquiryOfferPrefillV1 | null {
-  if (
-    fragment.length > MAX_FRAGMENT_CHARS ||
-    !fragment.startsWith(CORE_INQUIRY_FRAGMENT_PREFIX)
-  ) {
+  if (fragment.length > MAX_FRAGMENT_CHARS || !fragment.startsWith(CORE_INQUIRY_FRAGMENT_PREFIX)) {
     return null;
   }
   try {
@@ -136,9 +133,7 @@ function validateHandoffPayload(parsed: unknown): CoreInquiryOfferPrefillV1 | nu
  * the URL to parse. This applies the exact same trust/validation as a fresh
  * fragment to whatever was cached, never assuming stored data is safe.
  */
-export function validateStoredCoreInquiryHandoff(
-  raw: string
-): CoreInquiryOfferPrefillV1 | null {
+export function validateStoredCoreInquiryHandoff(raw: string): CoreInquiryOfferPrefillV1 | null {
   try {
     return validateHandoffPayload(JSON.parse(raw));
   } catch {

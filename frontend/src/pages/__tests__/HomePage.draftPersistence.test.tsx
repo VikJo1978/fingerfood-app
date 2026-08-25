@@ -77,10 +77,7 @@ function encodeFragment(payload: unknown): string {
   const bytes = new TextEncoder().encode(json);
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return (
-    "#core-inquiry=" +
-    btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
-  );
+  return "#core-inquiry=" + btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function handoffFragment(
@@ -96,16 +93,13 @@ function handoffFragment(
 }
 
 vi.mock("../../services/api", async () => {
-  const actual = await vi.importActual<typeof import("../../services/api")>(
-    "../../services/api"
-  );
+  const actual = await vi.importActual<typeof import("../../services/api")>("../../services/api");
   return { ...actual, fetchItems: vi.fn(async () => [testItem]) };
 });
 
 vi.mock("../../services/session", async () => {
-  const actual = await vi.importActual<typeof import("../../services/session")>(
-    "../../services/session"
-  );
+  const actual =
+    await vi.importActual<typeof import("../../services/session")>("../../services/session");
   return {
     ...actual,
     fetchUiSession: vi.fn(async () => ({
@@ -128,8 +122,7 @@ function enableBudgetAndSet(basis: string, scope: string, type: string, amount: 
   fireEvent.change(screen.getByLabelText("Umfang"), { target: { value: scope } });
   const amountInput = screen.getByRole("spinbutton", { hidden: true }) as HTMLInputElement | null;
   const input =
-    amountInput ??
-    (document.querySelector('input[type="number"]') as HTMLInputElement | null);
+    amountInput ?? (document.querySelector('input[type="number"]') as HTMLInputElement | null);
   if (input) {
     fireEvent.change(input, { target: { value: amount } });
   }
@@ -160,13 +153,9 @@ describe("Configurator draft session persistence — Core-handoff flow", () => {
     await screen.findAllByText("Fingerfood Paket");
 
     expect(screen.getByDisplayValue("Musterfirma GmbH")).toBeTruthy();
-    expect((screen.getByLabelText("Budget-Typ") as HTMLSelectElement).value).toBe(
-      "per_person"
-    );
+    expect((screen.getByLabelText("Budget-Typ") as HTMLSelectElement).value).toBe("per_person");
     expect((screen.getByLabelText("Basis") as HTMLSelectElement).value).toBe("net");
-    expect((screen.getByLabelText("Umfang") as HTMLSelectElement).value).toBe(
-      "positions_only"
-    );
+    expect((screen.getByLabelText("Umfang") as HTMLSelectElement).value).toBe("positions_only");
     // The line added before reload is still part of the offer.
     expect(screen.getAllByText("Fingerfood Paket").length).toBeGreaterThan(0);
   });
@@ -209,9 +198,7 @@ describe("Configurator draft session persistence — Core-handoff flow", () => {
     });
 
     expect(
-      window.sessionStorage.getItem(
-        `fingerfood.configurator-draft.v1:inquiry:${INQUIRY_ID}`
-      )
+      window.sessionStorage.getItem(`fingerfood.configurator-draft.v1:inquiry:${INQUIRY_ID}`)
     ).toBeNull();
   });
 });
@@ -283,13 +270,9 @@ describe("Configurator draft session persistence — manual flow", () => {
     await screen.findAllByText("Fingerfood Paket");
 
     expect(screen.getByDisplayValue("0")).toBeTruthy();
-    expect((screen.getByLabelText("Budget-Typ") as HTMLSelectElement).value).toBe(
-      "per_person"
-    );
+    expect((screen.getByLabelText("Budget-Typ") as HTMLSelectElement).value).toBe("per_person");
     expect((screen.getByLabelText("Basis") as HTMLSelectElement).value).toBe("net");
-    expect((screen.getByLabelText("Umfang") as HTMLSelectElement).value).toBe(
-      "positions_only"
-    );
+    expect((screen.getByLabelText("Umfang") as HTMLSelectElement).value).toBe("positions_only");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
     expect(screen.getByDisplayValue("0,00")).toBeTruthy();

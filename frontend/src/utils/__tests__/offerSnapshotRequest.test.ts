@@ -10,10 +10,7 @@ import {
   prepareOfferInCore,
 } from "../offerSnapshotRequest";
 import * as session from "../../services/session";
-import {
-  CORE_INQUIRY_FRAGMENT_PREFIX,
-  parseCoreInquiryHandoff,
-} from "../coreInquiryHandoff";
+import { CORE_INQUIRY_FRAGMENT_PREFIX, parseCoreInquiryHandoff } from "../coreInquiryHandoff";
 import type { OfferDraft } from "../../types";
 import { createInitialChargesDefinition } from "../../types";
 
@@ -123,9 +120,7 @@ describe("prepareOfferInCore", () => {
       },
     ],
   ])("rejects malformed successful payload: %s", (_case, payload) => {
-    expect(() => parseOfferPrepareResponse(payload)).toThrow(
-      "invalid_prepare_response"
-    );
+    expect(() => parseOfferPrepareResponse(payload)).toThrow("invalid_prepare_response");
   });
 
   it("navigates only to the same-origin BFF open route", () => {
@@ -141,8 +136,8 @@ describe("prepareOfferInCore", () => {
   it("shows a stable error without echoing Core response details", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        new Response("snapshot customer@example.test secret-token", { status: 502 })
+      vi.fn(
+        async () => new Response("snapshot customer@example.test secret-token", { status: 502 })
       )
     );
 
@@ -164,8 +159,8 @@ describe("prepareOfferInCore", () => {
     const onPrepared = vi.fn();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        new Response("snapshot customer@example.test secret-token", { status: 502 })
+      vi.fn(
+        async () => new Response("snapshot customer@example.test secret-token", { status: 502 })
       )
     );
 
@@ -184,16 +179,16 @@ describe("prepareOfferInCore", () => {
   it.each([
     ["invalid JSON", () => new Response("<html>proxy error</html>")],
     ["missing field", () => Response.json({})],
-    [
-      "malformed UUID",
-      () => Response.json({ ...validPrepareResponse, offer_id: "bad-id" }),
-    ],
+    ["malformed UUID", () => Response.json({ ...validPrepareResponse, offer_id: "bad-id" })],
   ])(
     "does not navigate or announce success for a malformed 200 response: %s",
     async (_case, responseFactory) => {
       const assign = vi.fn();
       const onPrepared = vi.fn();
-      vi.stubGlobal("fetch", vi.fn(async () => responseFactory()));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => responseFactory())
+      );
 
       const body = buildOfferSnapshotRequest(draft, "inq-1", null);
       await expect(
@@ -213,7 +208,10 @@ describe("prepareOfferInCore", () => {
     async () => {
       const assign = vi.fn();
       const onPrepared = vi.fn();
-      vi.stubGlobal("fetch", vi.fn(async () => Response.json(validPrepareResponse)));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => Response.json(validPrepareResponse))
+      );
 
       const body = buildOfferSnapshotRequest(draft, "inq-1", null);
       await prepareAndNavigateToCoreOffer(body, {
@@ -278,23 +276,14 @@ describe("prepareOfferInCore", () => {
         },
       },
     });
-    const handoff = parseCoreInquiryHandoff(
-      `${CORE_INQUIRY_FRAGMENT_PREFIX}${encoded}`
-    );
+    const handoff = parseCoreInquiryHandoff(`${CORE_INQUIRY_FRAGMENT_PREFIX}${encoded}`);
     expect(handoff).not.toBeNull();
 
-    expect(buildOfferSnapshotRequest(draft, handoff!.inquiry_id, null).inquiry_id).toBe(
-      inquiryId
-    );
+    expect(buildOfferSnapshotRequest(draft, handoff!.inquiry_id, null).inquiry_id).toBe(inquiryId);
   });
 
   it("builds a same-authority prepare payload from context_id without inquiry_id", () => {
-    const body = buildOfferSnapshotRequest(
-      draft,
-      null,
-      "draft-1",
-      "trusted-context-1"
-    );
+    const body = buildOfferSnapshotRequest(draft, null, "draft-1", "trusted-context-1");
 
     expect(body.context_id).toBe("trusted-context-1");
     expect(body).not.toHaveProperty("inquiry_id");
@@ -304,11 +293,7 @@ describe("prepareOfferInCore", () => {
 
 describe("budget_definition in the Core snapshot payload", () => {
   it("is omitted entirely when budget tracking is disabled", () => {
-    const body = buildOfferSnapshotRequest(
-      { ...draft, budgetEnabled: false },
-      "inq-1",
-      null
-    );
+    const body = buildOfferSnapshotRequest({ ...draft, budgetEnabled: false }, "inq-1", null);
     expect(body.budget_definition).toBeUndefined();
     expect("budget_definition" in body).toBe(false);
   });
@@ -501,7 +486,6 @@ describe("charges_definition in the Core snapshot payload", () => {
   });
 });
 
-
 describe("canonical logistics timing in the Core snapshot payload", () => {
   it("omits canonical delivery fields when no explicit structured window exists", () => {
     const body = buildOfferSnapshotRequest(draft, "inq-1", null);
@@ -522,7 +506,7 @@ describe("canonical logistics timing in the Core snapshot payload", () => {
         },
       },
       "inq-1",
-      null,
+      null
     );
     expect(body.event).toMatchObject({
       time_window_text: "abends",
@@ -544,8 +528,8 @@ describe("canonical logistics timing in the Core snapshot payload", () => {
           },
         },
         "inq-1",
-        null,
-      ),
+        null
+      )
     ).toThrow("invalid_delivery_window");
   });
 

@@ -1,10 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import {
-  clearCsrfToken,
-  fetchUiSession,
-  getCsrfToken,
-  sessionStatusMessage,
-} from "../session";
+import { clearCsrfToken, fetchUiSession, getCsrfToken, sessionStatusMessage } from "../session";
 
 type FetchMock = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 

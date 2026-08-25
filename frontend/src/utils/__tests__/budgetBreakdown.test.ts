@@ -111,7 +111,9 @@ describe("computeBudgetBreakdown — worked examples from the task spec", () => 
     expect(result.comparisonLabel).toBe("Speisen (netto)");
     expect(result.comparisonAbsolute).toBe(subtotal);
     expect(result.comparisonPerPerson).toBeCloseTo(subtotal / persons, 5);
-    expect(result.included).toEqual([{ label: "Positionen (Speisen etc.) netto", amount: subtotal }]);
+    expect(result.included).toEqual([
+      { label: "Positionen (Speisen etc.) netto", amount: subtotal },
+    ]);
     // Pauschalen, delivery (Anlieferung) and VAT explicitly not included.
     expect(result.excluded.map((l) => l.label)).toEqual([
       "Pauschalen (Büffet, Geschirr, Anlieferung)",
@@ -256,7 +258,6 @@ describe("computeBudgetBreakdown — budgetType affects units, not included/excl
     });
     expect(perPersonR.over).toBe(true);
   });
-
 });
 
 /** Cross-repo parity requirement: Core's `compute_offer_budget_presentation`
@@ -301,24 +302,27 @@ describe("computeBudgetBreakdown — PER_PERSON guest-count parity with Core", (
   it.each([
     ["guest_count = 1", 1],
     ["guest_count = 30 (normal positive)", 30],
-  ] as const)("%s: personsRequired is false, a real comparison is shown", (_label, validPersons) => {
-    const r = computeBudgetBreakdown({
-      budgetType: "per_person",
-      budgetBasis: "gross",
-      budgetScope: "full_offer",
-      configuredAmount: 35,
-      persons: validPersons,
-      subtotal,
-      pauschalen,
-      vat,
-      formatCurrency,
-    });
-    expect(r.personsRequired).toBe(false);
-    expect(r.comparisonPerPerson).toBeCloseTo(vat.totalInclVat / validPersons, 5);
-    expect(r.remaining).not.toBeNull();
-    expect(r.over).not.toBeNull();
-    expect(typeof r.pctUsed).toBe("number");
-  });
+  ] as const)(
+    "%s: personsRequired is false, a real comparison is shown",
+    (_label, validPersons) => {
+      const r = computeBudgetBreakdown({
+        budgetType: "per_person",
+        budgetBasis: "gross",
+        budgetScope: "full_offer",
+        configuredAmount: 35,
+        persons: validPersons,
+        subtotal,
+        pauschalen,
+        vat,
+        formatCurrency,
+      });
+      expect(r.personsRequired).toBe(false);
+      expect(r.comparisonPerPerson).toBeCloseTo(vat.totalInclVat / validPersons, 5);
+      expect(r.remaining).not.toBeNull();
+      expect(r.over).not.toBeNull();
+      expect(typeof r.pctUsed).toBe("number");
+    }
+  );
 
   it("TOTAL budgets are entirely unaffected by guest_count = 0 or missing", () => {
     for (const invalidPersons of [0, null] as const) {

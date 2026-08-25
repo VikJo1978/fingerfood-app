@@ -6,12 +6,7 @@ import type { AllergenCode, DietType } from "../constants/classification";
  */
 export type PriceType = "piece" | "person";
 
-export type ItemModule =
-	| "food"
-	| "beverage"
-	| "staff"
-	| "tableware"
-	| "equipment";
+export type ItemModule = "food" | "beverage" | "staff" | "tableware" | "equipment";
 
 export type SourceType = "internal" | "external";
 
@@ -179,12 +174,12 @@ export interface DishwareAdditionalLine {
 }
 
 export interface ReturnLogisticsDefinition {
-	mode: ReturnMode;
-	pickupWindowText: string | null;
-	sameDayFeeCents: number;
-	/** Optional canonical SAME_DAY pickup timing for logistics capacity. */
-	pickupWindowStartLocal?: string;
-	pickupWindowEndLocal?: string;
+  mode: ReturnMode;
+  pickupWindowText: string | null;
+  sameDayFeeCents: number;
+  /** Optional canonical SAME_DAY pickup timing for logistics capacity. */
+  pickupWindowStartLocal?: string;
+  pickupWindowEndLocal?: string;
 }
 
 export interface ChargesDefinition {
@@ -202,8 +197,8 @@ export interface ChargesDefinition {
     pauschalePerPersonCents: number;
     additionalLines: DishwareAdditionalLine[];
   };
-	/** Optional only while restoring drafts created before issue #171. */
-	returnLogistics?: ReturnLogisticsDefinition;
+  /** Optional only while restoring drafts created before issue #171. */
+  returnLogistics?: ReturnLogisticsDefinition;
 }
 
 /**
@@ -227,13 +222,7 @@ export interface OfferDraft {
 }
 
 /** Channel through which an inquiry entered (V1, types only). */
-export type InquirySource =
-	| "web"
-	| "phone"
-	| "email"
-	| "walk_in"
-	| "referral"
-	| "other";
+export type InquirySource = "web" | "phone" | "email" | "walk_in" | "referral" | "other";
 
 /** Inquiry lifecycle stage (V1). */
 export type InquiryStatus =
@@ -246,11 +235,7 @@ export type InquiryStatus =
   | "archived";
 
 /** Clarification / follow-up state on intake (V1). */
-export type ClarificationState =
-	| "none"
-	| "pending_internal"
-	| "pending_customer"
-	| "resolved";
+export type ClarificationState = "none" | "pending_internal" | "pending_customer" | "resolved";
 
 /**
  * Full inquiry intake / protocol payload (V1, structural placeholder).
@@ -331,11 +316,11 @@ export function createInitialDeliveryFulfillmentDefinition(): DeliveryFulfillmen
 }
 
 export function createInitialReturnLogisticsDefinition(): ReturnLogisticsDefinition {
-	return {
-		mode: "NEXT_WORKING_DAY",
-		pickupWindowText: null,
-		sameDayFeeCents: 0,
-	};
+  return {
+    mode: "NEXT_WORKING_DAY",
+    pickupWindowText: null,
+    sameDayFeeCents: 0,
+  };
 }
 
 export function createInitialOfferDraft(): OfferDraft {
@@ -369,6 +354,6 @@ export function createInitialChargesDefinition(): ChargesDefinition {
       pauschalePerPersonCents: 200,
       additionalLines: [],
     },
-		returnLogistics: createInitialReturnLogisticsDefinition(),
+    returnLogistics: createInitialReturnLogisticsDefinition(),
   };
 }

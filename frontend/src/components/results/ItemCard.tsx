@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import type { CatalogItem, QuantityMode, WarningSeverity } from "../../types";
-import { computeLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings } from "../../utils/pricing";
+import {
+  computeLineTotal,
+  formatCurrency,
+  isPieceUnitBasis,
+  lineWarnings,
+} from "../../utils/pricing";
 import { TagBadge } from "../ui/TagBadge";
 import { ALLERGEN_LABELS_DE } from "../../constants/classification";
 import { activeIngredientLabels, dietLabelDe } from "../../utils/classificationDisplay";
@@ -9,7 +14,12 @@ import { IntegerField } from "../ui/IntegerField";
 interface ItemCardProps {
   item: CatalogItem;
   persons: number;
-  onAdd: (item: CatalogItem, mode: QuantityMode, quantity: number, surchargeSelected: boolean) => void;
+  onAdd: (
+    item: CatalogItem,
+    mode: QuantityMode,
+    quantity: number,
+    surchargeSelected: boolean
+  ) => void;
 }
 
 function defaultQuantity(mode: QuantityMode): number {
@@ -116,7 +126,9 @@ export function ItemCard({ item, persons, onAdd }: ItemCardProps) {
             {(item.allergens ?? []).length ? (
               <div className="space-y-1.5">
                 <p className="text-xs font-bold uppercase tracking-[.05em] text-muted">
-                  {item.allergens_verified ? "Allergene (deklariert)" : "Allergene (Hinweis, ungeprüft)"}
+                  {item.allergens_verified
+                    ? "Allergene (deklariert)"
+                    : "Allergene (Hinweis, ungeprüft)"}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {(item.allergens ?? []).map((code) => (

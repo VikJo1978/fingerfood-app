@@ -11,7 +11,10 @@ import { createInitialOrderContextV1 } from "../../types";
 describe("OrderContextCard", () => {
   it("renders as an Office-Panel-style card with eyebrow and title", () => {
     render(
-      <OrderContextCard orderContext={createInitialOrderContextV1()} onOrderContextChange={vi.fn()} />
+      <OrderContextCard
+        orderContext={createInitialOrderContextV1()}
+        onOrderContextChange={vi.fn()}
+      />
     );
     expect(screen.getByText("Basisdaten")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Auftragskontext" })).toBeTruthy();
@@ -36,7 +39,10 @@ describe("OrderContextCard", () => {
 
   it("does not render the Anfrage-Kontext block when there are no remarks", () => {
     render(
-      <OrderContextCard orderContext={createInitialOrderContextV1()} onOrderContextChange={vi.fn()} />
+      <OrderContextCard
+        orderContext={createInitialOrderContextV1()}
+        onOrderContextChange={vi.fn()}
+      />
     );
     expect(screen.queryByText("Anfrage-Kontext")).toBeNull();
   });

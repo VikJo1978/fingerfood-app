@@ -92,10 +92,7 @@ function AddressFields({
   );
 }
 
-export function DeliveryFulfillmentSection({
-  charges,
-  onChange,
-}: DeliveryFulfillmentSectionProps) {
+export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfillmentSectionProps) {
   const current = fulfillment(charges);
 
   function changeMode(mode: FulfillmentMode) {
@@ -103,8 +100,7 @@ export function DeliveryFulfillmentSection({
       setFulfillment(charges, {
         ...current,
         fulfillmentMode: mode,
-        deliveryAddressMode:
-          mode === "DELIVERY" ? current.deliveryAddressMode : "UNKNOWN",
+        deliveryAddressMode: mode === "DELIVERY" ? current.deliveryAddressMode : "UNKNOWN",
       })
     );
   }
@@ -147,7 +143,8 @@ export function DeliveryFulfillmentSection({
                 onChange(
                   setFulfillment(charges, {
                     ...current,
-                    deliveryAddressMode: event.target.value as DeliveryFulfillmentDefinition["deliveryAddressMode"],
+                    deliveryAddressMode: event.target
+                      .value as DeliveryFulfillmentDefinition["deliveryAddressMode"],
                   })
                 )
               }

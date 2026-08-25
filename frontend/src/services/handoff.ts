@@ -37,9 +37,7 @@ function parseExchangeResponse(value: unknown): ExchangedConfiguratorHandoff | n
   };
 }
 
-export async function exchangeCoreHandoff(
-  code: string
-): Promise<ExchangedConfiguratorHandoff> {
+export async function exchangeCoreHandoff(code: string): Promise<ExchangedConfiguratorHandoff> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const csrfToken = getCsrfToken();
   if (csrfToken) {

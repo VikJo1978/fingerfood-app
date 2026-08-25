@@ -71,7 +71,11 @@ export function RecommendationLauncher({
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/35 p-4 sm:p-8" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-ink/35 p-4 sm:p-8"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="mx-auto max-w-6xl space-y-4 rounded-card bg-canvas p-4 shadow-xl sm:p-6">
             <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-line bg-white p-4">
               <div>
@@ -114,7 +118,9 @@ export function RecommendationLauncher({
                   max={5000}
                   value={guestCount}
                   onChange={(event) =>
-                    setGuestCount(Math.min(5000, Math.max(1, Math.round(Number(event.target.value)) || 1)))
+                    setGuestCount(
+                      Math.min(5000, Math.max(1, Math.round(Number(event.target.value)) || 1))
+                    )
                   }
                   className="rounded-control border border-line bg-white px-3 py-2 text-sm text-ink focus:border-accent"
                 />

@@ -1,4 +1,9 @@
-import { ALLERGENS, DIET_TYPES, type AllergenCode, type DietType } from "../constants/classification";
+import {
+  ALLERGENS,
+  DIET_TYPES,
+  type AllergenCode,
+  type DietType,
+} from "../constants/classification";
 import type {
   CatalogItem,
   CustomizationMode,
@@ -58,11 +63,7 @@ function isPricingMode(v: unknown): v is PricingMode {
 
 function isItemModule(v: unknown): v is ItemModule {
   return (
-    v === "food" ||
-    v === "beverage" ||
-    v === "staff" ||
-    v === "tableware" ||
-    v === "equipment"
+    v === "food" || v === "beverage" || v === "staff" || v === "tableware" || v === "equipment"
   );
 }
 
@@ -97,7 +98,9 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
   const category = typeof r.category === "string" ? r.category : "";
   const section = typeof r.section === "string" ? r.section : "";
   const subcategory =
-    typeof r.subcategory === "string" || r.subcategory === null ? (r.subcategory as string | null) : null;
+    typeof r.subcategory === "string" || r.subcategory === null
+      ? (r.subcategory as string | null)
+      : null;
   const description = typeof r.description === "string" ? r.description : "";
   const items_included =
     typeof r.items_included === "string" || r.items_included === null
@@ -138,12 +141,15 @@ export function normalizeCatalogItem(raw: unknown): CatalogItem | null {
     : "allergens" in r
       ? sanitizeAllergens(r.allergens)
       : undefined;
-  const allergens_verified = typeof r.allergens_verified === "boolean" ? r.allergens_verified : false;
+  const allergens_verified =
+    typeof r.allergens_verified === "boolean" ? r.allergens_verified : false;
   const vat_rate_percent: 7 | 19 = r.vat_rate_percent === 7 ? 7 : 19;
 
   const surcharge_label = typeof r.surcharge_label === "string" ? r.surcharge_label : null;
   const surcharge_amount =
-    typeof r.surcharge_amount === "number" && Number.isFinite(r.surcharge_amount) ? r.surcharge_amount : null;
+    typeof r.surcharge_amount === "number" && Number.isFinite(r.surcharge_amount)
+      ? r.surcharge_amount
+      : null;
 
   return {
     id,

@@ -24,10 +24,7 @@ function quantityModeLabel(mode: OfferLine["quantityMode"]): string {
 }
 
 function isCompositeLine(line: OfferLine, catalogItem?: CatalogItem): boolean {
-	return (
-		catalogItem?.item_kind === "composite" ||
-		line.snapshot.item_kind === "composite"
-	);
+  return catalogItem?.item_kind === "composite" || line.snapshot.item_kind === "composite";
 }
 
 export interface OfferPreviewProps {
@@ -95,12 +92,11 @@ export function OfferPreview({
           {oc.billingAddress?.trim() ? (
             <section className="rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 print:border-black">
               <p className="text-sm font-bold text-amber-900">
-								⚠ Achtung: abweichender Lieferort — Rechnungsadresse ≠
-								Lieferadresse!
+                ⚠ Achtung: abweichender Lieferort — Rechnungsadresse ≠ Lieferadresse!
               </p>
               <p className="mt-1 text-xs text-amber-800">
-								Lieferung/Anlieferung an <strong>{oc.location}</strong>.
-								Rechnungsadresse (unten, separat) ist NICHT der Lieferort.
+                Lieferung/Anlieferung an <strong>{oc.location}</strong>. Rechnungsadresse (unten,
+                separat) ist NICHT der Lieferort.
               </p>
             </section>
           ) : null}
@@ -113,30 +109,19 @@ export function OfferPreview({
               </p>
               <p className="text-xs text-slate-500">Hamburg, {todayDe()}</p>
             </div>
-						<img
-							src={logo}
-							alt="Silberlöffel Event Catering Service"
-							className="h-16 w-auto"
-						/>
+            <img src={logo} alt="Silberlöffel Event Catering Service" className="h-16 w-auto" />
           </header>
 
           {/* Client block */}
           <section className="grid gap-1 text-sm">
-						<p className="font-semibold text-slate-900">
-							{dashIfEmpty(oc.companyName)}
-						</p>
+            <p className="font-semibold text-slate-900">{dashIfEmpty(oc.companyName)}</p>
             <p className="text-slate-700">{dashIfEmpty(oc.contactPerson)}</p>
-						{oc.email?.trim() ? (
-							<p className="text-slate-700">{oc.email}</p>
-						) : null}
-						{oc.phone?.trim() ? (
-							<p className="text-slate-700">{oc.phone}</p>
-						) : null}
+            {oc.email?.trim() ? <p className="text-slate-700">{oc.email}</p> : null}
+            {oc.phone?.trim() ? <p className="text-slate-700">{oc.phone}</p> : null}
           </section>
 
           <p className="leading-relaxed text-slate-800">
-						Angebot für Ihre Veranstaltung am{" "}
-						<strong>{formatDateDe(oc.eventDate)}</strong>
+            Angebot für Ihre Veranstaltung am <strong>{formatDateDe(oc.eventDate)}</strong>
             {oc.eventTime ? (
               <>
                 {", Zeitfenster "}
@@ -154,14 +139,14 @@ export function OfferPreview({
                 {dashIfEmpty(oc.location)}
               </span>
             </p>
-						<p>
-							<span className="text-slate-500">Rückholung: </span>
-							<span className="font-medium text-slate-900">
-								{draft.chargesDefinition.returnLogistics?.mode === "SAME_DAY"
-									? `Am Veranstaltungstag, ${draft.chargesDefinition.returnLogistics.pickupWindowText ?? "—"}`
-									: "Nächster Werktag"}
-							</span>
-						</p>
+            <p>
+              <span className="text-slate-500">Rückholung: </span>
+              <span className="font-medium text-slate-900">
+                {draft.chargesDefinition.returnLogistics?.mode === "SAME_DAY"
+                  ? `Am Veranstaltungstag, ${draft.chargesDefinition.returnLogistics.pickupWindowText ?? "—"}`
+                  : "Nächster Werktag"}
+              </span>
+            </p>
           </section>
 
           {/* Itemized table */}
@@ -171,12 +156,8 @@ export function OfferPreview({
                 <tr className="border-b-2 border-slate-800 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="py-1.5 pr-2 font-medium">Anzahl</th>
                   <th className="py-1.5 pr-2 font-medium">Bezeichnung</th>
-									<th className="py-1.5 pr-2 text-right font-medium">
-										Einzelpreis
-									</th>
-									<th className="py-1.5 pl-2 text-right font-medium">
-										Gesamtpreis
-									</th>
+                  <th className="py-1.5 pr-2 text-right font-medium">Einzelpreis</th>
+                  <th className="py-1.5 pl-2 text-right font-medium">Gesamtpreis</th>
                 </tr>
               </thead>
               <tbody>
@@ -190,22 +171,16 @@ export function OfferPreview({
                   draft.lines.map((line) => {
                     const it = itemsById[line.itemId];
                     const name = it?.name ?? line.snapshot.title;
-										const lineTotal = computeOfferLineTotal(
-											line,
-											draft.persons,
-										);
-										const unitLabel = isPieceUnitBasis(line.snapshot.price_type)
-											? "Stück"
-											: "Person";
+                    const lineTotal = computeOfferLineTotal(line, draft.persons);
+                    const unitLabel = isPieceUnitBasis(line.snapshot.price_type)
+                      ? "Stück"
+                      : "Person";
                     const composite = isCompositeLine(line, it);
                     const itemsIncluded = it?.items_included?.trim();
                     const note = line.customizationNote?.trim();
 
                     return (
-											<tr
-												key={line.lineId}
-												className="border-b border-slate-200 align-top"
-											>
+                      <tr key={line.lineId} className="border-b border-slate-200 align-top">
                         <td className="py-2.5 pr-2 text-slate-700">
                           {line.quantity} {unitLabel}
                           <br />
@@ -250,9 +225,7 @@ export function OfferPreview({
                       </span>
                     </td>
                     <td className="py-2 pr-2 text-right">
-											{formatCurrency(
-												pauschalen.buffetpauschale / draft.persons,
-											)}
+                      {formatCurrency(pauschalen.buffetpauschale / draft.persons)}
                     </td>
                     <td className="py-2 pl-2 text-right font-semibold">
                       {formatCurrency(pauschalen.buffetpauschale)}
@@ -264,39 +237,28 @@ export function OfferPreview({
                     <td className="py-2 pr-2">{draft.persons} Person</td>
                     <td className="py-2 pr-2">
                       Geschirrpauschale
-											<span className="block text-xs text-slate-500">
-												(Geschirr, Besteck)
-											</span>
+                      <span className="block text-xs text-slate-500">(Geschirr, Besteck)</span>
                     </td>
                     <td className="py-2 pr-2 text-right">
-											{formatCurrency(
-												pauschalen.geschirrpauschale / draft.persons,
-											)}
+                      {formatCurrency(pauschalen.geschirrpauschale / draft.persons)}
                     </td>
                     <td className="py-2 pl-2 text-right font-semibold">
                       {formatCurrency(pauschalen.geschirrpauschale)}
                     </td>
                   </tr>
                 ) : null}
-								{draft.chargesDefinition.dishware.additionalLines.map(
-									(line) => (
-										<tr
-											key={line.lineId}
-											className="border-b border-slate-200 text-slate-700"
-										>
+                {draft.chargesDefinition.dishware.additionalLines.map((line) => (
+                  <tr key={line.lineId} className="border-b border-slate-200 text-slate-700">
                     <td className="py-2 pr-2">{line.quantity} Stück</td>
                     <td className="py-2 pr-2">{line.description}</td>
                     <td className="py-2 pr-2 text-right">
                       {formatCurrency(line.unitNetCents / 100)}
                     </td>
                     <td className="py-2 pl-2 text-right font-semibold">
-												{formatCurrency(
-													(line.quantity * line.unitNetCents) / 100,
-												)}
+                      {formatCurrency((line.quantity * line.unitNetCents) / 100)}
                     </td>
                   </tr>
-									),
-								)}
+                ))}
                 {pauschalen.anlieferung >= 0 ? (
                   <tr className="border-b border-slate-200 text-slate-700">
                     <td className="py-2 pr-2">1 Pauschale</td>
@@ -309,27 +271,23 @@ export function OfferPreview({
                     </td>
                   </tr>
                 ) : null}
-								{draft.chargesDefinition.returnLogistics?.mode ===
-								"SAME_DAY" ? (
-									<tr className="border-b border-slate-200 text-slate-700">
-										<td className="py-2 pr-2">1 Pauschale</td>
-										<td className="py-2 pr-2">
-											Rückholung am Veranstaltungstag
-											<span className="block text-xs text-slate-500">
-												{
-													draft.chargesDefinition.returnLogistics
-														.pickupWindowText
-												}
-											</span>
-										</td>
-										<td className="py-2 pr-2 text-right">
-											{formatCurrency(pauschalen.returnPickup ?? 0)}
-										</td>
-										<td className="py-2 pl-2 text-right font-semibold">
-											{formatCurrency(pauschalen.returnPickup ?? 0)}
-										</td>
-									</tr>
-								) : null}
+                {draft.chargesDefinition.returnLogistics?.mode === "SAME_DAY" ? (
+                  <tr className="border-b border-slate-200 text-slate-700">
+                    <td className="py-2 pr-2">1 Pauschale</td>
+                    <td className="py-2 pr-2">
+                      Rückholung am Veranstaltungstag
+                      <span className="block text-xs text-slate-500">
+                        {draft.chargesDefinition.returnLogistics.pickupWindowText}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-2 text-right">
+                      {formatCurrency(pauschalen.returnPickup ?? 0)}
+                    </td>
+                    <td className="py-2 pl-2 text-right font-semibold">
+                      {formatCurrency(pauschalen.returnPickup ?? 0)}
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </section>
@@ -339,9 +297,7 @@ export function OfferPreview({
             <div className="flex flex-col gap-1.5 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-600">Positionen (netto)</span>
-								<span className="font-medium text-slate-900">
-									{formatCurrency(subtotal)}
-								</span>
+                <span className="font-medium text-slate-900">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between gap-4 text-xs text-slate-500">
                 <span>Preis pro Person (Positionen)</span>
@@ -360,15 +316,11 @@ export function OfferPreview({
                 <span>{formatCurrency(vat.vat7Amount)}</span>
               </div>
               <div className="flex justify-between gap-4 text-xs text-slate-500">
-								<span>
-									zzgl. 19% MwSt. (auf {formatCurrency(vat.vat19Base)})
-								</span>
+                <span>zzgl. 19% MwSt. (auf {formatCurrency(vat.vat19Base)})</span>
                 <span>{formatCurrency(vat.vat19Amount)}</span>
               </div>
               <div className="flex justify-between gap-4 border-t-2 border-slate-800 pt-2">
-								<span className="text-base font-bold text-slate-900">
-									Gesamtsumme brutto
-								</span>
+                <span className="text-base font-bold text-slate-900">Gesamtsumme brutto</span>
                 <span className="text-lg font-bold text-slate-900">
                   {formatCurrency(vat.totalInclVat)}
                 </span>
@@ -377,9 +329,8 @@ export function OfferPreview({
           </section>
 
           <p className="text-xs text-slate-600">
-						Zahlbar sofort rein netto nach Erhalt der Rechnung. Alle Preise
-						verstehen sich zzgl. der zum Zeitpunkt der Rechnungsstellung
-						gültigen Mehrwertsteuer.
+            Zahlbar sofort rein netto nach Erhalt der Rechnung. Alle Preise verstehen sich zzgl. der
+            zum Zeitpunkt der Rechnungsstellung gültigen Mehrwertsteuer.
           </p>
 
           <section className="rounded-lg border border-amber-100 bg-amber-50/80 px-4 py-3 text-xs leading-relaxed text-amber-950">
@@ -388,31 +339,25 @@ export function OfferPreview({
               <li>Änderungen am Paket müssen intern geprüft werden.</li>
               <li>Preis bleibt vorläufig.</li>
               <li className="font-semibold">
-								⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für
-								Getränke, Service/Personal und Equipment — nach dem seit
-								1.1.2026 geltenden ermäßigten Steuersatz für Speisen im
-								Catering. Keine steuerliche Prüfung. Bitte vor Rechnungsstellung
-								mit dem Steuerberater abstimmen. Die automatische USt.-Zuordnung
-								gilt für Leistungen ab 01.01.2026; historische Leistungen werden
-								nicht steuerlich bewertet.
+                ⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für Getränke,
+                Service/Personal und Equipment — nach dem seit 1.1.2026 geltenden ermäßigten
+                Steuersatz für Speisen im Catering. Keine steuerliche Prüfung. Bitte vor
+                Rechnungsstellung mit dem Steuerberater abstimmen. Die automatische USt.-Zuordnung
+                gilt für Leistungen ab 01.01.2026; historische Leistungen werden nicht steuerlich
+                bewertet.
               </li>
               <li className="font-semibold">
-								⚠ Allergenangaben sind, sofern nicht anders vermerkt,
-								automatisch aus den Beschreibungen abgeleitet und küchenseitig
-								ungeprüft — bei Kundenanfragen zu Allergien bitte vor Zusage in
-								der Küche nachfragen.
+                ⚠ Allergenangaben sind, sofern nicht anders vermerkt, automatisch aus den
+                Beschreibungen abgeleitet und küchenseitig ungeprüft — bei Kundenanfragen zu
+                Allergien bitte vor Zusage in der Küche nachfragen.
               </li>
             </ul>
           </section>
 
           {/* Signature line */}
           <section className="grid grid-cols-2 gap-8 pt-6 text-xs text-slate-600">
-						<p className="border-t border-slate-400 pt-1.5">
-							Hamburg, den ____________________
-						</p>
-						<p className="border-t border-slate-400 pt-1.5">
-							Stempel, Unterschrift
-						</p>
+            <p className="border-t border-slate-400 pt-1.5">Hamburg, den ____________________</p>
+            <p className="border-t border-slate-400 pt-1.5">Stempel, Unterschrift</p>
           </section>
 
           {/* Legal footer, per Impressumspflicht. Sitz (registered seat) is

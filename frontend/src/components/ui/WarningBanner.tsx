@@ -15,10 +15,7 @@ const TONE_CLASSES: Record<WarningBannerTone, string> = {
 
 export function WarningBanner({ message, tone = "warning" }: WarningBannerProps) {
   return (
-    <div
-      className={`rounded-control border px-4 py-3 text-sm ${TONE_CLASSES[tone]}`}
-      role="status"
-    >
+    <div className={`rounded-control border px-4 py-3 text-sm ${TONE_CLASSES[tone]}`} role="status">
       {message}
     </div>
   );
