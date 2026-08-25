@@ -71,9 +71,7 @@ vi.mock("../../components/inquiry/InquiryIntake", () => ({
 }));
 
 vi.mock("../../services/api", async () => {
-  const actual = await vi.importActual<typeof import("../../services/api")>(
-    "../../services/api"
-  );
+  const actual = await vi.importActual<typeof import("../../services/api")>("../../services/api");
   return {
     ...actual,
     fetchItems: vi.fn(async () => [testItem]),
@@ -116,7 +114,9 @@ describe("HomePage — add item to offer", () => {
     await renderConfigurator();
 
     expect(
-      screen.getByText("Noch keine Positionen. Wählen Sie links Artikel aus und fügen Sie sie hinzu.")
+      screen.getByText(
+        "Noch keine Positionen. Wählen Sie links Artikel aus und fügen Sie sie hinzu."
+      )
     ).toBeTruthy();
     const totalBefore = positionenTotalText();
 
@@ -125,7 +125,9 @@ describe("HomePage — add item to offer", () => {
     }).not.toThrow();
 
     expect(
-      screen.queryByText("Noch keine Positionen. Wählen Sie links Artikel aus und fügen Sie sie hinzu.")
+      screen.queryByText(
+        "Noch keine Positionen. Wählen Sie links Artikel aus und fügen Sie sie hinzu."
+      )
     ).toBeNull();
     expect(within(offerSummary()).getAllByRole("listitem")).toHaveLength(1);
     expect(positionenTotalText()).not.toBe(totalBefore);

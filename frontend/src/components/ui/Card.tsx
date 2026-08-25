@@ -20,9 +20,7 @@ interface CardProps {
 export function Card({ eyebrow, title, subtitle, headerAction, children, className }: CardProps) {
   const hasHeader = eyebrow || title || subtitle;
   return (
-    <section
-      className={`rounded-card border border-line bg-white shadow-card ${className ?? ""}`}
-    >
+    <section className={`rounded-card border border-line bg-white shadow-card ${className ?? ""}`}>
       {hasHeader ? (
         <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="min-w-0">

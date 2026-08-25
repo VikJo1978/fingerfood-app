@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import {
-	type ChargesDefinition,
-	createInitialReturnLogisticsDefinition,
-	type DishwareAdditionalLine,
+  type ChargesDefinition,
+  createInitialReturnLogisticsDefinition,
+  type DishwareAdditionalLine,
 } from "../../types";
 import { formatCentsInput, parseGermanMoneyToCents } from "../../utils/money";
 import { formatCurrency } from "../../utils/pricing";
@@ -20,8 +20,7 @@ interface ChargeConfiguratorModalProps {
   createLineId: () => string;
 }
 
-const labelClass =
-	"text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
+const labelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
 const moneyClass =
   "w-full rounded-control border border-line bg-canvas/60 px-3 py-2 text-sm text-ink transition focus:border-accent focus:bg-white";
 const selectClass =
@@ -36,14 +35,14 @@ function validPersons(persons: number): boolean {
 function setLine(
   charges: ChargesDefinition,
   lineId: string,
-	patch: Partial<DishwareAdditionalLine>,
+  patch: Partial<DishwareAdditionalLine>
 ): ChargesDefinition {
   return {
     ...charges,
     dishware: {
       ...charges.dishware,
       additionalLines: charges.dishware.additionalLines.map((line) =>
-				line.lineId === lineId ? { ...line, ...patch } : line,
+        line.lineId === lineId ? { ...line, ...patch } : line
       ),
     },
   };
@@ -118,8 +117,7 @@ export function ChargeConfiguratorModal({
   if (!open) return null;
 
   const hasPersons = validPersons(persons);
-	const returnLogistics =
-		charges.returnLogistics ?? createInitialReturnLogisticsDefinition();
+  const returnLogistics = charges.returnLogistics ?? createInitialReturnLogisticsDefinition();
   const buffetTotal =
     charges.buffet.baseMode === "PAUSCHALE" && hasPersons
       ? charges.buffet.pauschalePerPersonCents * persons
@@ -164,8 +162,7 @@ export function ChargeConfiguratorModal({
                       ...charges,
                       buffet: {
                         ...charges.buffet,
-												baseMode: e.target
-													.value as ChargesDefinition["buffet"]["baseMode"],
+                        baseMode: e.target.value as ChargesDefinition["buffet"]["baseMode"],
                       },
                     })
                   }
@@ -177,9 +174,7 @@ export function ChargeConfiguratorModal({
               </label>
               <div className="text-right text-sm">
                 <span className="block text-muted">Summe</span>
-								<strong className="text-ink">
-									{formatCurrency(buffetTotal / 100)}
-								</strong>
+                <strong className="text-ink">{formatCurrency(buffetTotal / 100)}</strong>
               </div>
             </div>
             <MoneyField
@@ -213,86 +208,76 @@ export function ChargeConfiguratorModal({
             />
             {charges.delivery.fulfillment?.fulfillmentMode === "PICKUP" ? (
               <p className="text-xs text-muted">
-								Bei Selbstabholung bleibt der hinterlegte Lieferpreis erhalten,
-								wird aber nicht berechnet.
+                Bei Selbstabholung bleibt der hinterlegte Lieferpreis erhalten, wird aber nicht
+                berechnet.
               </p>
             ) : null}
           </section>
 
-					<section className="grid gap-3 border-b border-line pb-5">
-						<label className="grid gap-1.5">
-							<span className={labelClass}>Rückholung</span>
-							<select
-								aria-label="Rückholmodus"
-								value={returnLogistics.mode}
-								onChange={(e) => {
-									const mode = e.target.value as typeof returnLogistics.mode;
-									onChange({
-										...charges,
-										returnLogistics: {
-											...returnLogistics,
-											mode,
-							pickupWindowText:
-								mode === "SAME_DAY"
-									? returnLogistics.pickupWindowText
-									: null,
-                pickupWindowStartLocal:
-                  mode === "SAME_DAY" ? returnLogistics.pickupWindowStartLocal : undefined,
-                pickupWindowEndLocal:
-                  mode === "SAME_DAY" ? returnLogistics.pickupWindowEndLocal : undefined,
-										},
-									});
-								}}
-								className={selectClass}
-							>
-								<option value="NEXT_WORKING_DAY">Nächster Werktag</option>
-								<option value="SAME_DAY">Am Veranstaltungstag</option>
-							</select>
-						</label>
-						{returnLogistics.mode === "SAME_DAY" ? (
-							<>
-								<label className="grid gap-1.5">
-									<span className={labelClass}>Abholfenster</span>
-									<input
-										aria-label="Abholfenster Rückholung"
-										type="text"
-										maxLength={DESCRIPTION_MAX}
-										placeholder="z. B. 22:00–23:00"
-										value={returnLogistics.pickupWindowText ?? ""}
-										onChange={(e) =>
-											onChange({
-												...charges,
-												returnLogistics: {
-													...returnLogistics,
-													pickupWindowText: e.target.value.slice(
-														0,
-														DESCRIPTION_MAX,
-													),
-												},
-											})
-										}
-										onBlur={(e) =>
-											onChange({
-												...charges,
-												returnLogistics: {
-													...returnLogistics,
-													pickupWindowText:
-														e.currentTarget.value.trim() || null,
-												},
-											})
-										}
-										className={moneyClass}
-									/>
-									{returnLogistics.pickupWindowText?.trim() ? null : (
-										<span
-											className="text-xs font-semibold text-danger"
-											role="alert"
-										>
-											Abholfenster für Rückholung am Veranstaltungstag
-											erforderlich.
-										</span>
-									)}
-								</label>
+          <section className="grid gap-3 border-b border-line pb-5">
+            <label className="grid gap-1.5">
+              <span className={labelClass}>Rückholung</span>
+              <select
+                aria-label="Rückholmodus"
+                value={returnLogistics.mode}
+                onChange={(e) => {
+                  const mode = e.target.value as typeof returnLogistics.mode;
+                  onChange({
+                    ...charges,
+                    returnLogistics: {
+                      ...returnLogistics,
+                      mode,
+                      pickupWindowText:
+                        mode === "SAME_DAY" ? returnLogistics.pickupWindowText : null,
+                      pickupWindowStartLocal:
+                        mode === "SAME_DAY" ? returnLogistics.pickupWindowStartLocal : undefined,
+                      pickupWindowEndLocal:
+                        mode === "SAME_DAY" ? returnLogistics.pickupWindowEndLocal : undefined,
+                    },
+                  });
+                }}
+                className={selectClass}
+              >
+                <option value="NEXT_WORKING_DAY">Nächster Werktag</option>
+                <option value="SAME_DAY">Am Veranstaltungstag</option>
+              </select>
+            </label>
+            {returnLogistics.mode === "SAME_DAY" ? (
+              <>
+                <label className="grid gap-1.5">
+                  <span className={labelClass}>Abholfenster</span>
+                  <input
+                    aria-label="Abholfenster Rückholung"
+                    type="text"
+                    maxLength={DESCRIPTION_MAX}
+                    placeholder="z. B. 22:00–23:00"
+                    value={returnLogistics.pickupWindowText ?? ""}
+                    onChange={(e) =>
+                      onChange({
+                        ...charges,
+                        returnLogistics: {
+                          ...returnLogistics,
+                          pickupWindowText: e.target.value.slice(0, DESCRIPTION_MAX),
+                        },
+                      })
+                    }
+                    onBlur={(e) =>
+                      onChange({
+                        ...charges,
+                        returnLogistics: {
+                          ...returnLogistics,
+                          pickupWindowText: e.currentTarget.value.trim() || null,
+                        },
+                      })
+                    }
+                    className={moneyClass}
+                  />
+                  {returnLogistics.pickupWindowText?.trim() ? null : (
+                    <span className="text-xs font-semibold text-danger" role="alert">
+                      Abholfenster für Rückholung am Veranstaltungstag erforderlich.
+                    </span>
+                  )}
+                </label>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className="grid gap-1.5">
                     <span className={labelClass}>Abholung von · optional</span>
@@ -332,31 +317,30 @@ export function ChargeConfiguratorModal({
                   </label>
                 </div>
                 <p className="text-xs text-muted">
-                  Die strukturierte Von/Bis-Zeit ist nur für die Logistik-Kapazitätsplanung.
-                  Leer bedeutet: Zeitpunkt noch unbekannt.
+                  Die strukturierte Von/Bis-Zeit ist nur für die Logistik-Kapazitätsplanung. Leer
+                  bedeutet: Zeitpunkt noch unbekannt.
                 </p>
-								<MoneyField
-									label="Aufpreis Rückholung netto"
-									valueCents={returnLogistics.sameDayFeeCents}
-									onValidChange={(sameDayFeeCents) =>
-										onChange({
-											...charges,
-											returnLogistics: { ...returnLogistics, sameDayFeeCents },
-										})
-									}
-								/>
-								<p className="text-xs text-muted">
-									Die Rückholung am selben Tag wird als eigene Position im
-									Angebot berechnet.
-								</p>
-							</>
-						) : (
-							<p className="text-xs text-muted">
-								Rückholung am nächsten Werktag ist durch den normalen
-								Liefer-/Servicetarif abgedeckt.
-							</p>
-						)}
-					</section>
+                <MoneyField
+                  label="Aufpreis Rückholung netto"
+                  valueCents={returnLogistics.sameDayFeeCents}
+                  onValidChange={(sameDayFeeCents) =>
+                    onChange({
+                      ...charges,
+                      returnLogistics: { ...returnLogistics, sameDayFeeCents },
+                    })
+                  }
+                />
+                <p className="text-xs text-muted">
+                  Die Rückholung am selben Tag wird als eigene Position im Angebot berechnet.
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-muted">
+                Rückholung am nächsten Werktag ist durch den normalen Liefer-/Servicetarif
+                abgedeckt.
+              </p>
+            )}
+          </section>
 
           <section className="grid gap-3">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -369,8 +353,7 @@ export function ChargeConfiguratorModal({
                       ...charges,
                       dishware: {
                         ...charges.dishware,
-												baseMode: e.target
-													.value as ChargesDefinition["dishware"]["baseMode"],
+                        baseMode: e.target.value as ChargesDefinition["dishware"]["baseMode"],
                       },
                     })
                   }
@@ -382,9 +365,7 @@ export function ChargeConfiguratorModal({
               </label>
               <div className="text-right text-sm">
                 <span className="block text-muted">Pauschale</span>
-                <strong className="text-ink">
-                  {formatCurrency(dishwarePauschaleTotal / 100)}
-                </strong>
+                <strong className="text-ink">{formatCurrency(dishwarePauschaleTotal / 100)}</strong>
               </div>
             </div>
             <MoneyField
@@ -393,10 +374,10 @@ export function ChargeConfiguratorModal({
               onValidChange={(cents) =>
                 onChange({
                   ...charges,
-									dishware: {
-										...charges.dishware,
-										pauschalePerPersonCents: cents,
-									},
+                  dishware: {
+                    ...charges.dishware,
+                    pauschalePerPersonCents: cents,
+                  },
                 })
               }
             />
@@ -440,10 +421,7 @@ export function ChargeConfiguratorModal({
             ) : (
               <ul className="space-y-3">
                 {charges.dishware.additionalLines.map((line) => (
-									<li
-										key={line.lineId}
-										className="rounded-control border border-line p-3"
-									>
+                  <li key={line.lineId} className="rounded-control border border-line p-3">
                     <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_9rem_10rem]">
                       <label className="grid gap-1.5">
                         <span className={labelClass}>Beschreibung</span>
@@ -452,27 +430,18 @@ export function ChargeConfiguratorModal({
                           maxLength={DESCRIPTION_MAX}
                           value={line.description}
                           onChange={(e) => {
-														const description = e.target.value
-															.trim()
-															.slice(0, DESCRIPTION_MAX);
-														onChange(
-															setLine(charges, line.lineId, { description }),
-														);
+                            const description = e.target.value.trim().slice(0, DESCRIPTION_MAX);
+                            onChange(setLine(charges, line.lineId, { description }));
                           }}
                           onBlur={(e) => {
                             const description = e.currentTarget.value.trim();
-														if (description)
-															onChange(
-																setLine(charges, line.lineId, { description }),
-															);
+                            if (description)
+                              onChange(setLine(charges, line.lineId, { description }));
                           }}
                           className={moneyClass}
                         />
                         {line.description.trim() === "" ? (
-													<span
-														className="text-xs font-semibold text-danger"
-														role="alert"
-													>
+                          <span className="text-xs font-semibold text-danger" role="alert">
                             Beschreibung erforderlich.
                           </span>
                         ) : null}
@@ -482,9 +451,7 @@ export function ChargeConfiguratorModal({
                         <IntegerField
                           value={line.quantity}
                           onChange={(quantity) =>
-														onChange(
-															setLine(charges, line.lineId, { quantity }),
-														)
+                            onChange(setLine(charges, line.lineId, { quantity }))
                           }
                           min={1}
                           max={5000}
@@ -497,18 +464,13 @@ export function ChargeConfiguratorModal({
                         label="Netto-Einzelpreis"
                         valueCents={line.unitNetCents}
                         onValidChange={(unitNetCents) =>
-													onChange(
-														setLine(charges, line.lineId, { unitNetCents }),
-													)
+                          onChange(setLine(charges, line.lineId, { unitNetCents }))
                         }
                       />
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-3 text-sm">
                       <span className="text-muted">
-												Summe:{" "}
-												{formatCurrency(
-													(line.quantity * line.unitNetCents) / 100,
-												)}
+                        Summe: {formatCurrency((line.quantity * line.unitNetCents) / 100)}
                       </span>
                       <button
                         type="button"
@@ -517,10 +479,8 @@ export function ChargeConfiguratorModal({
                             ...charges,
                             dishware: {
                               ...charges.dishware,
-															additionalLines:
-																charges.dishware.additionalLines.filter(
-																	(candidate) =>
-																		candidate.lineId !== line.lineId,
+                              additionalLines: charges.dishware.additionalLines.filter(
+                                (candidate) => candidate.lineId !== line.lineId
                               ),
                             },
                           })

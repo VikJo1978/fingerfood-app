@@ -102,9 +102,7 @@ describe("RecommendationPanel variant apply", () => {
   });
 
   it("sends catering format and event type to deterministic scoring", async () => {
-    render(
-      <RecommendationPanel eventDate="2026-08-30" guestCount={40} catalog={catalog} />
-    );
+    render(<RecommendationPanel eventDate="2026-08-30" guestCount={40} catalog={catalog} />);
 
     fireEvent.change(screen.getByLabelText("Catering-Format"), {
       target: { value: "buffet" },
@@ -160,12 +158,8 @@ describe("RecommendationPanel variant apply", () => {
       />
     );
 
-    expect((screen.getByLabelText("Catering-Format") as HTMLSelectElement).value).toBe(
-      "buffet"
-    );
-    expect((screen.getByLabelText("Veranstaltungstyp") as HTMLSelectElement).value).toBe(
-      "wedding"
-    );
+    expect((screen.getByLabelText("Catering-Format") as HTMLSelectElement).value).toBe("buffet");
+    expect((screen.getByLabelText("Veranstaltungstyp") as HTMLSelectElement).value).toBe("wedding");
 
     fireEvent.click(screen.getByRole("button", { name: "Vorschläge berechnen" }));
 
@@ -185,14 +179,8 @@ describe("RecommendationPanel variant apply", () => {
     expect(recommendationEventTypeFromInquiry("Kundenspezifischer Anlass")).toBe("");
 
     expect(recommendationCateringFormatFromServiceStyle("Buffet")).toBe("buffet");
-    expect(recommendationCateringFormatFromServiceStyle("Flying Dinner")).toBe(
-      "fingerfood"
-    );
-    expect(recommendationCateringFormatFromServiceStyle("Fingerfood + Buffet")).toBe(
-      "mixed"
-    );
-    expect(recommendationCateringFormatFromServiceStyle("Service nach Absprache")).toBe(
-      ""
-    );
+    expect(recommendationCateringFormatFromServiceStyle("Flying Dinner")).toBe("fingerfood");
+    expect(recommendationCateringFormatFromServiceStyle("Fingerfood + Buffet")).toBe("mixed");
+    expect(recommendationCateringFormatFromServiceStyle("Service nach Absprache")).toBe("");
   });
 });

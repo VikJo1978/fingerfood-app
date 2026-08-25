@@ -1,6 +1,11 @@
 import { useState } from "react";
 import type { CatalogItem, OfferLine, QuantityMode, WarningSeverity } from "../../types";
-import { computeOfferLineTotal, formatCurrency, isPieceUnitBasis, lineWarnings } from "../../utils/pricing";
+import {
+  computeOfferLineTotal,
+  formatCurrency,
+  isPieceUnitBasis,
+  lineWarnings,
+} from "../../utils/pricing";
 import { IntegerField } from "../ui/IntegerField";
 
 function warningLineClasses(severity: WarningSeverity): string {
@@ -148,7 +153,8 @@ export function OfferLineItem({
           </p>
           {line.snapshot.surchargeSelected ? (
             <p className="text-xs font-medium text-ink">
-              + {line.snapshot.surchargeLabel} ({formatCurrency(line.snapshot.surchargeAmount ?? 0)} Aufpreis)
+              + {line.snapshot.surchargeLabel} ({formatCurrency(line.snapshot.surchargeAmount ?? 0)}{" "}
+              Aufpreis)
             </p>
           ) : null}
 
@@ -163,7 +169,9 @@ export function OfferLineItem({
           ) : null}
 
           <label className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">Bezug</span>
+            <span className="text-[11px] font-bold uppercase tracking-[.05em] text-muted">
+              Bezug
+            </span>
             <select
               value={line.quantityMode}
               onChange={(e) => onModeChange(line.lineId, e.target.value as QuantityMode)}
@@ -181,9 +189,7 @@ export function OfferLineItem({
                 rows={2}
                 value={line.customizationNote ?? ""}
                 onChange={(e) => onCustomizationNoteChange(line.lineId, e.target.value)}
-                placeholder={
-                  "Dessert tauschen:\nSalat entfernen:\nStarter hinzufügen:\nSonstiges:"
-                }
+                placeholder={"Dessert tauschen:\nSalat entfernen:\nStarter hinzufügen:\nSonstiges:"}
                 className="min-h-[4rem] resize-y rounded-control border border-line bg-white px-2 py-1.5 text-sm text-ink focus:border-accent"
               />
               <span className="text-xs leading-relaxed text-muted">

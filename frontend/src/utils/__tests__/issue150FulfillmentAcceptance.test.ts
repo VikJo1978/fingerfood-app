@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { OfferDraft } from "../../types";
-import {
-  createInitialChargesDefinition,
-  createInitialCustomerAddressInput,
-} from "../../types";
+import { createInitialChargesDefinition, createInitialCustomerAddressInput } from "../../types";
 import { buildOfferSnapshotRequest } from "../offerSnapshotRequest";
 import { computeChargesCents, computePauschalen } from "../pricing";
 

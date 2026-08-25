@@ -172,7 +172,11 @@ describe("Core Inquiry handoff", () => {
     const calls: unknown[][] = [];
     const envelope = validEnvelope();
     consumeCoreInquiryHandoff(
-      { hash: `${CORE_INQUIRY_FRAGMENT_PREFIX}${encode(envelope)}`, pathname: "/angebot", search: "" },
+      {
+        hash: `${CORE_INQUIRY_FRAGMENT_PREFIX}${encode(envelope)}`,
+        pathname: "/angebot",
+        search: "",
+      },
       { replaceState: (...args: unknown[]) => calls.push(args) } as Pick<History, "replaceState">
     );
     expect(calls).toEqual([
@@ -218,7 +222,9 @@ describe("Core Inquiry handoff — sessionStorage lifecycle", () => {
   it("ignores and removes a stored handoff for a different inquiry id than the marker", () => {
     const storage = fakeStorage();
     storeCoreInquiryHandoff(handoff, storage);
-    expect(readStoredCoreInquiryHandoff("22222222-2222-2222-2222-222222222222", storage)).toBeNull();
+    expect(
+      readStoredCoreInquiryHandoff("22222222-2222-2222-2222-222222222222", storage)
+    ).toBeNull();
     expect(storage.getItem(CORE_INQUIRY_SESSION_KEY)).toBeNull();
   });
 

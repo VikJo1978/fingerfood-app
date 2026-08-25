@@ -82,16 +82,13 @@ const authenticatedSessionResult = {
 };
 
 vi.mock("../../services/api", async () => {
-  const actual = await vi.importActual<typeof import("../../services/api")>(
-    "../../services/api"
-  );
+  const actual = await vi.importActual<typeof import("../../services/api")>("../../services/api");
   return { ...actual, fetchItems: vi.fn(async () => [testItem]) };
 });
 
 vi.mock("../../services/session", async () => {
-  const actual = await vi.importActual<typeof import("../../services/session")>(
-    "../../services/session"
-  );
+  const actual =
+    await vi.importActual<typeof import("../../services/session")>("../../services/session");
   return { ...actual, fetchUiSession: (...args: []) => fetchUiSessionMock(...args) };
 });
 

@@ -11,8 +11,8 @@ import type {
   ReturnLogisticsDefinition,
 } from "../types";
 import {
-	createInitialDeliveryFulfillmentDefinition,
-	createInitialReturnLogisticsDefinition,
+  createInitialDeliveryFulfillmentDefinition,
+  createInitialReturnLogisticsDefinition,
 } from "../types";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
@@ -44,13 +44,13 @@ export interface OfferSnapshotChargesDefinition {
     base_mode: "NONE" | "PAUSCHALE";
     pauschale_per_person_cents: number;
   };
-	return_logistics: {
-		mode: "NEXT_WORKING_DAY" | "SAME_DAY";
-		pickup_window_text: string | null;
-		same_day_fee_cents: number;
-		pickup_window_start_local?: string;
-		pickup_window_end_local?: string;
-	};
+  return_logistics: {
+    mode: "NEXT_WORKING_DAY" | "SAME_DAY";
+    pickup_window_text: string | null;
+    same_day_fee_cents: number;
+    pickup_window_start_local?: string;
+    pickup_window_end_local?: string;
+  };
 }
 
 export interface OfferPrepareAddress {
@@ -77,9 +77,7 @@ function canonicalLocalTime(value: string | undefined): string {
   return normalized;
 }
 
-function canonicalDeliveryTiming(
-  context: OrderContextV1,
-): Record<string, string> {
+function canonicalDeliveryTiming(context: OrderContextV1): Record<string, string> {
   const serviceDate = context.deliveryDate?.trim() ?? "";
   const start = context.deliveryWindowStart?.trim() ?? "";
   const end = context.deliveryWindowEnd?.trim() ?? "";
@@ -99,7 +97,7 @@ function canonicalDeliveryTiming(
 }
 
 function canonicalReturnPickupTiming(
-  returnLogistics: ReturnLogisticsDefinition,
+  returnLogistics: ReturnLogisticsDefinition
 ): Record<string, string> {
   const start = returnLogistics.pickupWindowStartLocal?.trim() ?? "";
   const end = returnLogistics.pickupWindowEndLocal?.trim() ?? "";
@@ -121,17 +119,11 @@ function canonicalReturnPickupTiming(
   };
 }
 
-function normalizedFulfillment(
-	charges: ChargesDefinition,
-): DeliveryFulfillmentDefinition {
-	return (
-		charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition()
-	);
+function normalizedFulfillment(charges: ChargesDefinition): DeliveryFulfillmentDefinition {
+  return charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
 }
 
-function addressToWire(
-	address: CustomerAddressInput,
-): OfferPrepareAddress | null {
+function addressToWire(address: CustomerAddressInput): OfferPrepareAddress | null {
   const street = address.street.trim();
   const postalCode = address.postalCode.trim();
   const city = address.city.trim();
@@ -145,52 +137,42 @@ function addressToWire(
   };
 }
 
-export function buildPrepareFulfillment(
-	charges: ChargesDefinition,
-): OfferPrepareFulfillment {
+export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepareFulfillment {
   const current = normalizedFulfillment(charges);
   return {
     fulfillment_mode: current.fulfillmentMode,
     delivery_address_mode:
-			current.fulfillmentMode === "DELIVERY"
-				? current.deliveryAddressMode
-				: "UNKNOWN",
+      current.fulfillmentMode === "DELIVERY" ? current.deliveryAddressMode : "UNKNOWN",
     invoice_address: addressToWire(current.invoiceAddress),
     delivery_address:
-			current.fulfillmentMode === "DELIVERY" &&
-			current.deliveryAddressMode === "SEPARATE"
+      current.fulfillmentMode === "DELIVERY" && current.deliveryAddressMode === "SEPARATE"
         ? addressToWire(current.deliveryAddress)
         : null,
   };
 }
 
 export function buildBudgetDefinition(
-	draft: OfferDraft,
+  draft: OfferDraft
 ): OfferSnapshotBudgetDefinition | undefined {
   if (!draft.budgetEnabled) return undefined;
   return {
     amount_cents: Math.round(Math.max(0, draft.totalBudget) * 100),
     type: draft.budgetType === "per_person" ? "PER_PERSON" : "TOTAL",
     tax_basis: draft.budgetBasis === "gross" ? "GROSS" : "NET",
-		cost_scope:
-			draft.budgetScope === "full_offer" ? "FULL_OFFER" : "POSITIONS_ONLY",
+    cost_scope: draft.budgetScope === "full_offer" ? "FULL_OFFER" : "POSITIONS_ONLY",
   };
 }
 
-export function buildChargesDefinition(
-	charges: ChargesDefinition,
-): OfferSnapshotChargesDefinition {
+export function buildChargesDefinition(charges: ChargesDefinition): OfferSnapshotChargesDefinition {
   const current = normalizedFulfillment(charges);
-	const returnLogistics =
-		charges.returnLogistics ?? createInitialReturnLogisticsDefinition();
+  const returnLogistics = charges.returnLogistics ?? createInitialReturnLogisticsDefinition();
   const canonicalPickup = canonicalReturnPickupTiming(returnLogistics);
   return {
     delivery: {
       // Keep the operator's configured amount while fulfillment is still
       // undecided. PICKUP is the explicit instruction that zeroes it. The
       // BFF refuses UNKNOWN before Core can persist an OfferVersion.
-      amount_cents:
-        current.fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents,
+      amount_cents: current.fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents,
     },
     dishware: {
       base_mode: charges.dishware.baseMode,
@@ -205,15 +187,15 @@ export function buildChargesDefinition(
       base_mode: charges.buffet.baseMode,
       pauschale_per_person_cents: charges.buffet.pauschalePerPersonCents,
     },
-		return_logistics: {
-			mode: returnLogistics.mode,
-			pickup_window_text:
-				returnLogistics.mode === "SAME_DAY"
-					? returnLogistics.pickupWindowText?.trim() || null
-					: null,
-			same_day_fee_cents: returnLogistics.sameDayFeeCents,
+    return_logistics: {
+      mode: returnLogistics.mode,
+      pickup_window_text:
+        returnLogistics.mode === "SAME_DAY"
+          ? returnLogistics.pickupWindowText?.trim() || null
+          : null,
+      same_day_fee_cents: returnLogistics.sameDayFeeCents,
       ...canonicalPickup,
-		},
+    },
   };
 }
 
@@ -272,7 +254,7 @@ export function buildOfferSnapshotRequest(
   draft: OfferDraft,
   inquiryId: string | null,
   draftId: string | null,
-	contextId: string | null = null,
+  contextId: string | null = null
 ): OfferSnapshotRequestBody {
   const ctx = draft.orderContext;
   const company = ctx.companyName.trim() || "Angebot";
@@ -285,9 +267,7 @@ export function buildOfferSnapshotRequest(
   const guestCount = Math.round(draft.persons) || 0;
   const deliveryTiming = canonicalDeliveryTiming(ctx);
   return {
-		...(contextId
-			? { context_id: contextId }
-			: { inquiry_id: inquiryId ?? "" }),
+    ...(contextId ? { context_id: contextId } : { inquiry_id: inquiryId ?? "" }),
     snapshot_id: generateUuidV4(),
     valid_until: defaultValidUntil(ctx.eventDate),
     ...(draftId ? { source_draft_id: draftId } : {}),
@@ -325,9 +305,7 @@ export interface OfferPrepareResponse {
   offer_id: string;
 }
 
-export type PrepareOfferErrorCode =
-  | "prepare_offer_failed"
-  | "invalid_prepare_response";
+export type PrepareOfferErrorCode = "prepare_offer_failed" | "invalid_prepare_response";
 
 export class PrepareOfferError extends Error {
   readonly code: PrepareOfferErrorCode;
@@ -349,15 +327,13 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-export function parseOfferPrepareResponse(
-	value: unknown,
-): OfferPrepareResponse {
+export function parseOfferPrepareResponse(value: unknown): OfferPrepareResponse {
   if (!isPlainObject(value)) {
     throw new PrepareOfferError("invalid_prepare_response");
   }
 
   const offerId = value.offer_id;
-	if (typeof offerId !== "string" || !CANONICAL_UUID_V4.test(offerId)) {
+  if (typeof offerId !== "string" || !CANONICAL_UUID_V4.test(offerId)) {
     throw new PrepareOfferError("invalid_prepare_response");
   }
 
@@ -365,22 +341,19 @@ export function parseOfferPrepareResponse(
 }
 
 export function prepareOfferErrorMessage(error: unknown): string {
-  if (
-		error instanceof PrepareOfferError &&
-		error.code === "invalid_prepare_response"
-  ) {
+  if (error instanceof PrepareOfferError && error.code === "invalid_prepare_response") {
     return "Core hat eine ungültige Antwort zurückgegeben.";
   }
   return "Angebot konnte nicht vorbereitet werden.";
 }
 
 export async function prepareOfferInCore(
-	body: OfferSnapshotRequestBody,
+  body: OfferSnapshotRequestBody
 ): Promise<OfferPrepareResponse> {
   const baseUrl = import.meta.env.VITE_API_URL ?? "";
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-	};
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   const csrfToken = getCsrfToken();
   if (csrfToken) {
     headers["X-CSRF-Token"] = csrfToken;
@@ -409,11 +382,9 @@ export interface OfferNavigation {
 
 export function navigateToPreparedCoreOffer(
   result: OfferPrepareResponse,
-	navigation: OfferNavigation = window.location,
+  navigation: OfferNavigation = window.location
 ): void {
-  navigation.assign(
-		`/api/ui/offer/open/${encodeURIComponent(result.offer_id)}`,
-  );
+  navigation.assign(`/api/ui/offer/open/${encodeURIComponent(result.offer_id)}`);
 }
 
 export interface PrepareAndNavigateOptions {
@@ -423,7 +394,7 @@ export interface PrepareAndNavigateOptions {
 
 export async function prepareAndNavigateToCoreOffer(
   body: OfferSnapshotRequestBody,
-	options: PrepareAndNavigateOptions = {},
+  options: PrepareAndNavigateOptions = {}
 ): Promise<OfferPrepareResponse> {
   const result = await prepareOfferInCore(body);
   options.onPrepared?.(result);

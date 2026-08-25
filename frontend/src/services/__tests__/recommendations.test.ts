@@ -65,7 +65,10 @@ describe("recommendation API client", () => {
   });
 
   it("fails closed when the BFF response shape is malformed", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ variants: [] })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ variants: [] }))
+    );
 
     await expect(
       generateRecommendations({

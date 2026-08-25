@@ -45,8 +45,7 @@ export function RecommendationPanel({
 }: RecommendationPanelProps) {
   const [cateringFormat, setCateringFormat] =
     useState<RecommendationCateringFormat>(initialCateringFormat);
-  const [eventType, setEventType] =
-    useState<RecommendationEventType | "">(initialEventType);
+  const [eventType, setEventType] = useState<RecommendationEventType | "">(initialEventType);
   const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>("DELIVERY");
   const [dietType, setDietType] = useState<DietType | "">("");
   const [noPork, setNoPork] = useState(false);
@@ -129,7 +128,8 @@ export function RecommendationPanel({
         </p>
         <h2 className="text-[17px] font-bold text-ink">Drei Angebotsvarianten erzeugen</h2>
         <p className="mt-1 text-sm text-muted">
-          Deterministisch aus Kundenwunsch, aktuellem Katalog und Produktionsüberschneidung. Kein automatischer Versand.
+          Deterministisch aus Kundenwunsch, aktuellem Katalog und Produktionsüberschneidung. Kein
+          automatischer Versand.
         </p>
       </div>
 
@@ -155,9 +155,7 @@ export function RecommendationPanel({
           <select
             className={fieldClass}
             value={eventType}
-            onChange={(event) =>
-              setEventType(event.target.value as RecommendationEventType | "")
-            }
+            onChange={(event) => setEventType(event.target.value as RecommendationEventType | "")}
           >
             <option value="">Keine Vorgabe</option>
             <option value="business">Business / Meeting</option>
@@ -292,7 +290,10 @@ export function RecommendationPanel({
           ) : null}
           <div className="grid gap-3 xl:grid-cols-3">
             {result.variants.map((variant) => (
-              <article key={variant.kind} className="rounded-card border border-line bg-canvas/40 p-4">
+              <article
+                key={variant.kind}
+                className="rounded-card border border-line bg-canvas/40 p-4"
+              >
                 <div className="flex items-baseline justify-between gap-3">
                   <h3 className="font-bold text-ink">{variant.label}</h3>
                   <span className="text-sm font-bold text-ink">
@@ -330,7 +331,8 @@ export function RecommendationPanel({
             ))}
           </div>
           <p className="text-xs text-muted">
-            Produktionssignale: {result.production_signal_count} · Historienhinweise: {result.customer_history_signal_count} · Katalog: {result.catalog_revision}
+            Produktionssignale: {result.production_signal_count} · Historienhinweise:{" "}
+            {result.customer_history_signal_count} · Katalog: {result.catalog_revision}
           </p>
         </div>
       ) : null}

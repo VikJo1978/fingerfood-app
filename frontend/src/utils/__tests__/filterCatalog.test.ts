@@ -52,15 +52,19 @@ describe("filterCatalog search", () => {
       id: "b",
       name: "Hanseaten Büffet",
       item_kind: "composite",
-      description: "Hanseaten Büffet als Buffet/Paket, Paketpreis pro Person. Zusammensetzung siehe Details.",
-      items_included: "Kalt:\n- Schaustück vom pochierten Atlantiklachs\n- Große Auswahl von Räucherfischen der Saison",
+      description:
+        "Hanseaten Büffet als Buffet/Paket, Paketpreis pro Person. Zusammensetzung siehe Details.",
+      items_included:
+        "Kalt:\n- Schaustück vom pochierten Atlantiklachs\n- Große Auswahl von Räucherfischen der Saison",
     });
     const out = filterCatalog([buffet], { ...baseOpts, search: "fisch" });
     expect(out.map((i) => i.id)).toEqual(["b"]);
   });
 
   it("does not match unrelated items", () => {
-    const items = [item({ id: "c", name: "Brötchen Mix 1", items_included: "Avocadocreme mit Tomate" })];
+    const items = [
+      item({ id: "c", name: "Brötchen Mix 1", items_included: "Avocadocreme mit Tomate" }),
+    ];
     const out = filterCatalog(items, { ...baseOpts, search: "fisch" });
     expect(out).toEqual([]);
   });
@@ -71,7 +75,12 @@ describe("filterCatalog search", () => {
     // — "fisch" now also matches items whose allergens include "fish"
     // (already derived from the same species keywords at catalog build time).
     const items = [
-      item({ id: "d", name: "Fingerfood I", description: "Mit Lachs und Frischkäse.", allergens: ["fish", "gluten", "milk"] }),
+      item({
+        id: "d",
+        name: "Fingerfood I",
+        description: "Mit Lachs und Frischkäse.",
+        allergens: ["fish", "gluten", "milk"],
+      }),
       item({ id: "e", name: "Brötchen Mix 1", description: "Mit Käse.", allergens: ["milk"] }),
     ];
     const out = filterCatalog(items, { ...baseOpts, search: "fisch" });

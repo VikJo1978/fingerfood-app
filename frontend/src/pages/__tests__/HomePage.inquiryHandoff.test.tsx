@@ -104,10 +104,7 @@ function encodeFragment(payload: unknown): string {
   const bytes = new TextEncoder().encode(json);
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return (
-    "#core-inquiry=" +
-    btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
-  );
+  return "#core-inquiry=" + btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function handoffFragment(
@@ -123,16 +120,13 @@ function handoffFragment(
 }
 
 vi.mock("../../services/api", async () => {
-  const actual = await vi.importActual<typeof import("../../services/api")>(
-    "../../services/api"
-  );
+  const actual = await vi.importActual<typeof import("../../services/api")>("../../services/api");
   return { ...actual, fetchItems: vi.fn(async () => [testItem]) };
 });
 
 vi.mock("../../services/session", async () => {
-  const actual = await vi.importActual<typeof import("../../services/session")>(
-    "../../services/session"
-  );
+  const actual =
+    await vi.importActual<typeof import("../../services/session")>("../../services/session");
   return {
     ...actual,
     fetchUiSession: vi.fn(async () => ({
@@ -193,8 +187,8 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     // are correct, so assert at least one and check the delivery line text.
     expect(within(dialog).getAllByText("12:25", { exact: false }).length).toBeGreaterThan(0);
     expect(
-      within(dialog).getByText((_, element) =>
-        element?.textContent === "12:25, Musterstraße 1, 22549 Hamburg"
+      within(dialog).getByText(
+        (_, element) => element?.textContent === "12:25, Musterstraße 1, 22549 Hamburg"
       )
     ).toBeTruthy();
     // Document creation date ("Hamburg, <today>") stays a separate line,
@@ -215,10 +209,7 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
       "fetch",
       vi.fn(async (_url: string, init?: RequestInit) => {
         capturedBody = JSON.parse(String(init?.body));
-        return Response.json(
-          { offer_id: "11111111-1111-4111-8111-111111111111" },
-          { status: 201 }
-        );
+        return Response.json({ offer_id: "11111111-1111-4111-8111-111111111111" }, { status: 201 });
       })
     );
 
@@ -228,7 +219,12 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
 
     expect(capturedBody).not.toBeNull();
     const body = capturedBody as unknown as {
-      recipient: { company_name: string; contact_name: string; email: string; postal_address: string };
+      recipient: {
+        company_name: string;
+        contact_name: string;
+        email: string;
+        postal_address: string;
+      };
       event: { event_date: string; time_window_text: string; location_text: string };
     };
     expect(body.recipient.company_name).toBe("Musterfirma GmbH");

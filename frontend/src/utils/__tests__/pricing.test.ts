@@ -156,11 +156,29 @@ describe("computeVatBreakdown", () => {
     const draft = {
       persons: 10,
       lines: [
-        { lineId: "l1", itemId: "a", quantityMode: "total" as const, quantity: 10, snapshot: { chosen_price: 2, price_type: "piece" as PriceType } },
-        { lineId: "l2", itemId: "b", quantityMode: "total" as const, quantity: 10, snapshot: { chosen_price: 3, price_type: "piece" as PriceType } },
+        {
+          lineId: "l1",
+          itemId: "a",
+          quantityMode: "total" as const,
+          quantity: 10,
+          snapshot: { chosen_price: 2, price_type: "piece" as PriceType },
+        },
+        {
+          lineId: "l2",
+          itemId: "b",
+          quantityMode: "total" as const,
+          quantity: 10,
+          snapshot: { chosen_price: 3, price_type: "piece" as PriceType },
+        },
       ],
     };
-    const pauschalen = { buffetpauschale: 5, geschirrpauschale: 20, anlieferung: 35, dishwareAdditional: 0, grandTotal: 110 };
+    const pauschalen = {
+      buffetpauschale: 5,
+      geschirrpauschale: 20,
+      anlieferung: 35,
+      dishwareAdditional: 0,
+      grandTotal: 110,
+    };
     const result = computeVatBreakdown(draft as never, itemsById as never, pauschalen);
     expect(result.vat7Base).toBe(20);
     expect(result.vat7Amount).toBe(1.4);
@@ -179,15 +197,39 @@ describe("computePositionsOnlyGross", () => {
     // (1.40, per the case above, since Pauschalen are never added to the
     // 7% bucket). Expected: 50 + 1.40 + 5.70 = 57.10.
     const subtotal = 50;
-    const vat = { vat7Base: 20, vat7Amount: 1.4, vat19Base: 90, vat19Amount: 17.1, totalInclVat: 128.5 };
-    const pauschalen = { buffetpauschale: 5, geschirrpauschale: 20, anlieferung: 35, dishwareAdditional: 0, grandTotal: 110 };
+    const vat = {
+      vat7Base: 20,
+      vat7Amount: 1.4,
+      vat19Base: 90,
+      vat19Amount: 17.1,
+      totalInclVat: 128.5,
+    };
+    const pauschalen = {
+      buffetpauschale: 5,
+      geschirrpauschale: 20,
+      anlieferung: 35,
+      dishwareAdditional: 0,
+      grandTotal: 110,
+    };
     expect(computePositionsOnlyGross(subtotal, vat, pauschalen)).toBe(57.1);
   });
 
   it("is strictly between the netto positions subtotal and the full brutto total whenever Pauschalen exist", () => {
     const subtotal = 500;
-    const vat = { vat7Base: 500, vat7Amount: 35, vat19Base: 60, vat19Amount: 11.4, totalInclVat: 606.4 };
-    const pauschalen = { buffetpauschale: 20, geschirrpauschale: 40, anlieferung: 35, dishwareAdditional: 0, grandTotal: 595 };
+    const vat = {
+      vat7Base: 500,
+      vat7Amount: 35,
+      vat19Base: 60,
+      vat19Amount: 11.4,
+      totalInclVat: 606.4,
+    };
+    const pauschalen = {
+      buffetpauschale: 20,
+      geschirrpauschale: 40,
+      anlieferung: 35,
+      dishwareAdditional: 0,
+      grandTotal: 595,
+    };
     const positionsGross = computePositionsOnlyGross(subtotal, vat, pauschalen);
     expect(positionsGross).toBeGreaterThan(subtotal);
     expect(positionsGross).toBeLessThan(vat.totalInclVat);
@@ -195,7 +237,13 @@ describe("computePositionsOnlyGross", () => {
 
   it("equals the plain subtotal when there are no positions (zero VAT bases)", () => {
     const vat = { vat7Base: 0, vat7Amount: 0, vat19Base: 0, vat19Amount: 0, totalInclVat: 0 };
-    const pauschalen = { buffetpauschale: 0, geschirrpauschale: 0, anlieferung: 0, dishwareAdditional: 0, grandTotal: 0 };
+    const pauschalen = {
+      buffetpauschale: 0,
+      geschirrpauschale: 0,
+      anlieferung: 0,
+      dishwareAdditional: 0,
+      grandTotal: 0,
+    };
     expect(computePositionsOnlyGross(0, vat, pauschalen)).toBe(0);
   });
 });

@@ -1,6 +1,4 @@
-export type MoneyParseResult =
-  | { ok: true; cents: number }
-  | { ok: false; message: string };
+export type MoneyParseResult = { ok: true; cents: number } | { ok: false; message: string };
 
 export function parseGermanMoneyToCents(raw: string): MoneyParseResult {
   const value = raw.trim();

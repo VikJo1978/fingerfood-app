@@ -78,7 +78,9 @@ export function SearchFilters({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Baustein-Typ</span>
+        <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+          Baustein-Typ
+        </span>
         <div className="flex flex-wrap gap-2">
           {MODULE_CHIPS.map(({ value, label }) => {
             const active = catalogModule === value;
@@ -125,7 +127,9 @@ export function SearchFilters({
         >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Bereich</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+                Bereich
+              </span>
               <select
                 value={section}
                 onChange={(e) => onSectionChange(e.target.value)}
@@ -141,7 +145,9 @@ export function SearchFilters({
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Preisart</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+                Preisart
+              </span>
               <select
                 value={priceType}
                 onChange={(e) => onPriceTypeChange(e.target.value as PriceTypeFilter)}
@@ -154,7 +160,9 @@ export function SearchFilters({
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Ernährung</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+                Ernährung
+              </span>
               <select
                 value={diet}
                 onChange={(e) => onDietChange(e.target.value as DietType | "")}
@@ -170,7 +178,9 @@ export function SearchFilters({
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Höchstpreis pro Einheit</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+                Höchstpreis pro Einheit
+              </span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -184,7 +194,9 @@ export function SearchFilters({
           </div>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">Allergene ausblenden</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+              Allergene ausblenden
+            </span>
             <input
               type="text"
               placeholder="z. B. gluten, milk, nuts"
@@ -193,8 +205,8 @@ export function SearchFilters({
               className="rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent focus:bg-white"
             />
             <span className="text-xs text-muted">
-              Blendet Artikel aus, die diese Stoffe ausweisen. Mehrere Einträge mit Komma trennen (z. B.
-              gluten, milk, nuts).
+              Blendet Artikel aus, die diese Stoffe ausweisen. Mehrere Einträge mit Komma trennen
+              (z. B. gluten, milk, nuts).
             </span>
           </label>
         </div>

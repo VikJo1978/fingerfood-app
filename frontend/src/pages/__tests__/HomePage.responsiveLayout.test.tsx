@@ -71,9 +71,7 @@ vi.mock("../../components/inquiry/InquiryIntake", () => ({
 }));
 
 vi.mock("../../services/api", async () => {
-  const actual = await vi.importActual<typeof import("../../services/api")>(
-    "../../services/api"
-  );
+  const actual = await vi.importActual<typeof import("../../services/api")>("../../services/api");
   return {
     ...actual,
     fetchItems: vi.fn(async () => [testItem]),

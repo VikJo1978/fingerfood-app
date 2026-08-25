@@ -59,7 +59,9 @@ const WEIGHT: Partial<Record<AufwandKey, number>> = {
 
 function estimateVorlaufLabel(flags: Record<AufwandKey, boolean>): string {
   if (flags.unclear) return "intern prüfen";
-  const active = AUFWAND_OPTIONS.filter((o) => o.key !== "unclear" && flags[o.key]).map((o) => o.key);
+  const active = AUFWAND_OPTIONS.filter((o) => o.key !== "unclear" && flags[o.key]).map(
+    (o) => o.key
+  );
   if (active.length === 0) return "15–30 min";
   let score = 0;
   for (const k of active) {
@@ -130,15 +132,12 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
   const vorlaufLabel = useMemo(() => estimateVorlaufLabel(aufwandFlags), [aufwandFlags]);
 
   const openCriticalRows = useMemo(
-    () =>
-      CRITICAL_ROWS.filter((row) => (critical[row.id] ?? "offen") === "offen"),
+    () => CRITICAL_ROWS.filter((row) => (critical[row.id] ?? "offen") === "offen"),
     [critical]
   );
 
   function toggleModule(m: ItemModule) {
-    setDesiredModules((prev) =>
-      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]
-    );
+    setDesiredModules((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
   }
 
   function toggleAufwand(key: AufwandKey) {
@@ -185,8 +184,8 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted">
-        Erfassen Sie die Anfrage in Ruhe. Die Eingaben bleiben nur in diesem Fenster — es wird nichts
-        zentral bei Kunden- oder Auftragsdaten abgelegt.
+        Erfassen Sie die Anfrage in Ruhe. Die Eingaben bleiben nur in diesem Fenster — es wird
+        nichts zentral bei Kunden- oder Auftragsdaten abgelegt.
       </p>
 
       <section className={blockClass}>
@@ -434,9 +433,9 @@ export function InquiryIntake({ onPrepareOffer }: InquiryIntakeProps) {
         <h2 className="text-[17px] font-bold text-ink">Nächster Schritt</h2>
         <p className="text-sm text-muted">
           Mit „Angebot vorbereiten“ wechseln Sie in den Konfigurator. Übernommen werden Firma,
-          Ansprechpartner, Datum, Uhrzeit, Liefer-/Veranstaltungsort, Bemerkungen zu Veranstaltung und
-          Ernährung (ohne Rechnungsdaten — diese bleiben hier im Formular), Personenzahl, Budget (falls
-          aktiv) und ggf. ein einzelnes Katalog-Modul — nicht das gesamte Anfrage-Protokoll.
+          Ansprechpartner, Datum, Uhrzeit, Liefer-/Veranstaltungsort, Bemerkungen zu Veranstaltung
+          und Ernährung (ohne Rechnungsdaten — diese bleiben hier im Formular), Personenzahl, Budget
+          (falls aktiv) und ggf. ein einzelnes Katalog-Modul — nicht das gesamte Anfrage-Protokoll.
         </p>
         <div className="rounded-control border border-warning-border bg-warning-soft px-3 py-3 text-sm text-warning">
           <p className="text-xs font-bold uppercase tracking-wide text-warning">Noch offen</p>
