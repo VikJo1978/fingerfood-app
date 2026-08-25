@@ -5,7 +5,7 @@ on:
     branches:
       - issue-171-return-logistics-configurator
     paths:
-      - backend/scripts/issue171_apply_configurator_return_v2.py
+      - backend/scripts/issue171_apply_configurator_return_v3.py
 
 permissions:
   contents: write
@@ -29,7 +29,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Apply return logistics patch
-        run: python backend/scripts/issue171_apply_configurator_return_v2.py
+        run: python backend/scripts/issue171_apply_configurator_return_v3.py
 
       - name: Install backend tools
         run: |
