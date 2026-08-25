@@ -103,7 +103,7 @@ def _capacity_warnings(rows: tuple[CoreCapacityRow, ...]) -> tuple[str, ...]:
         (reason for reason in _CAPACITY_TIER_PRIORITY if reason in reasons),
         None,
     )
-    if tier_reason is None:
+    if tier_reason is None and not reasons:
         tier_reason = _capacity_tier_from_percent(current_load_percent)
 
     if tier_reason is not None:
