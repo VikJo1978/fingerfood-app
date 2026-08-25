@@ -17,11 +17,26 @@ from app.models.classification import Allergen, DietType
 from app.models.item import CateringFormat, RecommendationEventType
 from app.routes.offer import safe_error_detail
 from app.services.catalog_client import CatalogClientError
-from app.services.catalog_factory import build_catalog_adapter, build_core_office_client
+from app.services.catalog_factory import (
+    build_catalog_adapter,
+    build_core_customer_history_client,
+    build_core_customer_preference_client,
+    build_core_office_client,
+)
 from app.services.core_capacity_signal_adapter import (
     CoreCapacityRow,
     capacity_signals_from_core_rows,
 )
+from app.services.core_customer_history_adapter import (
+    CustomerHistorySignal,
+    customer_history_signals_from_core_orders,
+)
+from app.services.core_customer_history_client import CoreCustomerHistoryClientError
+from app.services.core_customer_preference_adapter import (
+    CustomerPreferenceSignal,
+    customer_preference_signals_from_core_preferences,
+)
+from app.services.core_customer_preference_client import CoreCustomerPreferenceClientError
 from app.services.core_office_client import CoreOfficeClientError
 from app.services.core_production_signal_adapter import production_signals_from_core_rows
 from app.services.recommendation_engine import RecommendationRequest
@@ -57,6 +72,14 @@ _CAPACITY_SOURCE_UNAVAILABLE_WARNING = (
     "Empfehlungen und Angebot bleiben verfügbar; die Entscheidung trifft der "
     "Mitarbeiter."
 )
+_HISTORY_SOURCE_UNAVAILABLE_WARNING = (
+    "Kundenhistorie ist derzeit nicht verfügbar. Die Vorschläge bleiben verfügbar "
+    "und werden ohne Historienhinweise berechnet."
+)
+_PREFERENCE_SOURCE_UNAVAILABLE_WARNING = (
+    "Gespeicherte Kundenpräferenzen sind derzeit nicht verfügbar. Die Vorschläge "
+    "bleiben verfügbar und werden ohne diese Präferenzsignale berechnet."
+)
 
 
 class UiRecommendationGenerateRequest(BaseModel):
@@ -64,6 +87,8 @@ class UiRecommendationGenerateRequest(BaseModel):
 
     event_date: date
     guest_count: int = Field(gt=0)
+    inquiry_id: str | None = None
+    use_customer_history: bool = True
     event_type: RecommendationEventType | None = None
     catering_format: CateringFormat | None = None
     fulfillment_mode: Literal["PICKUP", "DELIVERY"]
@@ -189,6 +214,55 @@ def generate_ui_recommendations(
         core_capacity_rows,
         configurator_item_ids=configurator_item_ids,
     )
+
+    customer_id: str | None = None
+    identity_source_failed = False
+    if payload.inquiry_id:
+        try:
+            inquiry = core.get_inquiry(payload.inquiry_id)
+            raw_customer_id = inquiry.get("customer_id") if inquiry is not None else None
+            if isinstance(raw_customer_id, str) and raw_customer_id:
+                customer_id = raw_customer_id
+        except CoreOfficeClientError:
+            identity_source_failed = True
+
+    customer_history_signals: tuple[CustomerHistorySignal, ...] = ()
+    history_source_warnings: tuple[str, ...] = ()
+    if payload.use_customer_history and payload.inquiry_id:
+        if identity_source_failed:
+            history_source_warnings = (_HISTORY_SOURCE_UNAVAILABLE_WARNING,)
+        elif customer_id is not None:
+            try:
+                history_orders = build_core_customer_history_client().list_for_customer(
+                    customer_id
+                )
+                customer_history_signals = customer_history_signals_from_core_orders(
+                    history_orders,
+                    as_of=payload.event_date,
+                    configurator_item_ids=configurator_item_ids,
+                )
+            except CoreCustomerHistoryClientError:
+                history_source_warnings = (_HISTORY_SOURCE_UNAVAILABLE_WARNING,)
+
+    customer_preference_signals: tuple[CustomerPreferenceSignal, ...] = ()
+    preference_source_warnings: tuple[str, ...] = ()
+    if payload.inquiry_id:
+        if identity_source_failed:
+            preference_source_warnings = (_PREFERENCE_SOURCE_UNAVAILABLE_WARNING,)
+        elif customer_id is not None:
+            try:
+                preferences = build_core_customer_preference_client().list_for_customer(
+                    customer_id
+                )
+                customer_preference_signals = (
+                    customer_preference_signals_from_core_preferences(
+                        preferences,
+                        catalog_items=tuple(items),
+                    )
+                )
+            except CoreCustomerPreferenceClientError:
+                preference_source_warnings = (_PREFERENCE_SOURCE_UNAVAILABLE_WARNING,)
+
     recommendation_request = RecommendationRequest(
         catering_format=payload.catering_format,
         event_type=payload.event_type,
@@ -207,6 +281,8 @@ def generate_ui_recommendations(
         guest_count=payload.guest_count,
         production_signals=production_signals,
         capacity_signals=capacity_signals,
+        customer_history_signals=customer_history_signals,
+        customer_preference_signals=customer_preference_signals,
         max_variant_net_cents=payload.max_variant_net_cents,
         piece_quantity_by_item_id=payload.piece_quantity_by_item_id,
     )
@@ -214,6 +290,8 @@ def generate_ui_recommendations(
     warnings = [
         *catalog.warnings,
         *capacity_source_warnings,
+        *history_source_warnings,
+        *preference_source_warnings,
         *_capacity_warnings(core_capacity_rows),
     ]
     return {
@@ -224,6 +302,8 @@ def generate_ui_recommendations(
         "warnings": warnings,
         "production_signal_count": len(production_signals),
         "capacity_signal_count": len(capacity_signals),
+        "customer_history_signal_count": len(customer_history_signals),
+        "customer_preference_signal_count": len(customer_preference_signals),
         "variants": [
             {
                 "kind": variant.kind,

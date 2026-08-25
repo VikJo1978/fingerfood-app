@@ -7,6 +7,7 @@ import {
   type RecommendationVariant,
 } from "../../services/recommendations";
 import type { CatalogItem } from "../../types";
+import { readCoreInquiryHandoffHistoryMarker } from "../../utils/coreInquiryHandoff";
 import { RecommendationPanel } from "./RecommendationPanel";
 
 interface RecommendationLauncherProps {
@@ -14,6 +15,7 @@ interface RecommendationLauncherProps {
   initialGuestCount?: number;
   initialEventType?: string;
   initialServiceStyle?: string;
+  inquiryId?: string | null;
   onApplyVariant?: (variant: RecommendationVariant) => void;
 }
 
@@ -22,6 +24,7 @@ export function RecommendationLauncher({
   initialGuestCount = 10,
   initialEventType = "",
   initialServiceStyle = "",
+  inquiryId = null,
   onApplyVariant,
 }: RecommendationLauncherProps) {
   const [open, setOpen] = useState(false);
@@ -54,6 +57,8 @@ export function RecommendationLauncher({
   const prefilledEventType = recommendationEventTypeFromInquiry(initialEventType);
   const prefilledCateringFormat =
     recommendationCateringFormatFromServiceStyle(initialServiceStyle) || "fingerfood";
+  const effectiveInquiryId =
+    inquiryId ?? readCoreInquiryHandoffHistoryMarker(window.history)?.inquiry_id ?? null;
 
   return (
     <>
@@ -125,6 +130,7 @@ export function RecommendationLauncher({
                 eventDate={eventDate}
                 guestCount={guestCount}
                 catalog={catalog}
+                inquiryId={effectiveInquiryId}
                 initialEventType={prefilledEventType}
                 initialCateringFormat={prefilledCateringFormat}
                 onApplyVariant={(variant) => {

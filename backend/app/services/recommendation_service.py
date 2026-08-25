@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import replace
 
 from app.models.item import Item
+from app.services.core_customer_history_adapter import CustomerHistorySignal
+from app.services.core_customer_preference_adapter import CustomerPreferenceSignal
 from app.services.recommendation_engine import (
     CapacitySignal,
     ProductionSignal,
@@ -33,14 +35,17 @@ def generate_recommendation_variants(
     piece_quantity_by_item_id: dict[str, int] | None = None,
     production_signals: tuple[ProductionSignal, ...] = (),
     capacity_signals: tuple[CapacitySignal, ...] = (),
+    customer_history_signals: tuple[CustomerHistorySignal, ...] = (),
+    customer_preference_signals: tuple[CustomerPreferenceSignal, ...] = (),
     max_variant_net_cents: int | None = None,
 ) -> tuple[RecommendationVariant, ...]:
     """Generate Wirtschaftlich, Empfohlen and Premium from independent rankings.
 
     Every profile gets its own scoring pass over the same hard constraints and
-    operational signals. Piece-priced positions may receive explicit demand so
-    variant totals reflect intended quantities instead of pretending that the
-    catalog minimum is a serving recommendation.
+    advisory operational, history and explicit-customer-preference signals.
+    Piece-priced positions may receive explicit demand so variant totals reflect
+    intended quantities instead of pretending that the catalog minimum is a serving
+    recommendation.
     """
 
     variants: list[RecommendationVariant] = []
@@ -52,6 +57,8 @@ def generate_recommendation_variants(
             profile_request,
             production_signals=production_signals,
             capacity_signals=capacity_signals,
+            customer_history_signals=customer_history_signals,
+            customer_preference_signals=customer_preference_signals,
         )
         variant = assemble_variant(
             profile,

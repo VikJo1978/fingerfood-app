@@ -58,6 +58,8 @@ export function recommendationCateringFormatFromServiceStyle(
 export interface RecommendationGenerateRequest {
   event_date: string;
   guest_count: number;
+  inquiry_id?: string | null;
+  use_customer_history?: boolean;
   event_type?: RecommendationEventType | null;
   catering_format?: RecommendationCateringFormat | null;
   fulfillment_mode: FulfillmentMode;
@@ -96,6 +98,7 @@ export interface RecommendationGenerateResponse {
   catalog_source: string;
   warnings: string[];
   production_signal_count: number;
+  customer_history_signal_count: number;
   variants: RecommendationVariant[];
 }
 
@@ -114,7 +117,11 @@ function parseResponse(value: unknown): RecommendationGenerateResponse | null {
   if (typeof value.event_date !== "string" || typeof value.guest_count !== "number") return null;
   if (typeof value.catalog_revision !== "string" || typeof value.catalog_source !== "string") return null;
   if (!Array.isArray(value.warnings) || !value.warnings.every((item) => typeof item === "string")) return null;
-  if (typeof value.production_signal_count !== "number" || !Array.isArray(value.variants)) return null;
+  if (
+    typeof value.production_signal_count !== "number" ||
+    typeof value.customer_history_signal_count !== "number" ||
+    !Array.isArray(value.variants)
+  ) return null;
 
   const variants: RecommendationVariant[] = [];
   for (const rawVariant of value.variants) {
@@ -174,6 +181,7 @@ function parseResponse(value: unknown): RecommendationGenerateResponse | null {
     catalog_source: value.catalog_source,
     warnings: value.warnings,
     production_signal_count: value.production_signal_count,
+    customer_history_signal_count: value.customer_history_signal_count,
     variants,
   };
 }

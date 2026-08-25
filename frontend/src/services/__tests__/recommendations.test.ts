@@ -18,6 +18,7 @@ describe("recommendation API client", () => {
         catalog_source: "catalog",
         warnings: [],
         production_signal_count: 2,
+        customer_history_signal_count: 1,
         variants: [
           {
             kind: "ECONOMIC",
@@ -60,6 +61,7 @@ describe("recommendation API client", () => {
       max_variant_net_cents: 50000,
     });
     expect(result.variants[0].lines[0].item_id).toBe("canape");
+    expect(result.customer_history_signal_count).toBe(1);
   });
 
   it("fails closed when the BFF response shape is malformed", async () => {
