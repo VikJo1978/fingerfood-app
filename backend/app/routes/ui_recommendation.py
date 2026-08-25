@@ -27,6 +27,7 @@ from app.services.core_capacity_signal_adapter import (
     capacity_signals_from_core_rows,
 )
 from app.services.core_customer_history_adapter import (
+    CustomerHistorySignal,
     customer_history_signals_from_core_orders,
 )
 from app.services.core_customer_history_client import CoreCustomerHistoryClientError
@@ -53,7 +54,7 @@ _CAPACITY_CONFIGURATION_LABELS = {
     "MISSING_STATION_REQUIREMENT": "Kapazitätszuordnung fehlt",
     "STATION_INACTIVE": "Produktionsstation ist inaktiv",
     "CAPACITY_UNSET": "Kapazität ist nicht hinterlegt",
-    "STATION_UNAVAILABLE": "Produktionsstation ist nicht verfügbar",
+    "STATION_UNAVAILABLE": "Produktionsstation ist недоступна",
     "NO_CAPACITY": "Für die Produktionsstation ist keine Kapazität hinterlegt",
     "DEMAND_SOURCE_INCOMPLETE": (
         "Auslastung kann wegen unvollständiger Auftragsdaten nicht vollständig "
@@ -204,7 +205,7 @@ def generate_ui_recommendations(
         configurator_item_ids=configurator_item_ids,
     )
 
-    customer_history_signals = ()
+    customer_history_signals: tuple[CustomerHistorySignal, ...] = ()
     history_source_warnings: tuple[str, ...] = ()
     if payload.use_customer_history and payload.inquiry_id:
         try:
