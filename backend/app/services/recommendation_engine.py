@@ -12,6 +12,7 @@ from typing import Literal
 
 from app.models.classification import Allergen, DietType
 from app.models.item import CateringFormat, Item, RecommendationEventType
+from app.services.core_customer_history_adapter import CustomerHistorySignal
 
 RecommendationProfile = Literal["ECONOMIC", "RECOMMENDED", "PREMIUM"]
 ProductionConfidence = Literal["CONFIRMED", "LIKELY", "OPEN_OFFER"]
@@ -34,6 +35,8 @@ _FORMAT_MATCH_BONUS = 15
 _FORMAT_MISMATCH_PENALTY = 10
 _EVENT_MATCH_BONUS = 10
 _EVENT_MISMATCH_PENALTY = 5
+_HISTORY_FREQUENT_BONUS = 10
+_HISTORY_RECENT_PENALTY = 15
 
 
 @dataclass(frozen=True)
@@ -94,16 +97,19 @@ def rank_items(
     *,
     production_signals: tuple[ProductionSignal, ...] = (),
     capacity_signals: tuple[CapacitySignal, ...] = (),
+    customer_history_signals: tuple[CustomerHistorySignal, ...] = (),
 ) -> list[RecommendationCandidate]:
     """Rank items deterministically and return rejected candidates last.
 
-    Production capacity and catalog applicability are advisory operational context.
-    They may apply small soft ranking adjustments, but never reject an otherwise
-    valid catalog item. The human remains responsible for the final decision.
+    Production capacity, customer history and catalog applicability are advisory
+    context. They may apply soft ranking adjustments, but never reject an otherwise
+    valid catalog item. Explicit current inquiry choices remain stronger than
+    repetition hints. The human remains responsible for the final decision.
     """
 
     production_bonus = _production_bonus_by_item(production_signals)
     capacity_by_item = {signal.item_id: signal for signal in capacity_signals}
+    history_by_item = _history_signals_by_item(customer_history_signals)
     candidates = [
         _score_item(
             item,
@@ -111,6 +117,7 @@ def rank_items(
             request,
             production_bonus.get(item.id, 0),
             capacity_by_item.get(item.id),
+            history_by_item.get(item.id, ()),
         )
         for item in items
     ]
@@ -130,6 +137,7 @@ def _score_item(
     request: RecommendationRequest,
     production_bonus: int,
     capacity_signal: CapacitySignal | None,
+    history_signals: tuple[CustomerHistorySignal, ...],
 ) -> RecommendationCandidate:
     rejects: list[str] = []
     explanations: list[str] = []
@@ -170,7 +178,8 @@ def _score_item(
             explanations=(),
         )
 
-    if item.id in request.must_have_item_ids:
+    explicit_must_have = item.id in request.must_have_item_ids
+    if explicit_must_have:
         score += 100
         explanations.append("must-have")
     if item.id in request.disliked_item_ids:
@@ -179,6 +188,22 @@ def _score_item(
     if item.category in request.preferred_categories:
         score += 20
         explanations.append("preferred category")
+
+    for signal in history_signals:
+        if signal.kind == "frequently_ordered":
+            score += _HISTORY_FREQUENT_BONUS
+            explanations.append(
+                f"history frequent +{_HISTORY_FREQUENT_BONUS}: {signal.order_count} orders"
+            )
+        elif signal.kind == "recently_ordered":
+            if explicit_must_have:
+                explanations.append("history recent: repetition penalty ignored for must-have")
+            else:
+                score -= _HISTORY_RECENT_PENALTY
+                explanations.append(
+                    f"history recent -{_HISTORY_RECENT_PENALTY}: "
+                    f"last {signal.last_ordered_on.isoformat()}"
+                )
 
     applicability_score, applicability_explanations = _applicability_score(item, request)
     score += applicability_score
@@ -280,6 +305,15 @@ def _production_bonus_by_item(
             _PRODUCTION_BONUS[signal.confidence],
         )
     return bonuses
+
+
+def _history_signals_by_item(
+    signals: tuple[CustomerHistorySignal, ...],
+) -> dict[str, tuple[CustomerHistorySignal, ...]]:
+    grouped: dict[str, list[CustomerHistorySignal]] = {}
+    for signal in signals:
+        grouped.setdefault(signal.item_id, []).append(signal)
+    return {item_id: tuple(rows) for item_id, rows in grouped.items()}
 
 
 def _diet_compatible(item_diet: DietType, required: DietType) -> bool:
