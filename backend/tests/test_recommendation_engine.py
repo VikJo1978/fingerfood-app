@@ -126,7 +126,7 @@ def test_ranking_is_reproducible_with_item_id_tie_break() -> None:
     assert [candidate.item_id for candidate in ranked] == ["a", "b"]
 
 
-def test_unavailable_capacity_is_advisory_not_a_hard_reject() -> None:
+def test_unavailable_capacity_is_advisory_not_a_hard_reject_or_score_penalty() -> None:
     item = _item("capacity-warning")
 
     ranked = rank_items(
@@ -145,13 +145,14 @@ def test_unavailable_capacity_is_advisory_not_a_hard_reject() -> None:
 
     assert ranked[0].eligible is True
     assert ranked[0].hard_reject_reasons == ()
+    assert ranked[0].score == 10
     assert (
         "capacity advisory: capacity data unavailable or incomplete"
         in ranked[0].explanations
     )
 
 
-def test_capacity_pressure_does_not_change_score() -> None:
+def test_capacity_pressure_applies_soft_penalty_and_changes_ranking() -> None:
     items = [_item("free"), _item("busy")]
 
     ranked = rank_items(
@@ -167,28 +168,76 @@ def test_capacity_pressure_does_not_change_score() -> None:
         ),
     )
 
+    assert [candidate.item_id for candidate in ranked] == ["free", "busy"]
     by_id = {candidate.item_id: candidate for candidate in ranked}
-    assert by_id["free"].score == by_id["busy"].score
-    assert "capacity advisory: 75% load" in by_id["busy"].explanations
+    assert by_id["free"].score == 10
+    assert by_id["busy"].score == 5
+    assert "capacity advisory: 75% load, -5" in by_id["busy"].explanations
 
 
-def test_exceeded_capacity_stays_eligible_and_does_not_change_score() -> None:
-    item = _item("over-limit")
+def test_capacity_penalties_follow_warning_tiers() -> None:
+    item = _item("capacity-tier")
+    expected = (
+        (75, "CAPACITY_ELEVATED", 5),
+        (85, "CAPACITY_HIGH", 10),
+        (95, "CAPACITY_NEAR_LIMIT", 20),
+        (100, "CAPACITY_EXCEEDED", 30),
+    )
+
+    for load_percent, reason_code, penalty in expected:
+        ranked = rank_items(
+            [item],
+            {item.id: 500},
+            RecommendationRequest(),
+            capacity_signals=(
+                CapacitySignal(
+                    item.id,
+                    feasible=True,
+                    overload_penalty=load_percent,
+                    reason_code=reason_code,
+                ),
+            ),
+        )
+
+        assert ranked[0].eligible is True
+        assert ranked[0].score == 10 - penalty
+        assert (
+            f"capacity advisory: {load_percent}% load, -{penalty}"
+            in ranked[0].explanations
+        )
+
+
+def test_explicit_must_have_remains_stronger_than_capacity_penalty() -> None:
+    items = [_item("must-have"), _item("free")]
 
     ranked = rank_items(
-        [item],
-        {item.id: 500},
-        RecommendationRequest(),
+        items,
+        {"must-have": 500, "free": 500},
+        RecommendationRequest(must_have_item_ids=frozenset({"must-have"})),
         capacity_signals=(
             CapacitySignal(
-                item.id,
-                feasible=True,
+                "must-have",
                 overload_penalty=100,
                 reason_code="CAPACITY_EXCEEDED",
             ),
         ),
     )
 
+    assert ranked[0].item_id == "must-have"
     assert ranked[0].eligible is True
-    assert ranked[0].score == 10
-    assert "capacity advisory: 100% load" in ranked[0].explanations
+    assert ranked[0].score == 80
+
+
+def test_capacity_percentage_fallback_uses_same_soft_tiers() -> None:
+    item = _item("legacy-capacity")
+
+    ranked = rank_items(
+        [item],
+        {item.id: 500},
+        RecommendationRequest(),
+        capacity_signals=(CapacitySignal(item.id, overload_penalty=82),),
+    )
+
+    assert ranked[0].eligible is True
+    assert ranked[0].score == 0
+    assert "capacity advisory: 82% load, -10" in ranked[0].explanations

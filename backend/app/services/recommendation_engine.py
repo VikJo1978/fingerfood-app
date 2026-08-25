@@ -24,6 +24,12 @@ _CAPACITY_LOAD_REASON_CODES = frozenset(
         "CAPACITY_EXCEEDED",
     }
 )
+_CAPACITY_SCORE_PENALTY = {
+    "CAPACITY_ELEVATED": 5,
+    "CAPACITY_HIGH": 10,
+    "CAPACITY_NEAR_LIMIT": 20,
+    "CAPACITY_EXCEEDED": 30,
+}
 
 
 @dataclass(frozen=True)
@@ -85,9 +91,9 @@ def rank_items(
 ) -> list[RecommendationCandidate]:
     """Rank items deterministically and return rejected candidates last.
 
-    Production capacity is advisory operational context. It may be explained to the
-    employee, but it never rejects an otherwise valid catalog item and never changes
-    ranking. The human remains responsible for the capacity decision.
+    Production capacity is advisory operational context. It may apply a small soft
+    ranking penalty, but it never rejects an otherwise valid catalog item. The human
+    remains responsible for the final capacity decision.
     """
 
     production_bonus = _production_bonus_by_item(production_signals)
@@ -172,18 +178,28 @@ def _score_item(
         explanations.append(f"same-day production +{production_bonus}")
 
     if capacity_signal is not None:
-        if capacity_signal.reason_code in _CAPACITY_LOAD_REASON_CODES:
+        capacity_reason = capacity_signal.reason_code
+        if capacity_reason in _CAPACITY_LOAD_REASON_CODES:
+            penalty = _CAPACITY_SCORE_PENALTY[capacity_reason]
+            score -= penalty
             explanations.append(
-                f"capacity advisory: {capacity_signal.overload_penalty}% load"
+                f"capacity advisory: {capacity_signal.overload_penalty}% load, -{penalty}"
             )
-        elif capacity_signal.reason_code is not None:
+        elif capacity_reason is not None:
             explanations.append("capacity advisory: capacity data unavailable or incomplete")
         elif not capacity_signal.feasible:
             explanations.append("capacity advisory: limit or data issue")
-        elif capacity_signal.overload_penalty:
-            explanations.append(
-                f"capacity advisory: {capacity_signal.overload_penalty}% load"
+        else:
+            fallback_reason = _capacity_reason_from_percent(
+                capacity_signal.overload_penalty
             )
+            if fallback_reason is not None:
+                penalty = _CAPACITY_SCORE_PENALTY[fallback_reason]
+                score -= penalty
+                explanations.append(
+                    f"capacity advisory: {capacity_signal.overload_penalty}% load, "
+                    f"-{penalty}"
+                )
 
     assert unit_net_cents is not None
     if request.profile == "ECONOMIC":
@@ -202,6 +218,18 @@ def _score_item(
         hard_reject_reasons=(),
         explanations=tuple(explanations),
     )
+
+
+def _capacity_reason_from_percent(load_percent: int) -> str | None:
+    if load_percent >= 100:
+        return "CAPACITY_EXCEEDED"
+    if load_percent >= 90:
+        return "CAPACITY_NEAR_LIMIT"
+    if load_percent >= 80:
+        return "CAPACITY_HIGH"
+    if load_percent >= 70:
+        return "CAPACITY_ELEVATED"
+    return None
 
 
 def _production_bonus_by_item(
