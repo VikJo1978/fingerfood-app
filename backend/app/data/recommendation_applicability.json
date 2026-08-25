@@ -1,0 +1,21 @@
+{
+  "category_rules": {
+    "Business Meeting": {
+      "recommended_catering_formats": ["fingerfood", "mixed"],
+      "recommended_event_types": ["business"]
+    },
+    "Fingerfood": {
+      "recommended_catering_formats": ["fingerfood", "mixed"],
+      "recommended_event_types": []
+    },
+    "Fingerfood-Büffet": {
+      "recommended_catering_formats": ["fingerfood", "buffet", "mixed"],
+      "recommended_event_types": []
+    },
+    "Empfangsbüffet": {
+      "recommended_catering_formats": ["fingerfood", "buffet", "mixed"],
+      "recommended_event_types": ["reception"]
+    }
+  },
+  "item_rules": {}
+}
