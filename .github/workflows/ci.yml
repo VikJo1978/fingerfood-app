@@ -14,14 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Cross-repository contract: pin to the exact merged Core commit that
-      # provides both recommendation-demand and recommendation-capacity for
-      # issue #151/#162. Never use a moving branch here; bump deliberately
-      # when the approved Core contract changes.
+      # includes the accepted canonical logistics timing contract from #175.
+      # Never use a moving branch here; bump deliberately when the approved
+      # Core contract changes.
       - name: Checkout Core contract (VikJo1978/silberloeffel-catering)
         uses: actions/checkout@v7
         with:
           repository: VikJo1978/silberloeffel-catering
-          ref: f41859e76c7d5c2a5935a93031b99c4aad65a159
+          ref: 3f5e8d07d61b1caefe0a8485048ac022ecbdbd6c
           path: core-contract
       - name: Place Core checkout at the path expected by the cross-repository E2E tests
         run: |

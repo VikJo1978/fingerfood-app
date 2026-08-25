@@ -7,6 +7,8 @@ import type {
   CustomerAddressInput,
   DeliveryFulfillmentDefinition,
   OfferDraft,
+  OrderContextV1,
+  ReturnLogisticsDefinition,
 } from "../types";
 import {
 	createInitialDeliveryFulfillmentDefinition,
@@ -46,6 +48,8 @@ export interface OfferSnapshotChargesDefinition {
 		mode: "NEXT_WORKING_DAY" | "SAME_DAY";
 		pickup_window_text: string | null;
 		same_day_fee_cents: number;
+		pickup_window_start_local?: string;
+		pickup_window_end_local?: string;
 	};
 }
 
@@ -61,6 +65,60 @@ export interface OfferPrepareFulfillment {
   delivery_address_mode: DeliveryFulfillmentDefinition["deliveryAddressMode"];
   invoice_address: OfferPrepareAddress | null;
   delivery_address: OfferPrepareAddress | null;
+}
+
+const CANONICAL_LOCAL_TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+function canonicalLocalTime(value: string | undefined): string {
+  const normalized = value?.trim() ?? "";
+  if (!CANONICAL_LOCAL_TIME_RE.test(normalized)) {
+    throw new Error("invalid_canonical_logistics_time");
+  }
+  return normalized;
+}
+
+function canonicalDeliveryTiming(
+  context: OrderContextV1,
+): Record<string, string> {
+  const serviceDate = context.deliveryDate?.trim() ?? "";
+  const start = context.deliveryWindowStart?.trim() ?? "";
+  const end = context.deliveryWindowEnd?.trim() ?? "";
+  const supplied = [serviceDate, start, end].filter(Boolean).length;
+  if (supplied === 0) return {};
+  if (supplied !== 3 || !/^\d{4}-\d{2}-\d{2}$/.test(serviceDate)) {
+    throw new Error("invalid_delivery_window");
+  }
+  const canonicalStart = canonicalLocalTime(start);
+  const canonicalEnd = canonicalLocalTime(end);
+  if (canonicalStart >= canonicalEnd) throw new Error("invalid_delivery_window");
+  return {
+    delivery_date_local: serviceDate,
+    delivery_window_start_local: canonicalStart,
+    delivery_window_end_local: canonicalEnd,
+  };
+}
+
+function canonicalReturnPickupTiming(
+  returnLogistics: ReturnLogisticsDefinition,
+): Record<string, string> {
+  const start = returnLogistics.pickupWindowStartLocal?.trim() ?? "";
+  const end = returnLogistics.pickupWindowEndLocal?.trim() ?? "";
+  const supplied = [start, end].filter(Boolean).length;
+  if (returnLogistics.mode === "NEXT_WORKING_DAY") {
+    if (supplied !== 0) throw new Error("invalid_return_pickup_window");
+    return {};
+  }
+  if (supplied === 0) return {};
+  if (supplied !== 2) throw new Error("invalid_return_pickup_window");
+  const canonicalStart = canonicalLocalTime(start);
+  const canonicalEnd = canonicalLocalTime(end);
+  if (canonicalStart >= canonicalEnd) {
+    throw new Error("invalid_return_pickup_window");
+  }
+  return {
+    pickup_window_start_local: canonicalStart,
+    pickup_window_end_local: canonicalEnd,
+  };
 }
 
 function normalizedFulfillment(
@@ -125,6 +183,7 @@ export function buildChargesDefinition(
   const current = normalizedFulfillment(charges);
 	const returnLogistics =
 		charges.returnLogistics ?? createInitialReturnLogisticsDefinition();
+  const canonicalPickup = canonicalReturnPickupTiming(returnLogistics);
   return {
     delivery: {
       // Keep the operator's configured amount while fulfillment is still
@@ -153,6 +212,7 @@ export function buildChargesDefinition(
 					? returnLogistics.pickupWindowText?.trim() || null
 					: null,
 			same_day_fee_cents: returnLogistics.sameDayFeeCents,
+      ...canonicalPickup,
 		},
   };
 }
@@ -175,6 +235,9 @@ export interface OfferSnapshotRequestBody {
     location_text: string;
     guest_count: number;
     planning_mode: "caterer_suggestion" | "self_select";
+    delivery_date_local?: string;
+    delivery_window_start_local?: string;
+    delivery_window_end_local?: string;
   };
   customer_text: {
     title: string;
@@ -220,6 +283,7 @@ export function buildOfferSnapshotRequest(
   const remarks = ctx.remarks?.trim() ?? "";
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
+  const deliveryTiming = canonicalDeliveryTiming(ctx);
   return {
 		...(contextId
 			? { context_id: contextId }
@@ -240,6 +304,7 @@ export function buildOfferSnapshotRequest(
       location_text: location,
       guest_count: guestCount,
       planning_mode: "caterer_suggestion",
+      ...deliveryTiming,
     },
     customer_text: {
       title: company,

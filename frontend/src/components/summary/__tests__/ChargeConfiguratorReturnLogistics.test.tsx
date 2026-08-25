@@ -43,6 +43,8 @@ describe("ChargeConfiguratorModal return logistics", () => {
 			/>,
 		);
 		expect(screen.getByLabelText("Abholfenster Rückholung")).toBeTruthy();
+    expect(screen.getByLabelText("Abholung Rückholung von")).toBeTruthy();
+    expect(screen.getByLabelText("Abholung Rückholung bis")).toBeTruthy();
 		expect(screen.getByText(/Abholfenster für Rückholung/)).toBeTruthy();
 		expect(screen.getByText("Aufpreis Rückholung netto")).toBeTruthy();
 	});

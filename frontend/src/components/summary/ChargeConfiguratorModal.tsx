@@ -232,10 +232,14 @@ export function ChargeConfiguratorModal({
 										returnLogistics: {
 											...returnLogistics,
 											mode,
-											pickupWindowText:
-												mode === "SAME_DAY"
-													? returnLogistics.pickupWindowText
-													: null,
+							pickupWindowText:
+								mode === "SAME_DAY"
+									? returnLogistics.pickupWindowText
+									: null,
+                pickupWindowStartLocal:
+                  mode === "SAME_DAY" ? returnLogistics.pickupWindowStartLocal : undefined,
+                pickupWindowEndLocal:
+                  mode === "SAME_DAY" ? returnLogistics.pickupWindowEndLocal : undefined,
 										},
 									});
 								}}
@@ -289,6 +293,48 @@ export function ChargeConfiguratorModal({
 										</span>
 									)}
 								</label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="grid gap-1.5">
+                    <span className={labelClass}>Abholung von · optional</span>
+                    <input
+                      aria-label="Abholung Rückholung von"
+                      type="time"
+                      value={returnLogistics.pickupWindowStartLocal ?? ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...charges,
+                          returnLogistics: {
+                            ...returnLogistics,
+                            pickupWindowStartLocal: e.target.value || undefined,
+                          },
+                        })
+                      }
+                      className={moneyClass}
+                    />
+                  </label>
+                  <label className="grid gap-1.5">
+                    <span className={labelClass}>Abholung bis · optional</span>
+                    <input
+                      aria-label="Abholung Rückholung bis"
+                      type="time"
+                      value={returnLogistics.pickupWindowEndLocal ?? ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...charges,
+                          returnLogistics: {
+                            ...returnLogistics,
+                            pickupWindowEndLocal: e.target.value || undefined,
+                          },
+                        })
+                      }
+                      className={moneyClass}
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-muted">
+                  Die strukturierte Von/Bis-Zeit ist nur für die Logistik-Kapazitätsplanung.
+                  Leer bedeutet: Zeitpunkt noch unbekannt.
+                </p>
 								<MoneyField
 									label="Aufpreis Rückholung netto"
 									valueCents={returnLogistics.sameDayFeeCents}

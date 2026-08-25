@@ -18,6 +18,7 @@ duplicated here.
 
 from __future__ import annotations
 
+import re
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -31,6 +32,7 @@ ReturnMode = Literal["NEXT_WORKING_DAY", "SAME_DAY"]
 # rather than inventing new ones.
 _MAX_DESCRIPTION_LEN = 500
 _MAX_ADDITIONAL_LINES = 100
+_CANONICAL_LOCAL_TIME_RE = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 
 _Cents = Annotated[int, Field(strict=True, ge=0)]
 _PositiveQuantity = Annotated[int, Field(strict=True, ge=1)]
@@ -86,6 +88,8 @@ class ReturnLogisticsIn(BaseModel):
         default=None, max_length=_MAX_DESCRIPTION_LEN
     )
     same_day_fee_cents: _Cents = 0
+    pickup_window_start_local: str | None = None
+    pickup_window_end_local: str | None = None
 
     @field_validator("pickup_window_text")
     @classmethod
@@ -98,14 +102,38 @@ class ReturnLogisticsIn(BaseModel):
             raise ValueError("pickup_window_text must not be empty")
         return value
 
+    @field_validator("pickup_window_start_local", "pickup_window_end_local")
+    @classmethod
+    def _canonical_pickup_time(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if not _CANONICAL_LOCAL_TIME_RE.fullmatch(value):
+            raise ValueError("canonical pickup time must be HH:MM")
+        return value
+
     @model_validator(mode="after")
     def _mode_consistency(self) -> "ReturnLogisticsIn":
         if self.mode == "SAME_DAY" and self.pickup_window_text is None:
             raise ValueError("SAME_DAY return requires pickup_window_text")
-        if self.mode == "NEXT_WORKING_DAY" and self.pickup_window_text is not None:
-            raise ValueError(
-                "NEXT_WORKING_DAY return must not specify pickup_window_text"
-            )
+        if (self.pickup_window_start_local is None) != (
+            self.pickup_window_end_local is None
+        ):
+            raise ValueError("canonical pickup window requires start and end")
+        if (
+            self.pickup_window_start_local is not None
+            and self.pickup_window_end_local is not None
+            and self.pickup_window_start_local >= self.pickup_window_end_local
+        ):
+            raise ValueError("canonical pickup window start must be before end")
+        if self.mode == "NEXT_WORKING_DAY":
+            if self.pickup_window_text is not None:
+                raise ValueError(
+                    "NEXT_WORKING_DAY return must not specify pickup_window_text"
+                )
+            if self.pickup_window_start_local is not None:
+                raise ValueError(
+                    "NEXT_WORKING_DAY return must not specify canonical pickup time"
+                )
         return self
 
 
