@@ -14,6 +14,7 @@ interface RecommendationLauncherProps {
   initialGuestCount?: number;
   initialEventType?: string;
   initialServiceStyle?: string;
+  inquiryId?: string | null;
   onApplyVariant?: (variant: RecommendationVariant) => void;
 }
 
@@ -22,6 +23,7 @@ export function RecommendationLauncher({
   initialGuestCount = 10,
   initialEventType = "",
   initialServiceStyle = "",
+  inquiryId = null,
   onApplyVariant,
 }: RecommendationLauncherProps) {
   const [open, setOpen] = useState(false);
@@ -125,6 +127,7 @@ export function RecommendationLauncher({
                 eventDate={eventDate}
                 guestCount={guestCount}
                 catalog={catalog}
+                inquiryId={inquiryId}
                 initialEventType={prefilledEventType}
                 initialCateringFormat={prefilledCateringFormat}
                 onApplyVariant={(variant) => {
