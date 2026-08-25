@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: VikJo1978/silberloeffel-catering
-          ref: 0f58774677a036b746f884c8b28b8bc6c7a78047
+          ref: f41859e76c7d5c2a5935a93031b99c4aad65a159
           path: core-contract
       - name: Place Core checkout at the path expected by the cross-repository E2E tests
         run: |
