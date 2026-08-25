@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from app.models.classification import Allergen, DietType
-from app.models.item import Item
+from app.models.item import CateringFormat, Item, RecommendationEventType
 
 RecommendationProfile = Literal["ECONOMIC", "RECOMMENDED", "PREMIUM"]
 ProductionConfidence = Literal["CONFIRMED", "LIKELY", "OPEN_OFFER"]
@@ -30,11 +30,17 @@ _CAPACITY_SCORE_PENALTY = {
     "CAPACITY_NEAR_LIMIT": 20,
     "CAPACITY_EXCEEDED": 30,
 }
+_FORMAT_MATCH_BONUS = 15
+_FORMAT_MISMATCH_PENALTY = 10
+_EVENT_MATCH_BONUS = 10
+_EVENT_MISMATCH_PENALTY = 5
 
 
 @dataclass(frozen=True)
 class RecommendationRequest:
     profile: RecommendationProfile = "RECOMMENDED"
+    catering_format: CateringFormat | None = None
+    event_type: RecommendationEventType | None = None
     diet_type: DietType | None = None
     excluded_allergens: frozenset[Allergen] = frozenset()
     no_pork: bool = False
@@ -91,9 +97,9 @@ def rank_items(
 ) -> list[RecommendationCandidate]:
     """Rank items deterministically and return rejected candidates last.
 
-    Production capacity is advisory operational context. It may apply a small soft
-    ranking penalty, but it never rejects an otherwise valid catalog item. The human
-    remains responsible for the final capacity decision.
+    Production capacity and catalog applicability are advisory operational context.
+    They may apply small soft ranking adjustments, but never reject an otherwise
+    valid catalog item. The human remains responsible for the final decision.
     """
 
     production_bonus = _production_bonus_by_item(production_signals)
@@ -173,6 +179,11 @@ def _score_item(
     if item.category in request.preferred_categories:
         score += 20
         explanations.append("preferred category")
+
+    applicability_score, applicability_explanations = _applicability_score(item, request)
+    score += applicability_score
+    explanations.extend(applicability_explanations)
+
     if production_bonus:
         score += production_bonus
         explanations.append(f"same-day production +{production_bonus}")
@@ -218,6 +229,33 @@ def _score_item(
         hard_reject_reasons=(),
         explanations=tuple(explanations),
     )
+
+
+def _applicability_score(
+    item: Item, request: RecommendationRequest
+) -> tuple[int, tuple[str, ...]]:
+    score = 0
+    explanations: list[str] = []
+
+    if request.catering_format is not None and item.recommended_catering_formats:
+        if request.catering_format in item.recommended_catering_formats:
+            score += _FORMAT_MATCH_BONUS
+            explanations.append(f"catering format match +{_FORMAT_MATCH_BONUS}")
+        else:
+            score -= _FORMAT_MISMATCH_PENALTY
+            explanations.append(
+                f"catering format mismatch -{_FORMAT_MISMATCH_PENALTY}"
+            )
+
+    if request.event_type is not None and item.recommended_event_types:
+        if request.event_type in item.recommended_event_types:
+            score += _EVENT_MATCH_BONUS
+            explanations.append(f"event type match +{_EVENT_MATCH_BONUS}")
+        else:
+            score -= _EVENT_MISMATCH_PENALTY
+            explanations.append(f"event type mismatch -{_EVENT_MISMATCH_PENALTY}")
+
+    return score, tuple(explanations)
 
 
 def _capacity_reason_from_percent(load_percent: int) -> str | None:

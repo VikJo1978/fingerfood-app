@@ -95,4 +95,26 @@ describe("RecommendationPanel variant apply", () => {
     await waitFor(() => expect(onApplyVariant).toHaveBeenCalledOnce());
     expect(onApplyVariant).toHaveBeenCalledWith(variant);
   });
+
+  it("sends catering format and event type to deterministic scoring", async () => {
+    render(
+      <RecommendationPanel eventDate="2026-08-30" guestCount={40} catalog={catalog} />
+    );
+
+    fireEvent.change(screen.getByLabelText("Catering-Format"), {
+      target: { value: "buffet" },
+    });
+    fireEvent.change(screen.getByLabelText("Veranstaltungstyp"), {
+      target: { value: "business" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Vorschläge berechnen" }));
+
+    await waitFor(() => expect(generateRecommendationsMock).toHaveBeenCalledOnce());
+    expect(generateRecommendationsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        catering_format: "buffet",
+        event_type: "business",
+      })
+    );
+  });
 });

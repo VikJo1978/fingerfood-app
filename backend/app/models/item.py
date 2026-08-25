@@ -4,6 +4,15 @@ from pydantic import BaseModel, Field
 
 from app.models.classification import Allergen, DietType, IngredientFlags
 
+CateringFormat = Literal["fingerfood", "buffet", "mixed", "other"]
+RecommendationEventType = Literal[
+    "business",
+    "private",
+    "wedding",
+    "reception",
+    "other",
+]
+
 
 class Item(BaseModel):
     id: str
@@ -19,6 +28,16 @@ class Item(BaseModel):
     items_included: str | None = None
     module: Literal["food", "beverage", "staff", "tableware", "equipment"] = "food"
     item_kind: Literal["simple", "composite"] = "simple"
+
+    recommended_catering_formats: list[CateringFormat] = Field(default_factory=list)
+    recommended_event_types: list[RecommendationEventType] = Field(default_factory=list)
+    """Optional recommendation metadata, never a hard availability constraint.
+
+    Empty lists mean the catalog has no explicit applicability fact for this item.
+    Recommendation scoring must therefore stay neutral rather than infer suitability
+    from names/descriptions. Populated values are curated catalog metadata used only
+    as soft ranking signals for the Office recommendation flow.
+    """
 
     surcharge_label: str | None = None
     surcharge_amount: float | None = Field(default=None, ge=0)

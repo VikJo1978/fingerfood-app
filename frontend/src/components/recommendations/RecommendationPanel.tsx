@@ -11,6 +11,7 @@ import {
 import {
   generateRecommendations,
   type FulfillmentMode,
+  type RecommendationEventType,
   type RecommendationGenerateResponse,
   type RecommendationVariant,
 } from "../../services/recommendations";
@@ -38,6 +39,7 @@ export function RecommendationPanel({
   onApplyVariant,
 }: RecommendationPanelProps) {
   const [cateringFormat, setCateringFormat] = useState<CateringFormat>("fingerfood");
+  const [eventType, setEventType] = useState<RecommendationEventType | "">("");
   const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>("DELIVERY");
   const [dietType, setDietType] = useState<DietType | "">("");
   const [noPork, setNoPork] = useState(false);
@@ -88,6 +90,7 @@ export function RecommendationPanel({
       const response = await generateRecommendations({
         event_date: eventDate,
         guest_count: guestCount,
+        event_type: eventType || null,
         catering_format: cateringFormat,
         fulfillment_mode: fulfillmentMode,
         diet_type: dietType || null,
@@ -120,7 +123,7 @@ export function RecommendationPanel({
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="flex flex-col gap-1.5">
           <span className={labelClass}>Catering-Format</span>
           <select
@@ -131,6 +134,24 @@ export function RecommendationPanel({
             <option value="fingerfood">Fingerfood</option>
             <option value="buffet">Buffet</option>
             <option value="mixed">Gemischt</option>
+            <option value="other">Sonstiges</option>
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className={labelClass}>Veranstaltungstyp</span>
+          <select
+            className={fieldClass}
+            value={eventType}
+            onChange={(event) =>
+              setEventType(event.target.value as RecommendationEventType | "")
+            }
+          >
+            <option value="">Keine Vorgabe</option>
+            <option value="business">Business / Meeting</option>
+            <option value="private">Privat</option>
+            <option value="wedding">Hochzeit</option>
+            <option value="reception">Empfang</option>
             <option value="other">Sonstiges</option>
           </select>
         </label>
