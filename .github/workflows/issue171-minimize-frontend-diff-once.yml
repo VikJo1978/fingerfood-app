@@ -46,48 +46,72 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("frontend/src/utils/__tests__/offerSnapshotRequest.test.ts")
           text = path.read_text(encoding="utf-8")
-          return_block = '''      return_logistics: {
-                mode: "NEXT_WORKING_DAY",
-                pickup_window_text: null,
-                same_day_fee_cents: 0,
-              },
-          '''
-          anchors = [
-              '''      buffet: {
-                base_mode: "NONE",
-                pauschale_per_person_cents: 50,
-              },
-              ''',
-              '''      buffet: {
-                base_mode: "PAUSCHALE",
-                pauschale_per_person_cents: 75,
-              },
-              ''',
-          ]
-          for anchor in anchors:
-              if text.count(anchor) != 1:
-                  raise RuntimeError(f"unexpected offerSnapshotRequest test anchor count: {text.count(anchor)}")
-              text = text.replace(anchor, anchor + return_block, 1)
+
+          def add_return_default(text: str, mode: str, cents: int) -> str:
+              pattern = re.compile(
+                  rf'(?P<block>(?P<indent>^[ \t]+)buffet: \{{\n'
+                  rf'[ \t]+base_mode: "{mode}",\n'
+                  rf'[ \t]+pauschale_per_person_cents: {cents},\n'
+                  rf'(?P=indent)\}},)(?P<tail>\n[ \t]+\}}\);)',
+                  re.MULTILINE,
+              )
+              matches = list(pattern.finditer(text))
+              if len(matches) != 1:
+                  raise RuntimeError(
+                      f"unexpected charges expectation count for {mode}/{cents}: {len(matches)}"
+                  )
+              match = matches[0]
+              indent = match.group("indent")
+              child = indent + "  "
+              insertion = (
+                  f'{match.group("block")}\n'
+                  f'{indent}return_logistics: {{\n'
+                  f'{child}mode: "NEXT_WORKING_DAY",\n'
+                  f'{child}pickup_window_text: null,\n'
+                  f'{child}same_day_fee_cents: 0,\n'
+                  f'{indent}}},'
+                  f'{match.group("tail")}'
+              )
+              return text[: match.start()] + insertion + text[match.end() :]
+
+          text = add_return_default(text, "NONE", 50)
+          text = add_return_default(text, "PAUSCHALE", 75)
           path.write_text(text, encoding="utf-8")
 
           path = Path("frontend/src/utils/__tests__/draftPersistence.test.ts")
           text = path.read_text(encoding="utf-8")
-          old = '    expect(restored?.chargesDefinition).toEqual(draft.chargesDefinition);\n'
-          new = '''    expect(restored?.chargesDefinition).toEqual({
-              ...draft.chargesDefinition,
-              returnLogistics: {
-                mode: "NEXT_WORKING_DAY",
-                pickupWindowText: null,
-                sameDayFeeCents: 0,
-              },
-            });
-          '''
-          if text.count(old) != 1:
-              raise RuntimeError(f"unexpected draft persistence assertion count: {text.count(old)}")
-          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          pattern = re.compile(
+              r'^(?P<indent>[ \t]*)expect\(restored\?\.chargesDefinition\)'
+              r'\.toEqual\(draft\.chargesDefinition\);$',
+              re.MULTILINE,
+          )
+          matches = list(pattern.finditer(text))
+          if len(matches) != 1:
+              raise RuntimeError(
+                  f"unexpected draft persistence assertion count: {len(matches)}"
+              )
+          match = matches[0]
+          indent = match.group("indent")
+          child = indent + "  "
+          grandchild = child + "  "
+          replacement = (
+              f'{indent}expect(restored?.chargesDefinition).toEqual({{\n'
+              f'{child}...draft.chargesDefinition,\n'
+              f'{child}returnLogistics: {{\n'
+              f'{grandchild}mode: "NEXT_WORKING_DAY",\n'
+              f'{grandchild}pickupWindowText: null,\n'
+              f'{grandchild}sameDayFeeCents: 0,\n'
+              f'{child}}},\n'
+              f'{indent}}});'
+          )
+          path.write_text(
+              text[: match.start()] + replacement + text[match.end() :],
+              encoding="utf-8",
+          )
           PY
 
       - name: Validate frontend after diff cleanup
