@@ -14,6 +14,7 @@ from app.core.employee_auth import (
     require_employee_permission,
 )
 from app.models.classification import Allergen, DietType
+from app.models.item import CateringFormat, RecommendationEventType
 from app.routes.offer import safe_error_detail
 from app.services.catalog_client import CatalogClientError
 from app.services.catalog_factory import build_catalog_adapter, build_core_office_client
@@ -63,8 +64,8 @@ class UiRecommendationGenerateRequest(BaseModel):
 
     event_date: date
     guest_count: int = Field(gt=0)
-    event_type: str | None = None
-    catering_format: Literal["fingerfood", "buffet", "mixed", "other"] | None = None
+    event_type: RecommendationEventType | None = None
+    catering_format: CateringFormat | None = None
     fulfillment_mode: Literal["PICKUP", "DELIVERY"]
     diet_type: DietType | None = None
     excluded_allergens: set[Allergen] = Field(default_factory=set)
@@ -189,6 +190,8 @@ def generate_ui_recommendations(
         configurator_item_ids=configurator_item_ids,
     )
     recommendation_request = RecommendationRequest(
+        catering_format=payload.catering_format,
+        event_type=payload.event_type,
         diet_type=payload.diet_type,
         excluded_allergens=frozenset(payload.excluded_allergens),
         no_pork=payload.no_pork,
