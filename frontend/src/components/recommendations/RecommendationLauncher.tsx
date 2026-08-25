@@ -1,19 +1,27 @@
 import { useEffect, useState } from "react";
 
 import { fetchItems } from "../../services/api";
-import type { RecommendationVariant } from "../../services/recommendations";
+import {
+  recommendationCateringFormatFromServiceStyle,
+  recommendationEventTypeFromInquiry,
+  type RecommendationVariant,
+} from "../../services/recommendations";
 import type { CatalogItem } from "../../types";
 import { RecommendationPanel } from "./RecommendationPanel";
 
 interface RecommendationLauncherProps {
   initialEventDate?: string;
   initialGuestCount?: number;
+  initialEventType?: string;
+  initialServiceStyle?: string;
   onApplyVariant?: (variant: RecommendationVariant) => void;
 }
 
 export function RecommendationLauncher({
   initialEventDate = "",
   initialGuestCount = 10,
+  initialEventType = "",
+  initialServiceStyle = "",
   onApplyVariant,
 }: RecommendationLauncherProps) {
   const [open, setOpen] = useState(false);
@@ -42,6 +50,10 @@ export function RecommendationLauncher({
       cancelled = true;
     };
   }, [catalog.length, catalogError, open]);
+
+  const prefilledEventType = recommendationEventTypeFromInquiry(initialEventType);
+  const prefilledCateringFormat =
+    recommendationCateringFormatFromServiceStyle(initialServiceStyle) || "fingerfood";
 
   return (
     <>
@@ -113,6 +125,8 @@ export function RecommendationLauncher({
                 eventDate={eventDate}
                 guestCount={guestCount}
                 catalog={catalog}
+                initialEventType={prefilledEventType}
+                initialCateringFormat={prefilledCateringFormat}
                 onApplyVariant={(variant) => {
                   onApplyVariant?.(variant);
                   setOpen(false);
