@@ -43,6 +43,16 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Diagnose return-logistics anchor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path("frontend/src/components/summary/ChargeConfiguratorModal.tsx").read_text()
+          marker = "pickupWindowText:"
+          idx = text.index(marker)
+          print(repr(text[idx-140:idx+260]))
+          PY
+
       - name: Apply canonical timing patch
         run: python scripts_issue175_configurator_timing_patch.py
 
@@ -106,7 +116,7 @@ jobs:
       - name: Commit product changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+VikJo1978@users.noreply.github.com"
           git add backend frontend .github/workflows/ci.yml docs
           if git diff --cached --quiet; then
             echo "No product changes to commit"
