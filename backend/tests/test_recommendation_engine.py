@@ -133,12 +133,22 @@ def test_unavailable_capacity_is_advisory_not_a_hard_reject() -> None:
         [item],
         {item.id: 500},
         RecommendationRequest(),
-        capacity_signals=(CapacitySignal(item.id, feasible=False),),
+        capacity_signals=(
+            CapacitySignal(
+                item.id,
+                feasible=True,
+                overload_penalty=100,
+                reason_code="CAPACITY_UNSET",
+            ),
+        ),
     )
 
     assert ranked[0].eligible is True
     assert ranked[0].hard_reject_reasons == ()
-    assert "capacity advisory: limit or data issue" in ranked[0].explanations
+    assert (
+        "capacity advisory: capacity data unavailable or incomplete"
+        in ranked[0].explanations
+    )
 
 
 def test_capacity_pressure_does_not_change_score() -> None:
@@ -148,9 +158,37 @@ def test_capacity_pressure_does_not_change_score() -> None:
         items,
         {"free": 500, "busy": 500},
         RecommendationRequest(),
-        capacity_signals=(CapacitySignal("busy", overload_penalty=75),),
+        capacity_signals=(
+            CapacitySignal(
+                "busy",
+                overload_penalty=75,
+                reason_code="CAPACITY_ELEVATED",
+            ),
+        ),
     )
 
     by_id = {candidate.item_id: candidate for candidate in ranked}
     assert by_id["free"].score == by_id["busy"].score
     assert "capacity advisory: 75% load" in by_id["busy"].explanations
+
+
+def test_exceeded_capacity_stays_eligible_and_does_not_change_score() -> None:
+    item = _item("over-limit")
+
+    ranked = rank_items(
+        [item],
+        {item.id: 500},
+        RecommendationRequest(),
+        capacity_signals=(
+            CapacitySignal(
+                item.id,
+                feasible=True,
+                overload_penalty=100,
+                reason_code="CAPACITY_EXCEEDED",
+            ),
+        ),
+    )
+
+    assert ranked[0].eligible is True
+    assert ranked[0].score == 10
+    assert "capacity advisory: 100% load" in ranked[0].explanations
