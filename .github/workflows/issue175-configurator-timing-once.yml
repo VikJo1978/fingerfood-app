@@ -43,18 +43,20 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Diagnose return-logistics anchor
+      - name: Apply canonical timing patch
         run: |
           python - <<'PY'
           from pathlib import Path
-          text = Path("frontend/src/components/summary/ChargeConfiguratorModal.tsx").read_text()
-          marker = "pickupWindowText:"
-          idx = text.index(marker)
-          print(repr(text[idx-140:idx+260]))
-          PY
 
-      - name: Apply canonical timing patch
-        run: python scripts_issue175_configurator_timing_patch.py
+          script_path = Path("scripts_issue175_configurator_timing_patch.py")
+          source = script_path.read_text(encoding="utf-8")
+          old = '''    count = text.count(old)\n    if count != 1:\n        raise RuntimeError(f"expected one match in {path}, got {count}")\n    target.write_text(text.replace(old, new, 1), encoding="utf-8")\n'''
+          new = '''    count = text.count(old)\n    if (\n        count != 1\n        and path.endswith("ChargeConfiguratorModal.tsx")\n        and "pickupWindowText:" in old\n    ):\n        adjusted = "".join(\n            ("\\t" * 4 + line if line.strip() else line)\n            for line in old.splitlines(keepends=True)\n        )\n        if text.count(adjusted) == 1:\n            old = adjusted\n            count = 1\n    if count != 1:\n        raise RuntimeError(f"expected one match in {path}, got {count}")\n    target.write_text(text.replace(old, new, 1), encoding="utf-8")\n'''
+          if source.count(old) != 1:
+              raise RuntimeError("replace_once body changed unexpectedly")
+          source = source.replace(old, new, 1)
+          exec(compile(source, str(script_path), "exec"), {"__name__": "__main__"})
+          PY
 
       - name: Install backend
         run: |
