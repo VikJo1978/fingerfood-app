@@ -68,6 +68,7 @@ describe("RecommendationPanel variant apply", () => {
       catalog_source: "catalog",
       warnings: [],
       production_signal_count: 2,
+      customer_history_signal_count: 1,
       variants: [variant],
     });
   });
@@ -118,6 +119,32 @@ describe("RecommendationPanel variant apply", () => {
       expect.objectContaining({
         catering_format: "buffet",
         event_type: "business",
+      })
+    );
+  });
+
+  it("lets Office disable history hints without deleting history", async () => {
+    render(
+      <RecommendationPanel
+        eventDate="2026-08-30"
+        guestCount={40}
+        catalog={catalog}
+        inquiryId="inquiry-1"
+      />
+    );
+
+    const historyToggle = screen.getByLabelText(
+      "Kundenhistorie als weichen Hinweis berücksichtigen"
+    );
+    expect((historyToggle as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(historyToggle);
+    fireEvent.click(screen.getByRole("button", { name: "Vorschläge berechnen" }));
+
+    await waitFor(() => expect(generateRecommendationsMock).toHaveBeenCalledOnce());
+    expect(generateRecommendationsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inquiry_id: "inquiry-1",
+        use_customer_history: false,
       })
     );
   });
