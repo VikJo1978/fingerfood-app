@@ -20,9 +20,10 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 ChargeBaseMode = Literal["NONE", "PAUSCHALE"]
+ReturnMode = Literal["NEXT_WORKING_DAY", "SAME_DAY"]
 
 # Mirrors Core's MAX_SHORT_TEXT_LEN / MAX_POSITIONS_PER_VARIANT
 # (silberloeffel-catering domain/offer_snapshot.py) — Configurator has no
@@ -77,13 +78,47 @@ class BuffetChargeIn(BaseModel):
     pauschale_per_person_cents: _Cents
 
 
+class ReturnLogisticsIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: ReturnMode = "NEXT_WORKING_DAY"
+    pickup_window_text: str | None = Field(
+        default=None, max_length=_MAX_DESCRIPTION_LEN
+    )
+    same_day_fee_cents: _Cents = 0
+
+    @field_validator("pickup_window_text")
+    @classmethod
+    def _pickup_window_trimmed_and_nonempty(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value != value.strip():
+            raise ValueError("pickup_window_text must be trimmed")
+        if not value:
+            raise ValueError("pickup_window_text must not be empty")
+        return value
+
+    @model_validator(mode="after")
+    def _mode_consistency(self) -> "ReturnLogisticsIn":
+        if self.mode == "SAME_DAY" and self.pickup_window_text is None:
+            raise ValueError("SAME_DAY return requires pickup_window_text")
+        if self.mode == "NEXT_WORKING_DAY" and self.pickup_window_text is not None:
+            raise ValueError(
+                "NEXT_WORKING_DAY return must not specify pickup_window_text"
+            )
+        return self
+
+
 class ChargesDefinitionIn(BaseModel):
-    """Complete, explicit charge configuration — all three sections are
-    required whenever ``charges_definition`` is sent at all, matching Core's
-    "no partial shape" rule exactly."""
+    """Complete explicit charge configuration accepted from Configurator.
+
+    ``return_logistics`` defaults to NEXT_WORKING_DAY so callers created before
+    issue #171 remain valid while new producers send the section explicitly.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     delivery: DeliveryChargeIn
     dishware: DishwareChargeIn
     buffet: BuffetChargeIn
+    return_logistics: ReturnLogisticsIn = Field(default_factory=ReturnLogisticsIn)

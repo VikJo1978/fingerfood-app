@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
-import type { CatalogItem, ChargesDefinition, OfferDraft, QuantityMode } from "../../types";
-import { formatCurrency, type PauschalenBreakdown, type VatBreakdown } from "../../utils/pricing";
+import type {
+	CatalogItem,
+	ChargesDefinition,
+	OfferDraft,
+	QuantityMode,
+} from "../../types";
 import { computeBudgetBreakdown } from "../../utils/budgetBreakdown";
+import {
+	formatCurrency,
+	type PauschalenBreakdown,
+	type VatBreakdown,
+} from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
+import { ChargeConfiguratorModal } from "./ChargeConfiguratorModal";
 import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
-import { ChargeConfiguratorModal } from "./ChargeConfiguratorModal";
 
 export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
 export type PrepareStatus = "idle" | "preparing" | "done" | "error";
@@ -67,7 +76,15 @@ export function OfferSummary({
   canPrepareInCore,
   onPrepareInCore,
 }: OfferSummaryProps) {
-  const { lines, persons, budgetEnabled, totalBudget, budgetType, budgetBasis, budgetScope } = draft;
+	const {
+		lines,
+		persons,
+		budgetEnabled,
+		totalBudget,
+		budgetType,
+		budgetBasis,
+		budgetScope,
+	} = draft;
   const [previewOpen, setPreviewOpen] = useState(false);
   const [chargesOpen, setChargesOpen] = useState(false);
 
@@ -84,7 +101,16 @@ export function OfferSummary({
         vat,
         formatCurrency,
       }),
-    [budgetType, budgetBasis, budgetScope, totalBudget, persons, subtotal, pauschalen, vat]
+		[
+			budgetType,
+			budgetBasis,
+			budgetScope,
+			totalBudget,
+			persons,
+			subtotal,
+			pauschalen,
+			vat,
+		],
   );
 
   /** Mirrors Core's own hard requirement (a PER_PERSON budget without a
@@ -98,16 +124,25 @@ export function OfferSummary({
     (draft.chargesDefinition.buffet.baseMode === "PAUSCHALE" ||
       draft.chargesDefinition.dishware.baseMode === "PAUSCHALE") &&
     !(Number.isInteger(persons) && persons > 0);
-  const invalidDishwareLines = draft.chargesDefinition.dishware.additionalLines.some(
+	const invalidDishwareLines =
+		draft.chargesDefinition.dishware.additionalLines.some(
     (line) =>
       line.description.trim() === "" ||
       line.description.length > 500 ||
       !Number.isInteger(line.quantity) ||
       line.quantity < 1 ||
       !Number.isInteger(line.unitNetCents) ||
-      line.unitNetCents < 0
+				line.unitNetCents < 0,
   );
-  const chargeBlocksPrepare = pauschaleNeedsPersons || invalidDishwareLines;
+	const returnLogistics = draft.chargesDefinition.returnLogistics;
+	const invalidReturnLogistics =
+		returnLogistics?.mode === "SAME_DAY" &&
+		(returnLogistics.pickupWindowText?.trim() === "" ||
+			returnLogistics.pickupWindowText == null ||
+			!Number.isInteger(returnLogistics.sameDayFeeCents) ||
+			returnLogistics.sameDayFeeCents < 0);
+	const chargeBlocksPrepare =
+		pauschaleNeedsPersons || invalidDishwareLines || invalidReturnLogistics;
 
   return (
     // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: no more sticky/max-h guess.
@@ -151,7 +186,8 @@ export function OfferSummary({
       >
         {lines.length === 0 ? (
           <p className="rounded-card border border-dashed border-line bg-canvas/60 px-4 py-8 text-center text-sm text-muted">
-            Noch keine Positionen. Wählen Sie links Artikel aus und fügen Sie sie hinzu.
+						Noch keine Positionen. Wählen Sie links Artikel aus und fügen Sie
+						sie hinzu.
           </p>
         ) : (
           <ul className="space-y-1">
@@ -178,12 +214,18 @@ export function OfferSummary({
       <div className="shrink-0 rounded-b-[18px] border-t border-line p-3 pt-2.5 lg:shadow-[0_-8px_16px_-12px_rgba(41,54,47,0.18)]">
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between gap-4">
-            <span className="text-sm text-muted">Positionen ({lines.length})</span>
-            <span className="text-xl font-bold text-ink">{formatCurrency(subtotal)}</span>
+						<span className="text-sm text-muted">
+							Positionen ({lines.length})
+						</span>
+						<span className="text-xl font-bold text-ink">
+							{formatCurrency(subtotal)}
+						</span>
           </div>
           <div className="flex items-baseline justify-between gap-4 text-sm">
             <span className="text-muted">Preis pro Person (Positionen)</span>
-            <span className="font-semibold text-ink">{formatCurrency(pricePerPerson)}</span>
+						<span className="font-semibold text-ink">
+							{formatCurrency(pricePerPerson)}
+						</span>
           </div>
           <ChargeSummaryRow
             label="Büffetpauschale"
@@ -192,7 +234,9 @@ export function OfferSummary({
           />
           <ChargeSummaryRow
             label="Geschirr"
-            amount={pauschalen.geschirrpauschale + pauschalen.dishwareAdditional}
+						amount={
+							pauschalen.geschirrpauschale + pauschalen.dishwareAdditional
+						}
             onEdit={() => setChargesOpen(true)}
           />
           <ChargeSummaryRow
@@ -200,8 +244,18 @@ export function OfferSummary({
             amount={pauschalen.anlieferung}
             onEdit={() => setChargesOpen(true)}
           />
+					{returnLogistics?.mode === "SAME_DAY" ? (
+						<ChargeSummaryRow
+							label="Rückholung am Veranstaltungstag"
+							amount={pauschalen.returnPickup ?? 0}
+							onEdit={() => setChargesOpen(true)}
+						/>
+					) : null}
           <div className="flex items-baseline justify-between gap-4 border-t border-line pt-1.5">
-            <span className="text-sm font-semibold text-ink" title="Gesamtsumme inkl. Pauschalen (netto)">
+						<span
+							className="text-sm font-semibold text-ink"
+							title="Gesamtsumme inkl. Pauschalen (netto)"
+						>
               Gesamt (netto)
             </span>
             <span className="text-xl font-bold text-ink">
@@ -217,10 +271,15 @@ export function OfferSummary({
             <span>{formatCurrency(vat.vat19Amount)}</span>
           </div>
           <div className="flex items-baseline justify-between gap-4 border-t-2 border-ink/80 pt-1.5">
-            <span className="text-base font-bold text-ink" title="Gesamtsumme inkl. MwSt. (brutto)">
+						<span
+							className="text-base font-bold text-ink"
+							title="Gesamtsumme inkl. MwSt. (brutto)"
+						>
               Gesamt (brutto)
             </span>
-            <span className="text-xl font-extrabold text-ink">{formatCurrency(vat.totalInclVat)}</span>
+						<span className="text-xl font-extrabold text-ink">
+							{formatCurrency(vat.totalInclVat)}
+						</span>
           </div>
 
           {/* Collapsed by default so the full legal wording doesn't
@@ -232,12 +291,13 @@ export function OfferSummary({
               <ChevronDown />
             </summary>
             <p className="px-3 pb-2 text-xs leading-relaxed text-muted">
-              ⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für Getränke,
-              Service/Personal und Equipment — nach dem seit 1.1.2026 geltenden ermäßigten
-              Steuersatz für Speisen im Catering. Keine steuerliche Prüfung. Bitte vor
-              Rechnungsstellung mit dem Steuerberater abstimmen. Die automatische
-              USt.-Zuordnung gilt für Leistungen ab 01.01.2026; historische Leistungen werden
-              nicht steuerlich bewertet.
+							⚠ MwSt.-Sätze: 7% für Speisen (auch Büffets/Pakete), 19% für
+							Getränke, Service/Personal und Equipment — nach dem seit 1.1.2026
+							geltenden ermäßigten Steuersatz für Speisen im Catering. Keine
+							steuerliche Prüfung. Bitte vor Rechnungsstellung mit dem
+							Steuerberater abstimmen. Die automatische USt.-Zuordnung gilt für
+							Leistungen ab 01.01.2026; historische Leistungen werden nicht
+							steuerlich bewertet.
             </p>
           </details>
 
@@ -256,12 +316,16 @@ export function OfferSummary({
                 onClick={() => void onSaveDraft()}
                 className="inline-flex h-9 w-full items-center justify-center rounded-control border border-line bg-white px-3 text-xs font-medium text-ink transition hover:border-accent hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {draftSaveStatus === "saving" ? "Speichert…" : "Entwurf speichern"}
+								{draftSaveStatus === "saving"
+									? "Speichert…"
+									: "Entwurf speichern"}
               </button>
               {draftSaveMessage ? (
                 <p
                   className={`text-center text-xs ${
-                    draftSaveStatus === "error" ? "font-semibold text-danger" : "text-muted"
+										draftSaveStatus === "error"
+											? "font-semibold text-danger"
+											: "text-muted"
                   }`}
                   role="status"
                 >
@@ -316,31 +380,47 @@ export function OfferSummary({
                 : "Angebot in Core vorbereiten"}
             </button>
             {budgetBlocksPrepare ? (
-              <p className="text-center text-xs font-semibold text-danger" role="alert">
-                Personenzahl erforderlich, um das Pro-Person-Budget zu prüfen — Angebot kann
-                erst vorbereitet werden, wenn eine gültige Personenzahl eingetragen ist.
+							<p
+								className="text-center text-xs font-semibold text-danger"
+								role="alert"
+							>
+								Personenzahl erforderlich, um das Pro-Person-Budget zu prüfen —
+								Angebot kann erst vorbereitet werden, wenn eine gültige
+								Personenzahl eingetragen ist.
               </p>
             ) : null}
             {personBlocksPrepare ? (
-              <p className="text-center text-xs font-semibold text-danger" role="alert">
+							<p
+								className="text-center text-xs font-semibold text-danger"
+								role="alert"
+							>
                 Personenzahl erforderlich, um das Angebot vorzubereiten.
               </p>
             ) : null}
             {pauschaleNeedsPersons ? (
-              <p className="text-center text-xs font-semibold text-danger" role="alert">
-                Büffet- oder Geschirrpauschale benötigt eine gültige Personenzahl.
+							<p
+								className="text-center text-xs font-semibold text-danger"
+								role="alert"
+							>
+								Büffet- oder Geschirrpauschale benötigt eine gültige
+								Personenzahl.
               </p>
             ) : null}
             {invalidDishwareLines ? (
-              <p className="text-center text-xs font-semibold text-danger" role="alert">
-                Zusätzliche Geschirrpositionen brauchen Beschreibung, positive Anzahl und gültigen
-                Netto-Einzelpreis.
+							<p
+								className="text-center text-xs font-semibold text-danger"
+								role="alert"
+							>
+								Zusätzliche Geschirrpositionen brauchen Beschreibung, positive
+								Anzahl und gültigen Netto-Einzelpreis.
               </p>
             ) : null}
             {prepareMessage ? (
               <p
                 className={`text-center text-xs ${
-                  prepareStatus === "error" ? "font-semibold text-danger" : "text-muted"
+									prepareStatus === "error"
+										? "font-semibold text-danger"
+										: "text-muted"
                 }`}
                 role="status"
               >
@@ -388,7 +468,9 @@ function ChargeSummaryRow({
   return (
     <div className="flex items-center justify-between gap-3 text-xs text-muted">
       <span>{label}</span>
-      <span className="ml-auto font-semibold text-ink">{formatCurrency(amount)}</span>
+			<span className="ml-auto font-semibold text-ink">
+				{formatCurrency(amount)}
+			</span>
       <button
         type="button"
         onClick={onEdit}
@@ -410,7 +492,11 @@ function ChevronDown() {
       className="h-3.5 w-3.5 shrink-0 text-muted transition-transform group-open:rotate-180"
       aria-hidden="true"
     >
-      <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+			<path
+				d="M5 7.5 10 12.5 15 7.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
     </svg>
   );
 }

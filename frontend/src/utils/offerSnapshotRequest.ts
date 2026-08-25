@@ -1,15 +1,17 @@
 /** Map frontend OfferDraft to backend snapshot/prepare payloads. */
 
+import { offerDraftToCalculateBody } from "../services/api";
 import { getCsrfToken } from "../services/session";
-
 import type {
   ChargesDefinition,
   CustomerAddressInput,
   DeliveryFulfillmentDefinition,
   OfferDraft,
 } from "../types";
-import { createInitialDeliveryFulfillmentDefinition } from "../types";
-import { offerDraftToCalculateBody } from "../services/api";
+import {
+	createInitialDeliveryFulfillmentDefinition,
+	createInitialReturnLogisticsDefinition,
+} from "../types";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
 /** OFFER_BUDGET_DEFINITION_V1 wire shape — matches the Core snapshot
@@ -40,6 +42,11 @@ export interface OfferSnapshotChargesDefinition {
     base_mode: "NONE" | "PAUSCHALE";
     pauschale_per_person_cents: number;
   };
+	return_logistics: {
+		mode: "NEXT_WORKING_DAY" | "SAME_DAY";
+		pickup_window_text: string | null;
+		same_day_fee_cents: number;
+	};
 }
 
 export interface OfferPrepareAddress {
@@ -56,11 +63,17 @@ export interface OfferPrepareFulfillment {
   delivery_address: OfferPrepareAddress | null;
 }
 
-function normalizedFulfillment(charges: ChargesDefinition): DeliveryFulfillmentDefinition {
-  return charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
+function normalizedFulfillment(
+	charges: ChargesDefinition,
+): DeliveryFulfillmentDefinition {
+	return (
+		charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition()
+	);
 }
 
-function addressToWire(address: CustomerAddressInput): OfferPrepareAddress | null {
+function addressToWire(
+	address: CustomerAddressInput,
+): OfferPrepareAddress | null {
   const street = address.street.trim();
   const postalCode = address.postalCode.trim();
   const city = address.city.trim();
@@ -75,37 +88,43 @@ function addressToWire(address: CustomerAddressInput): OfferPrepareAddress | nul
 }
 
 export function buildPrepareFulfillment(
-  charges: ChargesDefinition
+	charges: ChargesDefinition,
 ): OfferPrepareFulfillment {
   const current = normalizedFulfillment(charges);
   return {
     fulfillment_mode: current.fulfillmentMode,
     delivery_address_mode:
-      current.fulfillmentMode === "DELIVERY" ? current.deliveryAddressMode : "UNKNOWN",
+			current.fulfillmentMode === "DELIVERY"
+				? current.deliveryAddressMode
+				: "UNKNOWN",
     invoice_address: addressToWire(current.invoiceAddress),
     delivery_address:
-      current.fulfillmentMode === "DELIVERY" && current.deliveryAddressMode === "SEPARATE"
+			current.fulfillmentMode === "DELIVERY" &&
+			current.deliveryAddressMode === "SEPARATE"
         ? addressToWire(current.deliveryAddress)
         : null,
   };
 }
 
 export function buildBudgetDefinition(
-  draft: OfferDraft
+	draft: OfferDraft,
 ): OfferSnapshotBudgetDefinition | undefined {
   if (!draft.budgetEnabled) return undefined;
   return {
     amount_cents: Math.round(Math.max(0, draft.totalBudget) * 100),
     type: draft.budgetType === "per_person" ? "PER_PERSON" : "TOTAL",
     tax_basis: draft.budgetBasis === "gross" ? "GROSS" : "NET",
-    cost_scope: draft.budgetScope === "full_offer" ? "FULL_OFFER" : "POSITIONS_ONLY",
+		cost_scope:
+			draft.budgetScope === "full_offer" ? "FULL_OFFER" : "POSITIONS_ONLY",
   };
 }
 
 export function buildChargesDefinition(
-  charges: ChargesDefinition
+	charges: ChargesDefinition,
 ): OfferSnapshotChargesDefinition {
   const current = normalizedFulfillment(charges);
+	const returnLogistics =
+		charges.returnLogistics ?? createInitialReturnLogisticsDefinition();
   return {
     delivery: {
       // Keep the operator's configured amount while fulfillment is still
@@ -127,6 +146,14 @@ export function buildChargesDefinition(
       base_mode: charges.buffet.baseMode,
       pauschale_per_person_cents: charges.buffet.pauschalePerPersonCents,
     },
+		return_logistics: {
+			mode: returnLogistics.mode,
+			pickup_window_text:
+				returnLogistics.mode === "SAME_DAY"
+					? returnLogistics.pickupWindowText?.trim() || null
+					: null,
+			same_day_fee_cents: returnLogistics.sameDayFeeCents,
+		},
   };
 }
 
@@ -182,7 +209,7 @@ export function buildOfferSnapshotRequest(
   draft: OfferDraft,
   inquiryId: string | null,
   draftId: string | null,
-  contextId: string | null = null
+	contextId: string | null = null,
 ): OfferSnapshotRequestBody {
   const ctx = draft.orderContext;
   const company = ctx.companyName.trim() || "Angebot";
@@ -194,7 +221,9 @@ export function buildOfferSnapshotRequest(
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
   return {
-    ...(contextId ? { context_id: contextId } : { inquiry_id: inquiryId ?? "" }),
+		...(contextId
+			? { context_id: contextId }
+			: { inquiry_id: inquiryId ?? "" }),
     snapshot_id: generateUuidV4(),
     valid_until: defaultValidUntil(ctx.eventDate),
     ...(draftId ? { source_draft_id: draftId } : {}),
@@ -256,17 +285,14 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 export function parseOfferPrepareResponse(
-  value: unknown
+	value: unknown,
 ): OfferPrepareResponse {
   if (!isPlainObject(value)) {
     throw new PrepareOfferError("invalid_prepare_response");
   }
 
   const offerId = value.offer_id;
-  if (
-    typeof offerId !== "string"
-    || !CANONICAL_UUID_V4.test(offerId)
-  ) {
+	if (typeof offerId !== "string" || !CANONICAL_UUID_V4.test(offerId)) {
     throw new PrepareOfferError("invalid_prepare_response");
   }
 
@@ -275,8 +301,8 @@ export function parseOfferPrepareResponse(
 
 export function prepareOfferErrorMessage(error: unknown): string {
   if (
-    error instanceof PrepareOfferError
-    && error.code === "invalid_prepare_response"
+		error instanceof PrepareOfferError &&
+		error.code === "invalid_prepare_response"
   ) {
     return "Core hat eine ungültige Antwort zurückgegeben.";
   }
@@ -284,10 +310,12 @@ export function prepareOfferErrorMessage(error: unknown): string {
 }
 
 export async function prepareOfferInCore(
-  body: OfferSnapshotRequestBody
+	body: OfferSnapshotRequestBody,
 ): Promise<OfferPrepareResponse> {
   const baseUrl = import.meta.env.VITE_API_URL ?? "";
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+	};
   const csrfToken = getCsrfToken();
   if (csrfToken) {
     headers["X-CSRF-Token"] = csrfToken;
@@ -316,10 +344,10 @@ export interface OfferNavigation {
 
 export function navigateToPreparedCoreOffer(
   result: OfferPrepareResponse,
-  navigation: OfferNavigation = window.location
+	navigation: OfferNavigation = window.location,
 ): void {
   navigation.assign(
-    `/api/ui/offer/open/${encodeURIComponent(result.offer_id)}`
+		`/api/ui/offer/open/${encodeURIComponent(result.offer_id)}`,
   );
 }
 
@@ -330,7 +358,7 @@ export interface PrepareAndNavigateOptions {
 
 export async function prepareAndNavigateToCoreOffer(
   body: OfferSnapshotRequestBody,
-  options: PrepareAndNavigateOptions = {}
+	options: PrepareAndNavigateOptions = {},
 ): Promise<OfferPrepareResponse> {
   const result = await prepareOfferInCore(body);
   options.onPrepared?.(result);

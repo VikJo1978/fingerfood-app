@@ -5,7 +5,10 @@ import type {
   OfferLine,
   OrderContextV1,
 } from "../types";
-import { createInitialChargesDefinition } from "../types";
+import {
+	createInitialChargesDefinition,
+	createInitialReturnLogisticsDefinition,
+} from "../types";
 import { normalizeBudgetDefinition } from "./budgetNormalization";
 
 /** Namespaced and versioned like CORE_INQUIRY_SESSION_KEY: bumping the
@@ -59,8 +62,13 @@ function isNonEmptyString(value: unknown, max = 2_000): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= max;
 }
 
-function isOptionalString(value: unknown, max = 2_000): value is string | undefined {
-  return value === undefined || (typeof value === "string" && value.length <= max);
+function isOptionalString(
+	value: unknown,
+	max = 2_000,
+): value is string | undefined {
+	return (
+		value === undefined || (typeof value === "string" && value.length <= max)
+	);
 }
 
 function isOrderContext(value: unknown): value is OrderContextV1 {
@@ -80,15 +88,19 @@ function isOrderContext(value: unknown): value is OrderContextV1 {
 
 function isOfferLine(value: unknown): value is OfferLine {
   if (!isRecord(value)) return false;
-  if (!isNonEmptyString(value.lineId) || !isNonEmptyString(value.itemId)) return false;
-  if (value.quantityMode !== "total" && value.quantityMode !== "per_person") return false;
+	if (!isNonEmptyString(value.lineId) || !isNonEmptyString(value.itemId))
+		return false;
+	if (value.quantityMode !== "total" && value.quantityMode !== "per_person")
+		return false;
   if (!isFiniteNumber(value.quantity)) return false;
   if (!isRecord(value.snapshot)) return false;
   const snapshot = value.snapshot;
   if (
     typeof snapshot.title !== "string" ||
-    (snapshot.source_type !== "internal" && snapshot.source_type !== "external") ||
-    (snapshot.pricing_mode !== "per_piece" && snapshot.pricing_mode !== "per_person") ||
+		(snapshot.source_type !== "internal" &&
+			snapshot.source_type !== "external") ||
+		(snapshot.pricing_mode !== "per_piece" &&
+			snapshot.pricing_mode !== "per_person") ||
     (snapshot.price_type !== "piece" && snapshot.price_type !== "person") ||
     !isFiniteNumber(snapshot.chosen_price)
   ) {
@@ -97,7 +109,9 @@ function isOfferLine(value: unknown): value is OfferLine {
   return true;
 }
 
-function isDishwareAdditionalLine(value: unknown): value is DishwareAdditionalLine {
+function isDishwareAdditionalLine(
+	value: unknown,
+): value is DishwareAdditionalLine {
   if (!isRecord(value)) return false;
   return (
     isNonEmptyString(value.lineId) &&
@@ -108,19 +122,48 @@ function isDishwareAdditionalLine(value: unknown): value is DishwareAdditionalLi
   );
 }
 
+function isReturnLogisticsDefinition(value: unknown): boolean {
+	if (!isRecord(value)) return false;
+	if (value.mode !== "NEXT_WORKING_DAY" && value.mode !== "SAME_DAY")
+		return false;
+	if (!isNonnegativeInteger(value.sameDayFeeCents)) return false;
+	if (value.mode === "SAME_DAY") {
+		return (
+			isNonEmptyString(value.pickupWindowText, 500) &&
+			value.pickupWindowText === value.pickupWindowText.trim()
+		);
+	}
+	return value.pickupWindowText === null;
+}
+
 function isChargesDefinition(value: unknown): value is ChargesDefinition {
   if (!isRecord(value)) return false;
-  if (!isRecord(value.buffet) || !isRecord(value.delivery) || !isRecord(value.dishware)) {
+	if (
+		!isRecord(value.buffet) ||
+		!isRecord(value.delivery) ||
+		!isRecord(value.dishware)
+	) {
     return false;
   }
-  if (value.buffet.baseMode !== "NONE" && value.buffet.baseMode !== "PAUSCHALE") return false;
+	if (value.buffet.baseMode !== "NONE" && value.buffet.baseMode !== "PAUSCHALE")
+		return false;
   if (!isNonnegativeInteger(value.buffet.pauschalePerPersonCents)) return false;
   if (!isNonnegativeInteger(value.delivery.amountCents)) return false;
-  if (value.dishware.baseMode !== "NONE" && value.dishware.baseMode !== "PAUSCHALE") {
+	if (
+		value.dishware.baseMode !== "NONE" &&
+		value.dishware.baseMode !== "PAUSCHALE"
+	) {
     return false;
   }
-  if (!isNonnegativeInteger(value.dishware.pauschalePerPersonCents)) return false;
+	if (!isNonnegativeInteger(value.dishware.pauschalePerPersonCents))
+		return false;
   if (!Array.isArray(value.dishware.additionalLines)) return false;
+	if (
+		value.returnLogistics !== undefined &&
+		!isReturnLogisticsDefinition(value.returnLogistics)
+	) {
+		return false;
+	}
   return value.dishware.additionalLines.every(isDishwareAdditionalLine);
 }
 
@@ -129,21 +172,29 @@ function isOfferDraftShape(value: unknown): value is OfferDraft {
   if (!isOrderContext(value.orderContext)) return false;
   // Reload restoration intentionally accepts a temporary zero-guest draft
   // state; prepare-time validation still blocks sending it to Core.
-  if (!isFiniteNumber(value.persons) || value.persons < 0 || value.persons > 5000) {
+	if (
+		!isFiniteNumber(value.persons) ||
+		value.persons < 0 ||
+		value.persons > 5000
+	) {
     return false;
   }
   if (typeof value.budgetEnabled !== "boolean") return false;
   if (!isFiniteNumber(value.totalBudget) || value.totalBudget < 0) return false;
-  if (value.chargesDefinition !== undefined && !isChargesDefinition(value.chargesDefinition)) {
+	if (
+		value.chargesDefinition !== undefined &&
+		!isChargesDefinition(value.chargesDefinition)
+	) {
     return false;
   }
-  if (!Array.isArray(value.lines) || !value.lines.every(isOfferLine)) return false;
+	if (!Array.isArray(value.lines) || !value.lines.every(isOfferLine))
+		return false;
   return true;
 }
 
 function isStoredEnvelope(
   value: unknown,
-  expectedScopeKey: string
+	expectedScopeKey: string,
 ): value is StoredDraftEnvelope {
   if (!isRecord(value)) return false;
   if (value.schema_version !== DRAFT_STORAGE_PREFIX) return false;
@@ -159,7 +210,7 @@ function isStoredEnvelope(
 export function saveDraftToSession(
   scope: DraftPersistenceScope,
   draft: OfferDraft,
-  storage: Pick<Storage, "setItem"> = window.sessionStorage
+	storage: Pick<Storage, "setItem"> = window.sessionStorage,
 ): void {
   const scopeKey = draftStorageKey(scope);
   const envelope: StoredDraftEnvelope = {
@@ -193,7 +244,7 @@ export function saveDraftToSession(
  */
 export function readDraftFromSession(
   scope: DraftPersistenceScope,
-  storage: Pick<Storage, "getItem"> = window.sessionStorage
+	storage: Pick<Storage, "getItem"> = window.sessionStorage,
 ): OfferDraft | null {
   const scopeKey = draftStorageKey(scope);
   let raw: string | null;
@@ -211,16 +262,23 @@ export function readDraftFromSession(
   }
   if (!isStoredEnvelope(parsed, scopeKey)) return null;
   const draft = parsed.draft;
+	const chargesDefinition =
+		draft.chargesDefinition ?? createInitialChargesDefinition();
   return {
     ...draft,
     ...normalizeBudgetDefinition(draft),
-    chargesDefinition: draft.chargesDefinition ?? createInitialChargesDefinition(),
+		chargesDefinition: {
+			...chargesDefinition,
+			returnLogistics:
+				chargesDefinition.returnLogistics ??
+				createInitialReturnLogisticsDefinition(),
+		},
   };
 }
 
 export function clearDraftFromSession(
   scope: DraftPersistenceScope,
-  storage: Pick<Storage, "removeItem"> = window.sessionStorage
+	storage: Pick<Storage, "removeItem"> = window.sessionStorage,
 ): void {
   try {
     storage.removeItem(draftStorageKey(scope));
@@ -229,7 +287,8 @@ export function clearDraftFromSession(
   }
 }
 
-const MANUAL_DRAFT_MARKER_SCHEMA = "fingerfood.configurator-draft.v1.manual-marker";
+const MANUAL_DRAFT_MARKER_SCHEMA =
+	"fingerfood.configurator-draft.v1.manual-marker";
 
 interface ManualDraftHistoryMarker {
   schema_version: typeof MANUAL_DRAFT_MARKER_SCHEMA;
@@ -243,17 +302,19 @@ interface ManualDraftHistoryMarker {
  * could resurface in an unrelated later tab/visit. */
 export function writeManualDraftHistoryMarker(
   location: Pick<Location, "pathname" | "search">,
-  history: Pick<History, "replaceState">
+	history: Pick<History, "replaceState">,
 ): void {
   history.replaceState(
-    { schema_version: MANUAL_DRAFT_MARKER_SCHEMA } satisfies ManualDraftHistoryMarker,
+		{
+			schema_version: MANUAL_DRAFT_MARKER_SCHEMA,
+		} satisfies ManualDraftHistoryMarker,
     "",
-    `${location.pathname}${location.search}`
+		`${location.pathname}${location.search}`,
   );
 }
 
 export function readManualDraftHistoryMarker(
-  history: Pick<History, "state">
+	history: Pick<History, "state">,
 ): ManualDraftHistoryMarker | null {
   const state: unknown = history.state;
   if (isRecord(state) && state.schema_version === MANUAL_DRAFT_MARKER_SCHEMA) {

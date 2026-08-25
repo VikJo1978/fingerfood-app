@@ -33,7 +33,7 @@ export function computeLineTotalFromPrice(
   persons: number,
   mode: QuantityMode,
   quantity: number,
-  surchargeAmount = 0
+	surchargeAmount = 0,
 ): number {
   const base = isPieceUnitBasis(unitBasis)
     ? mode === "total"
@@ -42,7 +42,10 @@ export function computeLineTotalFromPrice(
     : mode === "total"
       ? unitPrice * quantity
       : unitPrice * quantity * persons;
-  const surcharge = mode === "total" ? surchargeAmount * quantity : surchargeAmount * quantity * persons;
+	const surcharge =
+		mode === "total"
+			? surchargeAmount * quantity
+			: surchargeAmount * quantity * persons;
   return base + surcharge;
 }
 
@@ -51,10 +54,17 @@ export function computeLineTotal(
   persons: number,
   mode: QuantityMode,
   quantity: number,
-  surchargeSelected = false
+	surchargeSelected = false,
 ): number {
   const surchargeAmount = surchargeSelected ? (item.surcharge_amount ?? 0) : 0;
-  return computeLineTotalFromPrice(item.price, item.price_type, persons, mode, quantity, surchargeAmount);
+	return computeLineTotalFromPrice(
+		item.price,
+		item.price_type,
+		persons,
+		mode,
+		quantity,
+		surchargeAmount,
+	);
 }
 
 /**
@@ -62,15 +72,20 @@ export function computeLineTotal(
  * Uses snapshot `price_type` (unit basis), not `pricing_mode`.
  * Kein Live-Katalog nötig.
  */
-export function computeOfferLineTotal(line: OfferLine, persons: number): number {
-  const surchargeAmount = line.snapshot.surchargeSelected ? (line.snapshot.surchargeAmount ?? 0) : 0;
+export function computeOfferLineTotal(
+	line: OfferLine,
+	persons: number,
+): number {
+	const surchargeAmount = line.snapshot.surchargeSelected
+		? (line.snapshot.surchargeAmount ?? 0)
+		: 0;
   return computeLineTotalFromPrice(
     line.snapshot.chosen_price,
     line.snapshot.price_type,
     persons,
     line.quantityMode,
     line.quantity,
-    surchargeAmount
+		surchargeAmount,
   );
 }
 
@@ -78,10 +93,14 @@ export function lineWarnings(
   item: CatalogItem,
   persons: number,
   mode: QuantityMode,
-  quantity: number
+	quantity: number,
 ): OfferWarning[] {
   const w: OfferWarning[] = [];
-  if (mode === "total" && isPieceUnitBasis(item.price_type) && quantity < item.min_order) {
+	if (
+		mode === "total" &&
+		isPieceUnitBasis(item.price_type) &&
+		quantity < item.min_order
+	) {
     w.push({
       code: "MIN_ORDER_PIECE",
       severity: "warning",
@@ -96,7 +115,11 @@ export function lineWarnings(
         "Hinweis: Diese Konfiguration liegt unter dem üblichen Mindest-Personenzahl (10).",
     });
   }
-  if (mode === "total" && !isPieceUnitBasis(item.price_type) && quantity < item.min_order) {
+	if (
+		mode === "total" &&
+		!isPieceUnitBasis(item.price_type) &&
+		quantity < item.min_order
+	) {
     w.push({
       code: "MIN_ORDER_PERSON",
       severity: "warning",
@@ -107,7 +130,9 @@ export function lineWarnings(
 }
 
 export const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+	new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(
+		n,
+	);
 
 /**
  * Real Silberlöffel V1 flat fees — MUST mirror backend/app/services/pricing_service.py
@@ -124,6 +149,8 @@ export interface PauschalenBreakdown {
   geschirrpauschale: number;
   anlieferung: number;
   dishwareAdditional: number;
+	/** Separate net surcharge only for SAME_DAY return. */
+	returnPickup?: number;
   grandTotal: number;
 }
 
@@ -132,17 +159,21 @@ export function centsToEuros(cents: number): number {
 }
 
 function additionalDishwareCents(lines: DishwareAdditionalLine[]): number {
-  return lines.reduce((sum, line) => sum + line.quantity * line.unitNetCents, 0);
+	return lines.reduce(
+		(sum, line) => sum + line.quantity * line.unitNetCents,
+		0,
+	);
 }
 
 export function computeChargesCents(
   charges: ChargesDefinition,
-  persons: number
+	persons: number,
 ): {
   buffetCents: number;
   dishwarePauschaleCents: number;
   deliveryCents: number;
   dishwareAdditionalCents: number;
+	returnPickupCents: number;
   totalCents: number;
 } {
   const validPersons = Number.isInteger(persons) && persons > 0;
@@ -160,13 +191,25 @@ export function computeChargesCents(
   // The BFF refuses UNKNOWN before any offer can be prepared in Core.
   const deliveryCents =
     fulfillmentMode === "PICKUP" ? 0 : charges.delivery.amountCents;
-  const dishwareAdditionalCents = additionalDishwareCents(charges.dishware.additionalLines);
+	const dishwareAdditionalCents = additionalDishwareCents(
+		charges.dishware.additionalLines,
+	);
+	const returnPickupCents =
+		charges.returnLogistics?.mode === "SAME_DAY"
+			? charges.returnLogistics.sameDayFeeCents
+			: 0;
   return {
     buffetCents,
     dishwarePauschaleCents,
     deliveryCents,
     dishwareAdditionalCents,
-    totalCents: buffetCents + dishwarePauschaleCents + deliveryCents + dishwareAdditionalCents,
+		returnPickupCents,
+		totalCents:
+			buffetCents +
+			dishwarePauschaleCents +
+			deliveryCents +
+			dishwareAdditionalCents +
+			returnPickupCents,
   };
 }
 
@@ -180,7 +223,7 @@ export function computePauschalen(
   subtotal: number,
   persons: number,
   hasLines: boolean,
-  charges?: ChargesDefinition
+	charges?: ChargesDefinition,
 ): PauschalenBreakdown {
   if (charges) {
     const c = computeChargesCents(charges, persons);
@@ -189,7 +232,9 @@ export function computePauschalen(
       geschirrpauschale: centsToEuros(c.dishwarePauschaleCents),
       anlieferung: centsToEuros(c.deliveryCents),
       dishwareAdditional: centsToEuros(c.dishwareAdditionalCents),
-      grandTotal: Math.round((subtotal + centsToEuros(c.totalCents)) * 100) / 100,
+			returnPickup: centsToEuros(c.returnPickupCents),
+			grandTotal:
+				Math.round((subtotal + centsToEuros(c.totalCents)) * 100) / 100,
     };
   }
   if (!hasLines) {
@@ -198,14 +243,27 @@ export function computePauschalen(
       geschirrpauschale: 0,
       anlieferung: 0,
       dishwareAdditional: 0,
+			returnPickup: 0,
       grandTotal: 0,
     };
   }
-  const buffetpauschale = Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
-  const geschirrpauschale = Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
+	const buffetpauschale =
+		Math.round(PAUSCHALE_BUFFETPAUSCHALE_PER_PERSON * persons * 100) / 100;
+	const geschirrpauschale =
+		Math.round(PAUSCHALE_GESCHIRRPAUSCHALE_PER_PERSON * persons * 100) / 100;
   const anlieferung = Math.round(PAUSCHALE_ANLIEFERUNG_FLAT * 100) / 100;
-  const grandTotal = Math.round((subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100) / 100;
-  return { buffetpauschale, geschirrpauschale, anlieferung, dishwareAdditional: 0, grandTotal };
+	const grandTotal =
+		Math.round(
+			(subtotal + buffetpauschale + geschirrpauschale + anlieferung) * 100,
+		) / 100;
+	return {
+		buffetpauschale,
+		geschirrpauschale,
+		anlieferung,
+		dishwareAdditional: 0,
+		returnPickup: 0,
+		grandTotal,
+	};
 }
 
 /**
@@ -229,7 +287,7 @@ export interface VatBreakdown {
 export function computeVatBreakdown(
   draft: Pick<OfferDraft, "lines" | "persons">,
   itemsById: Record<string, CatalogItem>,
-  pauschalen: PauschalenBreakdown
+	pauschalen: PauschalenBreakdown,
 ): VatBreakdown {
   let vat7Base = 0;
   let vat19Base = 0;
@@ -243,10 +301,12 @@ export function computeVatBreakdown(
     pauschalen.buffetpauschale +
     pauschalen.geschirrpauschale +
     pauschalen.anlieferung +
-    pauschalen.dishwareAdditional;
+		pauschalen.dishwareAdditional +
+		(pauschalen.returnPickup ?? 0);
   const vat7Amount = Math.round(vat7Base * 0.07 * 100) / 100;
   const vat19Amount = Math.round(vat19Base * 0.19 * 100) / 100;
-  const totalInclVat = Math.round((pauschalen.grandTotal + vat7Amount + vat19Amount) * 100) / 100;
+	const totalInclVat =
+		Math.round((pauschalen.grandTotal + vat7Amount + vat19Amount) * 100) / 100;
   return {
     vat7Base: Math.round(vat7Base * 100) / 100,
     vat7Amount,
@@ -271,15 +331,19 @@ export function computeVatBreakdown(
 export function computePositionsOnlyGross(
   subtotal: number,
   vat: VatBreakdown,
-  pauschalen: PauschalenBreakdown
+	pauschalen: PauschalenBreakdown,
 ): number {
   const pauschalenBeforeVat =
     pauschalen.buffetpauschale +
     pauschalen.geschirrpauschale +
     pauschalen.anlieferung +
-    pauschalen.dishwareAdditional;
+		pauschalen.dishwareAdditional +
+		(pauschalen.returnPickup ?? 0);
   const itemsOnly19Base = Math.max(0, vat.vat19Base - pauschalenBeforeVat);
   const itemsOnly19Amount =
-    Math.round(itemsOnly19Base * (PAUSCHALEN_VAT_RATE_PERCENT / 100) * 100) / 100;
-  return Math.round((subtotal + vat.vat7Amount + itemsOnly19Amount) * 100) / 100;
+		Math.round(itemsOnly19Base * (PAUSCHALEN_VAT_RATE_PERCENT / 100) * 100) /
+		100;
+	return (
+		Math.round((subtotal + vat.vat7Amount + itemsOnly19Amount) * 100) / 100
+	);
 }

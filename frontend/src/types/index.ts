@@ -6,7 +6,12 @@ import type { AllergenCode, DietType } from "../constants/classification";
  */
 export type PriceType = "piece" | "person";
 
-export type ItemModule = "food" | "beverage" | "staff" | "tableware" | "equipment";
+export type ItemModule =
+	| "food"
+	| "beverage"
+	| "staff"
+	| "tableware"
+	| "equipment";
 
 export type SourceType = "internal" | "external";
 
@@ -144,6 +149,7 @@ export type BudgetBasis = "net" | "gross";
 export type BudgetScope = "full_offer" | "positions_only";
 
 export type ChargeBaseMode = "NONE" | "PAUSCHALE";
+export type ReturnMode = "NEXT_WORKING_DAY" | "SAME_DAY";
 export type FulfillmentMode = "UNKNOWN" | "PICKUP" | "DELIVERY";
 export type DeliveryAddressMode = "UNKNOWN" | "SAME_AS_INVOICE" | "SEPARATE";
 
@@ -168,6 +174,12 @@ export interface DishwareAdditionalLine {
   unitNetCents: number;
 }
 
+export interface ReturnLogisticsDefinition {
+	mode: ReturnMode;
+	pickupWindowText: string | null;
+	sameDayFeeCents: number;
+}
+
 export interface ChargesDefinition {
   buffet: {
     baseMode: ChargeBaseMode;
@@ -183,6 +195,8 @@ export interface ChargesDefinition {
     pauschalePerPersonCents: number;
     additionalLines: DishwareAdditionalLine[];
   };
+	/** Optional only while restoring drafts created before issue #171. */
+	returnLogistics?: ReturnLogisticsDefinition;
 }
 
 /**
@@ -206,7 +220,13 @@ export interface OfferDraft {
 }
 
 /** Channel through which an inquiry entered (V1, types only). */
-export type InquirySource = "web" | "phone" | "email" | "walk_in" | "referral" | "other";
+export type InquirySource =
+	| "web"
+	| "phone"
+	| "email"
+	| "walk_in"
+	| "referral"
+	| "other";
 
 /** Inquiry lifecycle stage (V1). */
 export type InquiryStatus =
@@ -219,7 +239,11 @@ export type InquiryStatus =
   | "archived";
 
 /** Clarification / follow-up state on intake (V1). */
-export type ClarificationState = "none" | "pending_internal" | "pending_customer" | "resolved";
+export type ClarificationState =
+	| "none"
+	| "pending_internal"
+	| "pending_customer"
+	| "resolved";
 
 /**
  * Full inquiry intake / protocol payload (V1, structural placeholder).
@@ -299,6 +323,14 @@ export function createInitialDeliveryFulfillmentDefinition(): DeliveryFulfillmen
   };
 }
 
+export function createInitialReturnLogisticsDefinition(): ReturnLogisticsDefinition {
+	return {
+		mode: "NEXT_WORKING_DAY",
+		pickupWindowText: null,
+		sameDayFeeCents: 0,
+	};
+}
+
 export function createInitialOfferDraft(): OfferDraft {
   return {
     orderContext: createInitialOrderContextV1(),
@@ -330,5 +362,6 @@ export function createInitialChargesDefinition(): ChargesDefinition {
       pauschalePerPersonCents: 200,
       additionalLines: [],
     },
+		returnLogistics: createInitialReturnLogisticsDefinition(),
   };
 }
