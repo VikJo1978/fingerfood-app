@@ -7,6 +7,7 @@ from app.services.catalog_adapter import CatalogAdapter
 from app.services.catalog_client import CatalogClient
 from app.services.configurator_handoff_context import ConfiguratorPrepareContextStore
 from app.services.core_configurator_handoff_client import CoreConfiguratorHandoffClient
+from app.services.core_customer_history_client import CoreCustomerHistoryClient
 from app.services.core_office_client import CoreOfficeClient
 
 
@@ -20,6 +21,12 @@ def build_catalog_adapter() -> CatalogAdapter:
 
 def build_core_office_client() -> CoreOfficeClient:
     return CoreOfficeClient(
+        settings.core_office_api_url, settings.core_office_api_token
+    )
+
+
+def build_core_customer_history_client() -> CoreCustomerHistoryClient:
+    return CoreCustomerHistoryClient(
         settings.core_office_api_url, settings.core_office_api_token
     )
 
