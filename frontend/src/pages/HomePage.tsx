@@ -88,6 +88,7 @@ export function HomePage() {
     kind: "manual",
   });
   const [inquiryEventType, setInquiryEventType] = useState("");
+  const [inquiryServiceStyle, setInquiryServiceStyle] = useState("");
   const [handoffError, setHandoffError] = useState<string | null>(null);
   const [handoffExchangePending, setHandoffExchangePending] = useState(false);
   const [prepareStatus, setPrepareStatus] = useState<PrepareStatus>("idle");
@@ -239,6 +240,7 @@ export function HomePage() {
       setCatalogModule(planning.desiredModules[0]);
     }
     setInquiryEventType(planning.eventType.trim());
+    setInquiryServiceStyle(planning.serviceStyle.trim());
     setPageMode("configurator");
   }, []);
 
@@ -846,6 +848,8 @@ export function HomePage() {
       <RecommendationLauncher
         initialEventDate={offerDraft.orderContext.eventDate}
         initialGuestCount={offerDraft.persons}
+        initialEventType={inquiryEventType}
+        initialServiceStyle={inquiryServiceStyle}
         onApplyVariant={onApplyRecommendationVariant}
       />
     </ConfiguratorShell>
