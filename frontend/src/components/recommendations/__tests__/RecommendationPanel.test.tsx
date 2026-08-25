@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  recommendationCateringFormatFromServiceStyle,
+  recommendationEventTypeFromInquiry,
+} from "../../../services/recommendations";
 import type { CatalogItem } from "../../../types";
 import { RecommendationPanel } from "../RecommendationPanel";
 
@@ -115,6 +119,53 @@ describe("RecommendationPanel variant apply", () => {
         catering_format: "buffet",
         event_type: "business",
       })
+    );
+  });
+
+  it("uses structured prefill without requiring duplicate input", async () => {
+    render(
+      <RecommendationPanel
+        eventDate="2026-08-30"
+        guestCount={40}
+        catalog={catalog}
+        initialCateringFormat="buffet"
+        initialEventType="wedding"
+      />
+    );
+
+    expect((screen.getByLabelText("Catering-Format") as HTMLSelectElement).value).toBe(
+      "buffet"
+    );
+    expect((screen.getByLabelText("Veranstaltungstyp") as HTMLSelectElement).value).toBe(
+      "wedding"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Vorschläge berechnen" }));
+
+    await waitFor(() => expect(generateRecommendationsMock).toHaveBeenCalledOnce());
+    expect(generateRecommendationsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        catering_format: "buffet",
+        event_type: "wedding",
+      })
+    );
+  });
+
+  it("normalizes only known inquiry wording and leaves unknown text neutral", () => {
+    expect(recommendationEventTypeFromInquiry("Firmenfeier")).toBe("business");
+    expect(recommendationEventTypeFromInquiry("Hochzeit")).toBe("wedding");
+    expect(recommendationEventTypeFromInquiry("Empfang im Rathaus")).toBe("reception");
+    expect(recommendationEventTypeFromInquiry("Kundenspezifischer Anlass")).toBe("");
+
+    expect(recommendationCateringFormatFromServiceStyle("Buffet")).toBe("buffet");
+    expect(recommendationCateringFormatFromServiceStyle("Flying Dinner")).toBe(
+      "fingerfood"
+    );
+    expect(recommendationCateringFormatFromServiceStyle("Fingerfood + Buffet")).toBe(
+      "mixed"
+    );
+    expect(recommendationCateringFormatFromServiceStyle("Service nach Absprache")).toBe(
+      ""
     );
   });
 });
