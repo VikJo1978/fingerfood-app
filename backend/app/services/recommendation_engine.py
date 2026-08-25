@@ -16,6 +16,15 @@ from app.models.item import Item
 RecommendationProfile = Literal["ECONOMIC", "RECOMMENDED", "PREMIUM"]
 ProductionConfidence = Literal["CONFIRMED", "LIKELY", "OPEN_OFFER"]
 
+_CAPACITY_LOAD_REASON_CODES = frozenset(
+    {
+        "CAPACITY_ELEVATED",
+        "CAPACITY_HIGH",
+        "CAPACITY_NEAR_LIMIT",
+        "CAPACITY_EXCEEDED",
+    }
+)
+
 
 @dataclass(frozen=True)
 class RecommendationRequest:
@@ -40,6 +49,7 @@ class CapacitySignal:
     item_id: str
     feasible: bool = True
     overload_penalty: int = 0
+    reason_code: str | None = None
 
     def __post_init__(self) -> None:
         if self.overload_penalty < 0:
@@ -162,7 +172,13 @@ def _score_item(
         explanations.append(f"same-day production +{production_bonus}")
 
     if capacity_signal is not None:
-        if not capacity_signal.feasible:
+        if capacity_signal.reason_code in _CAPACITY_LOAD_REASON_CODES:
+            explanations.append(
+                f"capacity advisory: {capacity_signal.overload_penalty}% load"
+            )
+        elif capacity_signal.reason_code is not None:
+            explanations.append("capacity advisory: capacity data unavailable or incomplete")
+        elif not capacity_signal.feasible:
             explanations.append("capacity advisory: limit or data issue")
         elif capacity_signal.overload_penalty:
             explanations.append(
