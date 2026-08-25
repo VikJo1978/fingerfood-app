@@ -198,8 +198,8 @@ def _score_item(
         score += 20
         explanations.append("preferred category")
 
-    for signal in preference_signals:
-        if signal.kind == "favorite_dish":
+    for preference_signal in preference_signals:
+        if preference_signal.kind == "favorite_dish":
             if explicit_dislike:
                 explanations.append(
                     "stored favorite ignored because current inquiry dislikes item"
@@ -207,9 +207,10 @@ def _score_item(
             else:
                 score += _STORED_FAVORITE_BONUS
                 explanations.append(
-                    f"stored favorite +{_STORED_FAVORITE_BONUS}: {signal.source}"
+                    f"stored favorite +{_STORED_FAVORITE_BONUS}: "
+                    f"{preference_signal.source}"
                 )
-        elif signal.kind == "disliked_dish":
+        elif preference_signal.kind == "disliked_dish":
             if explicit_must_have:
                 explanations.append(
                     "stored dislike ignored because current inquiry requires item"
@@ -217,23 +218,25 @@ def _score_item(
             else:
                 score -= _STORED_DISLIKE_PENALTY
                 explanations.append(
-                    f"stored dislike -{_STORED_DISLIKE_PENALTY}: {signal.source}"
+                    f"stored dislike -{_STORED_DISLIKE_PENALTY}: "
+                    f"{preference_signal.source}"
                 )
 
-    for signal in history_signals:
-        if signal.kind == "frequently_ordered":
+    for history_signal in history_signals:
+        if history_signal.kind == "frequently_ordered":
             score += _HISTORY_FREQUENT_BONUS
             explanations.append(
-                f"history frequent +{_HISTORY_FREQUENT_BONUS}: {signal.order_count} orders"
+                f"history frequent +{_HISTORY_FREQUENT_BONUS}: "
+                f"{history_signal.order_count} orders"
             )
-        elif signal.kind == "recently_ordered":
+        elif history_signal.kind == "recently_ordered":
             if explicit_must_have:
                 explanations.append("history recent: repetition penalty ignored for must-have")
             else:
                 score -= _HISTORY_RECENT_PENALTY
                 explanations.append(
                     f"history recent -{_HISTORY_RECENT_PENALTY}: "
-                    f"last {signal.last_ordered_on.isoformat()}"
+                    f"last {history_signal.last_ordered_on.isoformat()}"
                 )
 
     applicability_score, applicability_explanations = _applicability_score(item, request)
