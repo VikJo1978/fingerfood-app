@@ -1,0 +1,40 @@
+name: Issue 3 Biome format once
+
+on:
+  push:
+    branches:
+      - issue-3-biome-format-gate
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: issue-3-biome-format-gate
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Format frontend source with pinned Biome
+        working-directory: frontend
+        run: npm run format
+      - name: Commit normalized formatting
+        run: |
+          if git diff --quiet -- frontend/src; then
+            echo "frontend/src already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/src
+          git commit -m "Issue #3: normalize frontend formatting with Biome 2.5.6"
+          git push origin HEAD:issue-3-biome-format-gate
