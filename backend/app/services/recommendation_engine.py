@@ -13,6 +13,7 @@ from typing import Literal
 from app.models.classification import Allergen, DietType
 from app.models.item import CateringFormat, Item, RecommendationEventType
 from app.services.core_customer_history_adapter import CustomerHistorySignal
+from app.services.core_customer_preference_adapter import CustomerPreferenceSignal
 
 RecommendationProfile = Literal["ECONOMIC", "RECOMMENDED", "PREMIUM"]
 ProductionConfidence = Literal["CONFIRMED", "LIKELY", "OPEN_OFFER"]
@@ -37,6 +38,8 @@ _EVENT_MATCH_BONUS = 10
 _EVENT_MISMATCH_PENALTY = 5
 _HISTORY_FREQUENT_BONUS = 10
 _HISTORY_RECENT_PENALTY = 15
+_STORED_FAVORITE_BONUS = 30
+_STORED_DISLIKE_PENALTY = 40
 
 
 @dataclass(frozen=True)
@@ -98,18 +101,21 @@ def rank_items(
     production_signals: tuple[ProductionSignal, ...] = (),
     capacity_signals: tuple[CapacitySignal, ...] = (),
     customer_history_signals: tuple[CustomerHistorySignal, ...] = (),
+    customer_preference_signals: tuple[CustomerPreferenceSignal, ...] = (),
 ) -> list[RecommendationCandidate]:
     """Rank items deterministically and return rejected candidates last.
 
-    Production capacity, customer history and catalog applicability are advisory
+    Production capacity, customer history and stored taste preferences are advisory
     context. They may apply soft ranking adjustments, but never reject an otherwise
-    valid catalog item. Explicit current inquiry choices remain stronger than
-    repetition hints. The human remains responsible for the final decision.
+    valid catalog item. Explicit current inquiry choices remain stronger than stored
+    preferences and repetition hints. The human remains responsible for the final
+    decision.
     """
 
     production_bonus = _production_bonus_by_item(production_signals)
     capacity_by_item = {signal.item_id: signal for signal in capacity_signals}
     history_by_item = _history_signals_by_item(customer_history_signals)
+    preference_by_item = _preference_signals_by_item(customer_preference_signals)
     candidates = [
         _score_item(
             item,
@@ -118,6 +124,7 @@ def rank_items(
             production_bonus.get(item.id, 0),
             capacity_by_item.get(item.id),
             history_by_item.get(item.id, ()),
+            preference_by_item.get(item.id, ()),
         )
         for item in items
     ]
@@ -138,6 +145,7 @@ def _score_item(
     production_bonus: int,
     capacity_signal: CapacitySignal | None,
     history_signals: tuple[CustomerHistorySignal, ...],
+    preference_signals: tuple[CustomerPreferenceSignal, ...],
 ) -> RecommendationCandidate:
     rejects: list[str] = []
     explanations: list[str] = []
@@ -179,15 +187,38 @@ def _score_item(
         )
 
     explicit_must_have = item.id in request.must_have_item_ids
+    explicit_dislike = item.id in request.disliked_item_ids
     if explicit_must_have:
         score += 100
         explanations.append("must-have")
-    if item.id in request.disliked_item_ids:
+    if explicit_dislike:
         score -= 40
         explanations.append("explicit dislike")
     if item.category in request.preferred_categories:
         score += 20
         explanations.append("preferred category")
+
+    for signal in preference_signals:
+        if signal.kind == "favorite_dish":
+            if explicit_dislike:
+                explanations.append(
+                    "stored favorite ignored because current inquiry dislikes item"
+                )
+            else:
+                score += _STORED_FAVORITE_BONUS
+                explanations.append(
+                    f"stored favorite +{_STORED_FAVORITE_BONUS}: {signal.source}"
+                )
+        elif signal.kind == "disliked_dish":
+            if explicit_must_have:
+                explanations.append(
+                    "stored dislike ignored because current inquiry requires item"
+                )
+            else:
+                score -= _STORED_DISLIKE_PENALTY
+                explanations.append(
+                    f"stored dislike -{_STORED_DISLIKE_PENALTY}: {signal.source}"
+                )
 
     for signal in history_signals:
         if signal.kind == "frequently_ordered":
@@ -311,6 +342,15 @@ def _history_signals_by_item(
     signals: tuple[CustomerHistorySignal, ...],
 ) -> dict[str, tuple[CustomerHistorySignal, ...]]:
     grouped: dict[str, list[CustomerHistorySignal]] = {}
+    for signal in signals:
+        grouped.setdefault(signal.item_id, []).append(signal)
+    return {item_id: tuple(rows) for item_id, rows in grouped.items()}
+
+
+def _preference_signals_by_item(
+    signals: tuple[CustomerPreferenceSignal, ...],
+) -> dict[str, tuple[CustomerPreferenceSignal, ...]]:
+    grouped: dict[str, list[CustomerPreferenceSignal]] = {}
     for signal in signals:
         grouped.setdefault(signal.item_id, []).append(signal)
     return {item_id: tuple(rows) for item_id, rows in grouped.items()}
