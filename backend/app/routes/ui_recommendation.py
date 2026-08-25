@@ -28,6 +28,35 @@ from app.services.recommendation_service import generate_recommendation_variants
 
 router = APIRouter(prefix="/api/ui/recommendations", tags=["ui-recommendations"])
 
+_CAPACITY_TIER_LABELS = {
+    "CAPACITY_ELEVATED": "Erhöhte Auslastung",
+    "CAPACITY_HIGH": "Hohe Auslastung",
+    "CAPACITY_NEAR_LIMIT": "Auslastung nahe am empfohlenen Grenzwert",
+    "CAPACITY_EXCEEDED": "Empfohlener Kapazitätsgrenzwert überschritten",
+}
+_CAPACITY_TIER_PRIORITY = (
+    "CAPACITY_EXCEEDED",
+    "CAPACITY_NEAR_LIMIT",
+    "CAPACITY_HIGH",
+    "CAPACITY_ELEVATED",
+)
+_CAPACITY_CONFIGURATION_LABELS = {
+    "MISSING_STATION_REQUIREMENT": "Kapazitätszuordnung fehlt",
+    "STATION_INACTIVE": "Produktionsstation ist inaktiv",
+    "CAPACITY_UNSET": "Kapazität ist nicht hinterlegt",
+    "STATION_UNAVAILABLE": "Produktionsstation ist nicht verfügbar",
+    "NO_CAPACITY": "Für die Produktionsstation ist keine Kapazität hinterlegt",
+    "DEMAND_SOURCE_INCOMPLETE": (
+        "Auslastung kann wegen unvollständiger Auftragsdaten nicht vollständig "
+        "berechnet werden"
+    ),
+}
+_CAPACITY_SOURCE_UNAVAILABLE_WARNING = (
+    "Produktionshinweis: Kapazitätsdaten sind derzeit nicht verfügbar. "
+    "Empfehlungen und Angebot bleiben verfügbar; die Entscheidung trifft der "
+    "Mitarbeiter."
+)
+
 
 class UiRecommendationGenerateRequest(BaseModel):
     """Structured Office questionnaire inputs used by deterministic v1 scoring."""
@@ -48,6 +77,18 @@ class UiRecommendationGenerateRequest(BaseModel):
     piece_quantity_by_item_id: dict[str, int] = Field(default_factory=dict)
 
 
+def _capacity_tier_from_percent(load_percent: int) -> str | None:
+    if load_percent >= 100:
+        return "CAPACITY_EXCEEDED"
+    if load_percent >= 90:
+        return "CAPACITY_NEAR_LIMIT"
+    if load_percent >= 80:
+        return "CAPACITY_HIGH"
+    if load_percent >= 70:
+        return "CAPACITY_ELEVATED"
+    return None
+
+
 def _capacity_warnings(rows: tuple[CoreCapacityRow, ...]) -> tuple[str, ...]:
     """Turn Core capacity facts into visible, non-blocking employee guidance."""
 
@@ -55,29 +96,44 @@ def _capacity_warnings(rows: tuple[CoreCapacityRow, ...]) -> tuple[str, ...]:
         return ()
 
     reasons = {row.reason_code for row in rows if row.reason_code is not None}
-    if "CAPACITY_EXHAUSTED" in reasons:
-        return (
-            "Produktionshinweis: Die hinterlegte Tageskapazität ist erreicht oder "
-            "überschritten. Empfehlungen und Angebot bleiben verfügbar; die "
-            "Entscheidung trifft der Mitarbeiter.",
-        )
-
-    if reasons:
-        reason_text = ", ".join(sorted(reasons))
-        return (
-            "Produktionshinweis: Die Kapazität kann nicht vollständig bewertet "
-            f"werden ({reason_text}). Das blockiert die Bearbeitung nicht; die "
-            "Entscheidung trifft der Mitarbeiter.",
-        )
-
     current_load_percent = max(row.overload_penalty for row in rows)
-    if current_load_percent <= 0:
-        return ()
-    return (
-        "Produktionshinweis: Die aktuelle Tagesauslastung liegt bei ungefähr "
-        f"{current_load_percent} %. Das ist nur ein Hinweis; Empfehlungen und "
-        "Angebot bleiben verfügbar.",
+    warnings: list[str] = []
+
+    tier_reason = next(
+        (reason for reason in _CAPACITY_TIER_PRIORITY if reason in reasons),
+        None,
     )
+    if tier_reason is None and not reasons:
+        tier_reason = _capacity_tier_from_percent(current_load_percent)
+
+    if tier_reason is not None:
+        label = _CAPACITY_TIER_LABELS[tier_reason]
+        load_text = (
+            "mindestens 100 %"
+            if tier_reason == "CAPACITY_EXCEEDED"
+            else f"ca. {current_load_percent} %"
+        )
+        warnings.append(
+            f"Produktionshinweis: {label}. Die aktuelle Tagesauslastung liegt bei "
+            f"{load_text}. Empfehlungen und Angebot bleiben verfügbar; die "
+            "Entscheidung trifft der Mitarbeiter."
+        )
+
+    configuration_labels = sorted(
+        {
+            _CAPACITY_CONFIGURATION_LABELS[reason]
+            for reason in reasons
+            if reason in _CAPACITY_CONFIGURATION_LABELS
+        }
+    )
+    if configuration_labels:
+        warnings.append(
+            "Produktionshinweis: Die Kapazität kann nicht vollständig bewertet "
+            f"werden ({'; '.join(configuration_labels)}). Das blockiert die "
+            "Bearbeitung nicht; die Entscheidung trifft der Mitarbeiter."
+        )
+
+    return tuple(warnings)
 
 
 @router.post("/generate")
@@ -106,22 +162,21 @@ def generate_ui_recommendations(
     core = build_core_office_client()
     try:
         core_rows = core.get_recommendation_demand(payload.event_date)
-        core_capacity_rows = core.get_recommendation_capacity(payload.event_date)
     except CoreOfficeClientError as exc:
-        code = (
-            "recommendation_capacity_unavailable"
-            if exc.code.startswith("recommendation_capacity")
-            else "recommendation_demand_unavailable"
-        )
-        message = (
-            "Production capacity is unavailable."
-            if code == "recommendation_capacity_unavailable"
-            else "Same-day production demand is unavailable."
-        )
         raise HTTPException(
             status_code=503,
-            detail=safe_error_detail(code, message),
+            detail=safe_error_detail(
+                "recommendation_demand_unavailable",
+                "Same-day production demand is unavailable.",
+            ),
         ) from exc
+
+    capacity_source_warnings: tuple[str, ...] = ()
+    try:
+        core_capacity_rows = core.get_recommendation_capacity(payload.event_date)
+    except CoreOfficeClientError:
+        core_capacity_rows = ()
+        capacity_source_warnings = (_CAPACITY_SOURCE_UNAVAILABLE_WARNING,)
 
     items = list(catalog.items.values())
     configurator_item_ids = tuple(catalog.items.keys())
@@ -153,7 +208,11 @@ def generate_ui_recommendations(
         piece_quantity_by_item_id=payload.piece_quantity_by_item_id,
     )
 
-    warnings = [*catalog.warnings, *_capacity_warnings(core_capacity_rows)]
+    warnings = [
+        *catalog.warnings,
+        *capacity_source_warnings,
+        *_capacity_warnings(core_capacity_rows),
+    ]
     return {
         "event_date": payload.event_date.isoformat(),
         "guest_count": payload.guest_count,

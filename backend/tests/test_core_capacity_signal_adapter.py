@@ -12,21 +12,29 @@ def test_capacity_rows_map_back_to_configurator_item_ids() -> None:
         CoreCapacityRow(
             item_id=dish_id_from_source_id(item_id),
             feasible=True,
-            overload_penalty=35,
+            overload_penalty=75,
+            reason_code="CAPACITY_ELEVATED",
         ),
     )
 
     assert capacity_signals_from_core_rows(
         rows,
         configurator_item_ids=(item_id,),
-    ) == (CapacitySignal(item_id=item_id, feasible=True, overload_penalty=35),)
+    ) == (
+        CapacitySignal(
+            item_id=item_id,
+            feasible=True,
+            overload_penalty=75,
+            reason_code="CAPACITY_ELEVATED",
+        ),
+    )
 
 
-def test_capacity_rows_ignore_unknown_core_ids_and_preserve_hard_reject() -> None:
+def test_capacity_rows_ignore_unknown_core_ids_and_keep_advisory_reason() -> None:
     rows = (
         CoreCapacityRow(
             item_id=dish_id_from_source_id("D2"),
-            feasible=False,
+            feasible=True,
             overload_penalty=100,
             reason_code="CAPACITY_UNSET",
         ),
@@ -40,5 +48,6 @@ def test_capacity_rows_ignore_unknown_core_ids_and_preserve_hard_reject() -> Non
 
     assert len(signals) == 1
     assert signals[0].item_id == "D2"
-    assert signals[0].feasible is False
+    assert signals[0].feasible is True
     assert signals[0].overload_penalty == 100
+    assert signals[0].reason_code == "CAPACITY_UNSET"
