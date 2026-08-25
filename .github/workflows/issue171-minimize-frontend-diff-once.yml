@@ -42,6 +42,54 @@ jobs:
           git checkout origin/main -- "${files[@]}"
           git apply --ignore-space-change --ignore-whitespace /tmp/issue171-semantic.patch
 
+      - name: Update pre-171 frontend expectations
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("frontend/src/utils/__tests__/offerSnapshotRequest.test.ts")
+          text = path.read_text(encoding="utf-8")
+          return_block = '''      return_logistics: {
+                mode: "NEXT_WORKING_DAY",
+                pickup_window_text: null,
+                same_day_fee_cents: 0,
+              },
+          '''
+          anchors = [
+              '''      buffet: {
+                base_mode: "NONE",
+                pauschale_per_person_cents: 50,
+              },
+              ''',
+              '''      buffet: {
+                base_mode: "PAUSCHALE",
+                pauschale_per_person_cents: 75,
+              },
+              ''',
+          ]
+          for anchor in anchors:
+              if text.count(anchor) != 1:
+                  raise RuntimeError(f"unexpected offerSnapshotRequest test anchor count: {text.count(anchor)}")
+              text = text.replace(anchor, anchor + return_block, 1)
+          path.write_text(text, encoding="utf-8")
+
+          path = Path("frontend/src/utils/__tests__/draftPersistence.test.ts")
+          text = path.read_text(encoding="utf-8")
+          old = '    expect(restored?.chargesDefinition).toEqual(draft.chargesDefinition);\n'
+          new = '''    expect(restored?.chargesDefinition).toEqual({
+              ...draft.chargesDefinition,
+              returnLogistics: {
+                mode: "NEXT_WORKING_DAY",
+                pickupWindowText: null,
+                sameDayFeeCents: 0,
+              },
+            });
+          '''
+          if text.count(old) != 1:
+              raise RuntimeError(f"unexpected draft persistence assertion count: {text.count(old)}")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+
       - name: Validate frontend after diff cleanup
         working-directory: frontend
         run: |
@@ -62,6 +110,8 @@ jobs:
             frontend/src/utils/pricing.ts \
             frontend/src/components/summary/ChargeConfiguratorModal.tsx \
             frontend/src/components/summary/OfferSummary.tsx \
-            frontend/src/components/summary/OfferPreview.tsx
+            frontend/src/components/summary/OfferPreview.tsx \
+            frontend/src/utils/__tests__/offerSnapshotRequest.test.ts \
+            frontend/src/utils/__tests__/draftPersistence.test.ts
           git commit -m "Issue #171: minimize frontend diff"
           git push origin HEAD:issue-171-return-logistics-configurator
