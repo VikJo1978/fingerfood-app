@@ -17,7 +17,10 @@ from app.models.classification import Allergen, DietType
 from app.routes.offer import safe_error_detail
 from app.services.catalog_client import CatalogClientError
 from app.services.catalog_factory import build_catalog_adapter, build_core_office_client
-from app.services.core_capacity_signal_adapter import capacity_signals_from_core_rows
+from app.services.core_capacity_signal_adapter import (
+    CoreCapacityRow,
+    capacity_signals_from_core_rows,
+)
 from app.services.core_office_client import CoreOfficeClientError
 from app.services.core_production_signal_adapter import production_signals_from_core_rows
 from app.services.recommendation_engine import RecommendationRequest
@@ -43,6 +46,38 @@ class UiRecommendationGenerateRequest(BaseModel):
     max_unit_net_cents: int | None = Field(default=None, ge=0)
     max_variant_net_cents: int | None = Field(default=None, ge=0)
     piece_quantity_by_item_id: dict[str, int] = Field(default_factory=dict)
+
+
+def _capacity_warnings(rows: tuple[CoreCapacityRow, ...]) -> tuple[str, ...]:
+    """Turn Core capacity facts into visible, non-blocking employee guidance."""
+
+    if not rows:
+        return ()
+
+    reasons = {row.reason_code for row in rows if row.reason_code is not None}
+    if "CAPACITY_EXHAUSTED" in reasons:
+        return (
+            "Produktionshinweis: Die hinterlegte Tageskapazität ist erreicht oder "
+            "überschritten. Empfehlungen und Angebot bleiben verfügbar; die "
+            "Entscheidung trifft der Mitarbeiter.",
+        )
+
+    if reasons:
+        reason_text = ", ".join(sorted(reasons))
+        return (
+            "Produktionshinweis: Die Kapazität kann nicht vollständig bewertet "
+            f"werden ({reason_text}). Das blockiert die Bearbeitung nicht; die "
+            "Entscheidung trifft der Mitarbeiter.",
+        )
+
+    current_load_percent = max(row.overload_penalty for row in rows)
+    if current_load_percent <= 0:
+        return ()
+    return (
+        "Produktionshinweis: Die aktuelle Tagesauslastung liegt bei ungefähr "
+        f"{current_load_percent} %. Das ist nur ein Hinweis; Empfehlungen und "
+        "Angebot bleiben verfügbar.",
+    )
 
 
 @router.post("/generate")
@@ -118,12 +153,13 @@ def generate_ui_recommendations(
         piece_quantity_by_item_id=payload.piece_quantity_by_item_id,
     )
 
+    warnings = [*catalog.warnings, *_capacity_warnings(core_capacity_rows)]
     return {
         "event_date": payload.event_date.isoformat(),
         "guest_count": payload.guest_count,
         "catalog_revision": catalog.catalog_revision,
         "catalog_source": catalog.source,
-        "warnings": list(catalog.warnings),
+        "warnings": warnings,
         "production_signal_count": len(production_signals),
         "capacity_signal_count": len(capacity_signals),
         "variants": [
