@@ -1,7 +1,7 @@
 """Translate Core recommendation-capacity rows into configurator capacity signals.
 
-The adapter deliberately carries only the item-level feasibility and pressure
-facts exposed by Core; quantity-aware capacity remains outside this v1 contract.
+The adapter deliberately carries only the item-level advisory capacity facts exposed
+by Core. Capacity remains decision support and never becomes a hard reject here.
 """
 
 from __future__ import annotations
@@ -44,6 +44,7 @@ def capacity_signals_from_core_rows(
                 item_id=item_id,
                 feasible=row.feasible,
                 overload_penalty=row.overload_penalty,
+                reason_code=row.reason_code,
             )
         )
     return tuple(sorted(signals, key=lambda signal: signal.item_id))
