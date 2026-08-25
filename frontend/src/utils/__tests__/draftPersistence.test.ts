@@ -140,7 +140,14 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     expect(restored?.budgetType).toBe("per_person");
     expect(restored?.budgetBasis).toBe("net");
     expect(restored?.budgetScope).toBe("positions_only");
-    expect(restored?.chargesDefinition).toEqual(draft.chargesDefinition);
+    expect(restored?.chargesDefinition).toEqual({
+      ...draft.chargesDefinition,
+      returnLogistics: {
+        mode: "NEXT_WORKING_DAY",
+        pickupWindowText: null,
+        sameDayFeeCents: 0,
+      },
+    });
     expect(restored?.chargesDefinition.delivery.amountCents).toBe(0);
     expect(restored?.chargesDefinition.dishware.additionalLines).toEqual(
       draft.chargesDefinition.dishware.additionalLines

@@ -419,6 +419,11 @@ describe("charges_definition in the Core snapshot payload", () => {
         base_mode: "NONE",
         pauschale_per_person_cents: 50,
       },
+      return_logistics: {
+        mode: "NEXT_WORKING_DAY",
+        pickup_window_text: null,
+        same_day_fee_cents: 0,
+      },
     });
   });
 
@@ -466,6 +471,11 @@ describe("charges_definition in the Core snapshot payload", () => {
       buffet: {
         base_mode: "PAUSCHALE",
         pauschale_per_person_cents: 75,
+      },
+      return_logistics: {
+        mode: "NEXT_WORKING_DAY",
+        pickup_window_text: null,
+        same_day_fee_cents: 0,
       },
     });
     expect(JSON.stringify(body.charges_definition)).not.toContain("lineId");
