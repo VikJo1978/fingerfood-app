@@ -3,11 +3,17 @@ import { getCsrfToken } from "./session";
 
 export type RecommendationVariantKind = "ECONOMIC" | "RECOMMENDED" | "PREMIUM";
 export type FulfillmentMode = "PICKUP" | "DELIVERY";
+export type RecommendationEventType =
+  | "business"
+  | "private"
+  | "wedding"
+  | "reception"
+  | "other";
 
 export interface RecommendationGenerateRequest {
   event_date: string;
   guest_count: number;
-  event_type?: string | null;
+  event_type?: RecommendationEventType | null;
   catering_format?: "fingerfood" | "buffet" | "mixed" | "other" | null;
   fulfillment_mode: FulfillmentMode;
   diet_type?: DietType | null;
