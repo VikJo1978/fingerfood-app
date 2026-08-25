@@ -73,7 +73,12 @@ def rank_items(
     production_signals: tuple[ProductionSignal, ...] = (),
     capacity_signals: tuple[CapacitySignal, ...] = (),
 ) -> list[RecommendationCandidate]:
-    """Rank items deterministically and return rejected candidates last."""
+    """Rank items deterministically and return rejected candidates last.
+
+    Production capacity is advisory operational context. It may be explained to the
+    employee, but it never rejects an otherwise valid catalog item and never changes
+    ranking. The human remains responsible for the capacity decision.
+    """
 
     production_bonus = _production_bonus_by_item(production_signals)
     capacity_by_item = {signal.item_id: signal for signal in capacity_signals}
@@ -135,9 +140,6 @@ def _score_item(
     ):
         rejects.append("over_unit_budget")
 
-    if capacity_signal is not None and not capacity_signal.feasible:
-        rejects.append("capacity_unavailable")
-
     if rejects:
         return RecommendationCandidate(
             item_id=item.id,
@@ -158,9 +160,14 @@ def _score_item(
     if production_bonus:
         score += production_bonus
         explanations.append(f"same-day production +{production_bonus}")
-    if capacity_signal is not None and capacity_signal.overload_penalty:
-        score -= capacity_signal.overload_penalty
-        explanations.append(f"capacity pressure -{capacity_signal.overload_penalty}")
+
+    if capacity_signal is not None:
+        if not capacity_signal.feasible:
+            explanations.append("capacity advisory: limit or data issue")
+        elif capacity_signal.overload_penalty:
+            explanations.append(
+                f"capacity advisory: {capacity_signal.overload_penalty}% load"
+            )
 
     assert unit_net_cents is not None
     if request.profile == "ECONOMIC":
