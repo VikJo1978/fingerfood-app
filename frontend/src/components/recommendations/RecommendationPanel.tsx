@@ -24,6 +24,7 @@ interface RecommendationPanelProps {
   eventDate: string;
   guestCount: number;
   catalog: CatalogItem[];
+  inquiryId?: string | null;
   initialCateringFormat?: RecommendationCateringFormat;
   initialEventType?: RecommendationEventType | "";
   onApplyVariant?: (variant: RecommendationVariant) => void;
@@ -37,6 +38,7 @@ export function RecommendationPanel({
   eventDate,
   guestCount,
   catalog,
+  inquiryId = null,
   initialCateringFormat = "fingerfood",
   initialEventType = "",
   onApplyVariant,
@@ -48,6 +50,7 @@ export function RecommendationPanel({
   const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>("DELIVERY");
   const [dietType, setDietType] = useState<DietType | "">("");
   const [noPork, setNoPork] = useState(false);
+  const [useCustomerHistory, setUseCustomerHistory] = useState(true);
   const [excludedAllergens, setExcludedAllergens] = useState<AllergenCode[]>([]);
   const [preferredCategoriesRaw, setPreferredCategoriesRaw] = useState("");
   const [maxVariantNetEur, setMaxVariantNetEur] = useState("");
@@ -95,6 +98,8 @@ export function RecommendationPanel({
       const response = await generateRecommendations({
         event_date: eventDate,
         guest_count: guestCount,
+        inquiry_id: inquiryId,
+        use_customer_history: useCustomerHistory,
         event_type: eventType || null,
         catering_format: cateringFormat,
         fulfillment_mode: fulfillmentMode,
@@ -226,6 +231,18 @@ export function RecommendationPanel({
         </label>
       </div>
 
+      {inquiryId ? (
+        <label className="inline-flex items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={useCustomerHistory}
+            onChange={(event) => setUseCustomerHistory(event.target.checked)}
+            className="rounded border-line text-accent focus:ring-accent"
+          />
+          Kundenhistorie als weichen Hinweis berücksichtigen
+        </label>
+      ) : null}
+
       <div>
         <span className={labelClass}>Ausschluss Allergene</span>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -313,7 +330,7 @@ export function RecommendationPanel({
             ))}
           </div>
           <p className="text-xs text-muted">
-            Produktionssignale: {result.production_signal_count} · Katalog: {result.catalog_revision}
+            Produktionssignale: {result.production_signal_count} · Historienhinweise: {result.customer_history_signal_count} · Katalog: {result.catalog_revision}
           </p>
         </div>
       ) : null}
