@@ -50,6 +50,13 @@ jobs:
 
           script_path = Path("scripts_issue175_configurator_timing_patch.py")
           source = script_path.read_text(encoding="utf-8")
+
+          # GitHub Actions cannot push changes to workflow files with this token.
+          # The permanent Core contract pin is updated separately after #177 merges.
+          ci_start = source.index("# --- CI contract pin")
+          ci_end = source.index("# --- frontend request tests")
+          source = source[:ci_start] + source[ci_end:]
+
           old = '''    count = text.count(old)\n    if count != 1:\n        raise RuntimeError(f"expected one match in {path}, got {count}")\n    target.write_text(text.replace(old, new, 1), encoding="utf-8")\n'''
           new = '''    count = text.count(old)\n    if (\n        count != 1\n        and path.endswith("ChargeConfiguratorModal.tsx")\n        and "pickupWindowText:" in old\n    ):\n        adjusted = "".join(\n            ("\\t" * 4 + line if line.strip() else line)\n            for line in old.splitlines(keepends=True)\n        )\n        if text.count(adjusted) == 1:\n            old = adjusted\n            count = 1\n    if count != 1:\n        raise RuntimeError(f"expected one match in {path}, got {count}")\n    target.write_text(text.replace(old, new, 1), encoding="utf-8")\n'''
           if source.count(old) != 1:
@@ -119,7 +126,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+VikJo1978@users.noreply.github.com"
-          git add backend frontend .github/workflows/ci.yml docs
+          git add backend frontend docs
           if git diff --cached --quiet; then
             echo "No product changes to commit"
             exit 0
