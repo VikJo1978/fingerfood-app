@@ -11,6 +11,7 @@ import {
 import {
   generateRecommendations,
   type FulfillmentMode,
+  type RecommendationCateringFormat,
   type RecommendationEventType,
   type RecommendationGenerateResponse,
   type RecommendationVariant,
@@ -23,10 +24,10 @@ interface RecommendationPanelProps {
   eventDate: string;
   guestCount: number;
   catalog: CatalogItem[];
+  initialCateringFormat?: RecommendationCateringFormat;
+  initialEventType?: RecommendationEventType | "";
   onApplyVariant?: (variant: RecommendationVariant) => void;
 }
-
-type CateringFormat = "fingerfood" | "buffet" | "mixed" | "other";
 
 const fieldClass =
   "rounded-control border border-line bg-white px-3 py-2 text-sm text-ink transition focus:border-accent";
@@ -36,10 +37,14 @@ export function RecommendationPanel({
   eventDate,
   guestCount,
   catalog,
+  initialCateringFormat = "fingerfood",
+  initialEventType = "",
   onApplyVariant,
 }: RecommendationPanelProps) {
-  const [cateringFormat, setCateringFormat] = useState<CateringFormat>("fingerfood");
-  const [eventType, setEventType] = useState<RecommendationEventType | "">("");
+  const [cateringFormat, setCateringFormat] =
+    useState<RecommendationCateringFormat>(initialCateringFormat);
+  const [eventType, setEventType] =
+    useState<RecommendationEventType | "">(initialEventType);
   const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode>("DELIVERY");
   const [dietType, setDietType] = useState<DietType | "">("");
   const [noPork, setNoPork] = useState(false);
@@ -129,7 +134,9 @@ export function RecommendationPanel({
           <select
             className={fieldClass}
             value={cateringFormat}
-            onChange={(event) => setCateringFormat(event.target.value as CateringFormat)}
+            onChange={(event) =>
+              setCateringFormat(event.target.value as RecommendationCateringFormat)
+            }
           >
             <option value="fingerfood">Fingerfood</option>
             <option value="buffet">Buffet</option>
