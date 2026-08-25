@@ -290,3 +290,42 @@ describe("clearDraftFromSession", () => {
     expect(readDraftFromSession(INQUIRY_B, storage)?.persons).toBe(6);
   });
 });
+
+
+describe("canonical logistics timing draft compatibility", () => {
+  it("round-trips explicit delivery and SAME_DAY pickup timing", () => {
+    const storage = new FakeStorage();
+    const draft = draftWithBudget({
+      orderContext: {
+        ...createInitialOfferDraft().orderContext,
+        deliveryDate: "2026-10-01",
+        deliveryWindowStart: "18:00",
+        deliveryWindowEnd: "19:00",
+      },
+      chargesDefinition: {
+        ...createInitialOfferDraft().chargesDefinition,
+        returnLogistics: {
+          mode: "SAME_DAY",
+          pickupWindowText: "22:00–23:00",
+          sameDayFeeCents: 2500,
+          pickupWindowStartLocal: "22:00",
+          pickupWindowEndLocal: "23:00",
+        },
+      },
+    });
+    saveDraftToSession(INQUIRY_A, draft, storage);
+    const restored = readDraftFromSession(INQUIRY_A, storage);
+    expect(restored?.orderContext.deliveryWindowStart).toBe("18:00");
+    expect(restored?.chargesDefinition.returnLogistics?.pickupWindowEndLocal).toBe("23:00");
+  });
+
+  it("keeps an older draft with no canonical timing readable", () => {
+    const storage = new FakeStorage();
+    const legacy = createInitialOfferDraft();
+    saveDraftToSession(INQUIRY_A, legacy, storage);
+    const restored = readDraftFromSession(INQUIRY_A, storage);
+    expect(restored).not.toBeNull();
+    expect(restored?.orderContext.deliveryWindowStart).toBeUndefined();
+    expect(restored?.chargesDefinition.returnLogistics?.pickupWindowStartLocal).toBeUndefined();
+  });
+});

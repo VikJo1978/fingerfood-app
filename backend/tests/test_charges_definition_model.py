@@ -299,3 +299,60 @@ def test_rejects_too_many_additional_lines() -> None:
     )
     with pytest.raises(ValidationError):
         ChargesDefinitionIn.model_validate(payload)
+
+
+def test_same_day_accepts_optional_canonical_pickup_pair() -> None:
+    parsed = ChargesDefinitionIn.model_validate(
+        _valid_payload(
+            return_logistics={
+                "mode": "SAME_DAY",
+                "pickup_window_text": "22:00-23:00",
+                "same_day_fee_cents": 2500,
+                "pickup_window_start_local": "22:00",
+                "pickup_window_end_local": "23:00",
+            }
+        )
+    )
+    assert parsed.return_logistics.pickup_window_start_local == "22:00"
+    assert parsed.return_logistics.pickup_window_end_local == "23:00"
+
+
+@pytest.mark.parametrize(
+    "return_logistics",
+    [
+        {
+            "mode": "SAME_DAY",
+            "pickup_window_text": "22:00-23:00",
+            "same_day_fee_cents": 0,
+            "pickup_window_start_local": "22:00",
+        },
+        {
+            "mode": "SAME_DAY",
+            "pickup_window_text": "22:00-23:00",
+            "same_day_fee_cents": 0,
+            "pickup_window_start_local": "23:00",
+            "pickup_window_end_local": "22:00",
+        },
+        {
+            "mode": "SAME_DAY",
+            "pickup_window_text": "22:00-23:00",
+            "same_day_fee_cents": 0,
+            "pickup_window_start_local": "22:00:00",
+            "pickup_window_end_local": "23:00",
+        },
+        {
+            "mode": "NEXT_WORKING_DAY",
+            "pickup_window_text": None,
+            "same_day_fee_cents": 0,
+            "pickup_window_start_local": "10:00",
+            "pickup_window_end_local": "11:00",
+        },
+    ],
+)
+def test_rejects_invalid_canonical_pickup_windows(
+    return_logistics: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        ChargesDefinitionIn.model_validate(
+            _valid_payload(return_logistics=return_logistics)
+        )

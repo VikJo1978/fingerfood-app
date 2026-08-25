@@ -132,6 +132,10 @@ export interface OrderContextV1 {
   phone?: string;
   eventDate: string;
   eventTime: string;
+  /** Explicit machine-usable delivery timing. Never inferred from eventTime. */
+  deliveryDate?: string;
+  deliveryWindowStart?: string;
+  deliveryWindowEnd?: string;
   /** Veranstaltungsort. Delivery address is modeled separately below. */
   location: string;
   /** Legacy free-text billing address kept for the existing offer recipient snapshot. */
@@ -178,6 +182,9 @@ export interface ReturnLogisticsDefinition {
 	mode: ReturnMode;
 	pickupWindowText: string | null;
 	sameDayFeeCents: number;
+	/** Optional canonical SAME_DAY pickup timing for logistics capacity. */
+	pickupWindowStartLocal?: string;
+	pickupWindowEndLocal?: string;
 }
 
 export interface ChargesDefinition {

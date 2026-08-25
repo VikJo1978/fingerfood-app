@@ -71,6 +71,21 @@ function isOptionalString(
 	);
 }
 
+const CANONICAL_LOCAL_TIME_RE = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+function isCanonicalOptionalWindow(
+  start: unknown,
+  end: unknown,
+): boolean {
+  if (start === undefined && end === undefined) return true;
+  if (typeof start !== "string" || typeof end !== "string") return false;
+  return (
+    CANONICAL_LOCAL_TIME_RE.test(start) &&
+    CANONICAL_LOCAL_TIME_RE.test(end) &&
+    start < end
+  );
+}
+
 function isOrderContext(value: unknown): value is OrderContextV1 {
   if (!isRecord(value)) return false;
   return (
@@ -79,6 +94,12 @@ function isOrderContext(value: unknown): value is OrderContextV1 {
     typeof value.eventDate === "string" &&
     typeof value.eventTime === "string" &&
     typeof value.location === "string" &&
+    isOptionalString(value.deliveryDate, 10) &&
+    isOptionalString(value.deliveryWindowStart, 5) &&
+    isOptionalString(value.deliveryWindowEnd, 5) &&
+    isCanonicalOptionalWindow(value.deliveryWindowStart, value.deliveryWindowEnd) &&
+    ((value.deliveryDate === undefined && value.deliveryWindowStart === undefined) ||
+      (typeof value.deliveryDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.deliveryDate))) &&
     isOptionalString(value.email) &&
     isOptionalString(value.phone) &&
     isOptionalString(value.billingAddress) &&
@@ -127,13 +148,20 @@ function isReturnLogisticsDefinition(value: unknown): boolean {
 	if (value.mode !== "NEXT_WORKING_DAY" && value.mode !== "SAME_DAY")
 		return false;
 	if (!isNonnegativeInteger(value.sameDayFeeCents)) return false;
+  if (!isCanonicalOptionalWindow(value.pickupWindowStartLocal, value.pickupWindowEndLocal)) {
+    return false;
+  }
 	if (value.mode === "SAME_DAY") {
 		return (
 			isNonEmptyString(value.pickupWindowText, 500) &&
 			value.pickupWindowText === value.pickupWindowText.trim()
 		);
 	}
-	return value.pickupWindowText === null;
+	return (
+    value.pickupWindowText === null &&
+    value.pickupWindowStartLocal === undefined &&
+    value.pickupWindowEndLocal === undefined
+  );
 }
 
 function isChargesDefinition(value: unknown): value is ChargesDefinition {

@@ -500,3 +500,88 @@ describe("charges_definition in the Core snapshot payload", () => {
     expect(definition.dishware.additional_lines[0].description).toBe("Gläser");
   });
 });
+
+
+describe("canonical logistics timing in the Core snapshot payload", () => {
+  it("omits canonical delivery fields when no explicit structured window exists", () => {
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    expect(body.event).not.toHaveProperty("delivery_date_local");
+    expect(body.event.time_window_text).toBe("18:00");
+  });
+
+  it("sends an explicit canonical delivery window without parsing eventTime", () => {
+    const body = buildOfferSnapshotRequest(
+      {
+        ...draft,
+        orderContext: {
+          ...draft.orderContext,
+          eventTime: "abends",
+          deliveryDate: "2026-08-20",
+          deliveryWindowStart: "17:30",
+          deliveryWindowEnd: "18:15",
+        },
+      },
+      "inq-1",
+      null,
+    );
+    expect(body.event).toMatchObject({
+      time_window_text: "abends",
+      delivery_date_local: "2026-08-20",
+      delivery_window_start_local: "17:30",
+      delivery_window_end_local: "18:15",
+    });
+  });
+
+  it("rejects a partial canonical delivery window", () => {
+    expect(() =>
+      buildOfferSnapshotRequest(
+        {
+          ...draft,
+          orderContext: {
+            ...draft.orderContext,
+            deliveryDate: "2026-08-20",
+            deliveryWindowStart: "17:30",
+          },
+        },
+        "inq-1",
+        null,
+      ),
+    ).toThrow("invalid_delivery_window");
+  });
+
+  it("sends canonical SAME_DAY pickup timing only when the explicit pair exists", () => {
+    const definition = buildChargesDefinition({
+      ...draft.chargesDefinition,
+      returnLogistics: {
+        mode: "SAME_DAY",
+        pickupWindowText: "22:00–23:00",
+        sameDayFeeCents: 2500,
+        pickupWindowStartLocal: "22:00",
+        pickupWindowEndLocal: "23:00",
+      },
+    });
+    expect(definition.return_logistics).toEqual({
+      mode: "SAME_DAY",
+      pickup_window_text: "22:00–23:00",
+      same_day_fee_cents: 2500,
+      pickup_window_start_local: "22:00",
+      pickup_window_end_local: "23:00",
+    });
+  });
+
+  it("preserves the V2 return shape when SAME_DAY canonical pickup timing is unknown", () => {
+    const definition = buildChargesDefinition({
+      ...draft.chargesDefinition,
+      returnLogistics: {
+        mode: "SAME_DAY",
+        pickupWindowText: "nach Veranstaltungsende",
+        sameDayFeeCents: 2500,
+      },
+    });
+    expect(definition.return_logistics).toEqual({
+      mode: "SAME_DAY",
+      pickup_window_text: "nach Veranstaltungsende",
+      same_day_fee_cents: 2500,
+    });
+  });
+});

@@ -578,6 +578,37 @@ export function HomePage() {
       setPrepareMessage("Bitte zuerst ein Eventdatum im Auftragskontext setzen.");
       return;
     }
+    const deliveryTiming = [
+      offerDraft.orderContext.deliveryDate?.trim() ?? "",
+      offerDraft.orderContext.deliveryWindowStart?.trim() ?? "",
+      offerDraft.orderContext.deliveryWindowEnd?.trim() ?? "",
+    ];
+    const deliveryTimingCount = deliveryTiming.filter(Boolean).length;
+    if (deliveryTimingCount !== 0 && deliveryTimingCount !== 3) {
+      setPrepareStatus("error");
+      setPrepareMessage("Lieferfenster bitte vollständig mit Datum, Von und Bis angeben oder leer lassen.");
+      return;
+    }
+    if (deliveryTimingCount === 3 && deliveryTiming[1] >= deliveryTiming[2]) {
+      setPrepareStatus("error");
+      setPrepareMessage("Beim Lieferfenster muss Von vor Bis liegen.");
+      return;
+    }
+    const returnLogistics = offerDraft.chargesDefinition.returnLogistics;
+    if (returnLogistics?.mode === "SAME_DAY") {
+      const pickupStart = returnLogistics.pickupWindowStartLocal?.trim() ?? "";
+      const pickupEnd = returnLogistics.pickupWindowEndLocal?.trim() ?? "";
+      if (Boolean(pickupStart) !== Boolean(pickupEnd)) {
+        setPrepareStatus("error");
+        setPrepareMessage("Strukturiertes Rückholfenster bitte mit Von und Bis vollständig angeben oder leer lassen.");
+        return;
+      }
+      if (pickupStart && pickupEnd && pickupStart >= pickupEnd) {
+        setPrepareStatus("error");
+        setPrepareMessage("Beim strukturierten Rückholfenster muss Von vor Bis liegen.");
+        return;
+      }
+    }
     if (offerDraft.lines.length === 0) {
       setPrepareStatus("error");
       setPrepareMessage("Bitte mindestens eine Position hinzufügen.");
