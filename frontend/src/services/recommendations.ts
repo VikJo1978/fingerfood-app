@@ -3,6 +3,7 @@ import { getCsrfToken } from "./session";
 
 export type RecommendationVariantKind = "ECONOMIC" | "RECOMMENDED" | "PREMIUM";
 export type FulfillmentMode = "PICKUP" | "DELIVERY";
+export type RecommendationCateringFormat = "fingerfood" | "buffet" | "mixed" | "other";
 export type RecommendationEventType =
   | "business"
   | "private"
@@ -10,11 +11,55 @@ export type RecommendationEventType =
   | "reception"
   | "other";
 
+export function recommendationEventTypeFromInquiry(
+  value: string
+): RecommendationEventType | "" {
+  const text = value.trim().toLocaleLowerCase("de-DE");
+  if (!text) return "";
+
+  if (
+    text.includes("firmenfeier") ||
+    text.includes("firmenveranstaltung") ||
+    text.includes("firmenevent") ||
+    text.includes("business") ||
+    text.includes("meeting")
+  ) {
+    return "business";
+  }
+  if (text.includes("hochzeit")) return "wedding";
+  if (text.includes("empfang") || text.includes("reception")) return "reception";
+  if (
+    text.includes("privat") ||
+    text.includes("geburtstag") ||
+    text.includes("familienfeier")
+  ) {
+    return "private";
+  }
+  if (text === "sonstiges" || text === "other") return "other";
+  return "";
+}
+
+export function recommendationCateringFormatFromServiceStyle(
+  value: string
+): RecommendationCateringFormat | "" {
+  const text = value.trim().toLocaleLowerCase("de-DE");
+  if (!text) return "";
+
+  const mentionsFingerfood = text.includes("fingerfood") || text.includes("flying");
+  const mentionsBuffet = text.includes("buffet") || text.includes("büffet");
+
+  if (mentionsFingerfood && mentionsBuffet) return "mixed";
+  if (mentionsFingerfood) return "fingerfood";
+  if (mentionsBuffet) return "buffet";
+  if (text === "sonstiges" || text === "other") return "other";
+  return "";
+}
+
 export interface RecommendationGenerateRequest {
   event_date: string;
   guest_count: number;
   event_type?: RecommendationEventType | null;
-  catering_format?: "fingerfood" | "buffet" | "mixed" | "other" | null;
+  catering_format?: RecommendationCateringFormat | null;
   fulfillment_mode: FulfillmentMode;
   diet_type?: DietType | null;
   excluded_allergens?: AllergenCode[];
