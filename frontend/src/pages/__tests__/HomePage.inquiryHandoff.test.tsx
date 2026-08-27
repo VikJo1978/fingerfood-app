@@ -219,7 +219,9 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     await renderAfterHandoff();
 
     fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
     fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
 
     // Capture the exact JSON body sent to the prepare-offer endpoint.
     let capturedBody: Record<string, unknown> | null = null;
@@ -383,7 +385,9 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
   it("clears the stored handoff after a successful Offer preparation", async () => {
     await renderAfterHandoff();
     fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
     fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
 
     vi.stubGlobal(
       "fetch",
