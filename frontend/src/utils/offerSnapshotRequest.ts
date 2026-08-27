@@ -151,6 +151,32 @@ export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepar
   };
 }
 
+export function prepareFulfillmentBlocker(charges: ChargesDefinition): string | null {
+  const current = normalizedFulfillment(charges);
+  if (current.fulfillmentMode === "UNKNOWN") {
+    return "Bitte zuerst Lieferung oder Selbstabholung wählen.";
+  }
+  if (current.fulfillmentMode === "PICKUP") {
+    return null;
+  }
+  if (current.deliveryAddressMode === "UNKNOWN") {
+    return "Bitte zuerst auswählen, welche Lieferadresse verwendet wird.";
+  }
+  if (
+    current.deliveryAddressMode === "SAME_AS_INVOICE" &&
+    addressToWire(current.invoiceAddress) === null
+  ) {
+    return "Bitte zuerst die Rechnungsadresse angeben.";
+  }
+  if (
+    current.deliveryAddressMode === "SEPARATE" &&
+    addressToWire(current.deliveryAddress) === null
+  ) {
+    return "Bitte zuerst die abweichende Lieferadresse angeben.";
+  }
+  return null;
+}
+
 export function buildBudgetDefinition(
   draft: OfferDraft
 ): OfferSnapshotBudgetDefinition | undefined {
@@ -310,12 +336,14 @@ export type PrepareOfferErrorCode = "prepare_offer_failed" | "invalid_prepare_re
 export class PrepareOfferError extends Error {
   readonly code: PrepareOfferErrorCode;
   readonly status?: number;
+  readonly detailCode?: string;
 
-  constructor(code: PrepareOfferErrorCode, status?: number) {
+  constructor(code: PrepareOfferErrorCode, status?: number, detailCode?: string) {
     super(code);
     this.name = "PrepareOfferError";
     this.code = code;
     this.status = status;
+    this.detailCode = detailCode;
   }
 }
 
@@ -340,9 +368,34 @@ export function parseOfferPrepareResponse(value: unknown): OfferPrepareResponse 
   return { offer_id: offerId };
 }
 
+const PREPARE_ERROR_MESSAGES: Record<string, string> = {
+  fulfillment_mode_required: "Bitte zuerst Lieferung oder Selbstabholung wählen.",
+  delivery_address_mode_required: "Bitte zuerst auswählen, welche Lieferadresse verwendet wird.",
+  invoice_address_required: "Bitte zuerst die Rechnungsadresse angeben.",
+  delivery_address_required: "Bitte zuerst die abweichende Lieferadresse angeben.",
+  prepare_context_expired:
+    "Die Angebotsvorbereitung ist abgelaufen. Bitte die Anfrage erneut öffnen.",
+  prepare_context_consumed:
+    "Diese Angebotsvorbereitung wurde bereits verwendet. Bitte die Anfrage erneut öffnen.",
+};
+
+function prepareErrorDetailCode(value: unknown): string | undefined {
+  if (!isPlainObject(value) || !isPlainObject(value.detail)) {
+    return undefined;
+  }
+  const code = value.detail.code;
+  if (typeof code !== "string" || !(code in PREPARE_ERROR_MESSAGES)) {
+    return undefined;
+  }
+  return code;
+}
+
 export function prepareOfferErrorMessage(error: unknown): string {
   if (error instanceof PrepareOfferError && error.code === "invalid_prepare_response") {
     return "Core hat eine ungültige Antwort zurückgegeben.";
+  }
+  if (error instanceof PrepareOfferError && error.detailCode) {
+    return PREPARE_ERROR_MESSAGES[error.detailCode] ?? "Angebot konnte nicht vorbereitet werden.";
   }
   return "Angebot konnte nicht vorbereitet werden.";
 }
@@ -365,7 +418,13 @@ export async function prepareOfferInCore(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new PrepareOfferError("prepare_offer_failed", res.status);
+    let detailCode: string | undefined;
+    try {
+      detailCode = prepareErrorDetailCode(await res.json());
+    } catch {
+      detailCode = undefined;
+    }
+    throw new PrepareOfferError("prepare_offer_failed", res.status, detailCode);
   }
   let payload: unknown;
   try {

@@ -186,6 +186,9 @@ describe("Configurator draft session persistence — Core-handoff flow", () => {
     await act(async () => {});
     await screen.findAllByText("Fingerfood Paket");
     fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
 
     vi.stubGlobal(
       "fetch",

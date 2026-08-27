@@ -6,6 +6,7 @@ import {
   navigateToPreparedCoreOffer,
   parseOfferPrepareResponse,
   prepareAndNavigateToCoreOffer,
+  prepareFulfillmentBlocker,
   prepareOfferErrorMessage,
   prepareOfferInCore,
 } from "../offerSnapshotRequest";
@@ -154,6 +155,65 @@ describe("prepareOfferInCore", () => {
     }
   });
 
+  it("maps allow-listed BFF fulfillment errors to actionable messages", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          { detail: { code: "fulfillment_mode_required", message: "private detail" } },
+          { status: 422 }
+        )
+      )
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    let caught: unknown;
+    try {
+      await prepareOfferInCore(body);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toMatchObject({
+      code: "prepare_offer_failed",
+      status: 422,
+      detailCode: "fulfillment_mode_required",
+    });
+    expect(prepareOfferErrorMessage(caught)).toBe(
+      "Bitte zuerst Lieferung oder Selbstabholung wählen."
+    );
+  });
+
+  it("never echoes unknown backend detail codes or response messages", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          {
+            detail: {
+              code: "unexpected_private_error",
+              message: "customer@example.test Bearer secret-token",
+            },
+          },
+          { status: 422 }
+        )
+      )
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    let caught: unknown;
+    try {
+      await prepareOfferInCore(body);
+    } catch (error) {
+      caught = error;
+    }
+
+    const message = prepareOfferErrorMessage(caught);
+    expect(message).toBe("Angebot konnte nicht vorbereitet werden.");
+    expect(message).not.toContain("customer@example.test");
+    expect(message).not.toContain("secret-token");
+  });
+
   it("does not navigate or announce success when preparation fails", async () => {
     const assign = vi.fn();
     const onPrepared = vi.fn();
@@ -288,6 +348,60 @@ describe("prepareOfferInCore", () => {
     expect(body.context_id).toBe("trusted-context-1");
     expect(body).not.toHaveProperty("inquiry_id");
     expect(body.source_draft_id).toBe("draft-1");
+  });
+});
+
+describe("prepare fulfillment preflight", () => {
+  it("blocks unresolved fulfillment before the BFF request", () => {
+    expect(prepareFulfillmentBlocker(createInitialChargesDefinition())).toBe(
+      "Bitte zuerst Lieferung oder Selbstabholung wählen."
+    );
+  });
+
+  it("allows pickup without delivery address fields", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      ...charges.delivery.fulfillment!,
+      fulfillmentMode: "PICKUP",
+      deliveryAddressMode: "UNKNOWN",
+    };
+
+    expect(prepareFulfillmentBlocker(charges)).toBeNull();
+  });
+
+  it("requires an address mode for delivery", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      ...charges.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "UNKNOWN",
+    };
+
+    expect(prepareFulfillmentBlocker(charges)).toBe(
+      "Bitte zuerst auswählen, welche Lieferadresse verwendet wird."
+    );
+  });
+
+  it("requires the selected delivery address source to contain an address", () => {
+    const sameAsInvoice = createInitialChargesDefinition();
+    sameAsInvoice.delivery.fulfillment = {
+      ...sameAsInvoice.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SAME_AS_INVOICE",
+    };
+    expect(prepareFulfillmentBlocker(sameAsInvoice)).toBe(
+      "Bitte zuerst die Rechnungsadresse angeben."
+    );
+
+    const separate = createInitialChargesDefinition();
+    separate.delivery.fulfillment = {
+      ...separate.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+    };
+    expect(prepareFulfillmentBlocker(separate)).toBe(
+      "Bitte zuerst die abweichende Lieferadresse angeben."
+    );
   });
 });
 

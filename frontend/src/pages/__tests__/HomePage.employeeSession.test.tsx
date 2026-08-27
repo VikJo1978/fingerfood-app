@@ -126,6 +126,9 @@ async function renderPreparedPage() {
   await renderHomePage();
   await screen.findByText("Fingerfood Paket");
   fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+  fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+  fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
+  fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
 }
 
 describe("HomePage employee-session gating", () => {
