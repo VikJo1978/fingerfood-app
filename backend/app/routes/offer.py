@@ -20,6 +20,12 @@ def safe_error_detail(code: str, message: str) -> dict[str, str]:
     return {"code": code, "message": message}
 
 
+def _snapshot_build_error_code(exc: ValueError) -> str:
+    if str(exc).startswith("unknown catalog positions:"):
+        return "stale_catalog_positions"
+    return "invalid_offer_snapshot"
+
+
 class OfferSnapshotBuildRequest(BaseModel):
     inquiry_id: str
     snapshot_id: str
@@ -85,7 +91,7 @@ def execute_prepare_offer(body: OfferSnapshotBuildRequest) -> dict[str, object]:
         raise HTTPException(
             status_code=422,
             detail=safe_error_detail(
-                "invalid_offer_snapshot",
+                _snapshot_build_error_code(exc),
                 "Offer snapshot is invalid.",
             ),
         ) from exc
@@ -129,7 +135,7 @@ def build_snapshot(body: OfferSnapshotBuildRequest) -> dict[str, object]:
         raise HTTPException(
             status_code=422,
             detail=safe_error_detail(
-                "invalid_offer_snapshot",
+                _snapshot_build_error_code(exc),
                 "Offer snapshot is invalid.",
             ),
         ) from exc
