@@ -28,7 +28,7 @@ scp -r dist/. "$REMOTE:$REMOTE_STAGE/"
 
 local_index_sha="$(shasum -a 256 dist/index.html | awk '{print $1}')"
 remote_index_sha="$(
-  ssh "$REMOTE" "sha256sum '$REMOTE_STAGE/index.html' | awk '{print \\$1}'"
+  ssh "$REMOTE" "sha256sum '$REMOTE_STAGE/index.html' | awk '{print \$1}'"
 )"
 if [[ "$local_index_sha" != "$remote_index_sha" ]]; then
   ssh "$REMOTE" "rm -rf '$REMOTE_STAGE'"
