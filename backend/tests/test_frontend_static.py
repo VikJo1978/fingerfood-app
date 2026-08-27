@@ -28,6 +28,9 @@ def test_root_serves_index(frontend_dist: Path) -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
+    assert response.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"
+    assert response.headers["pragma"] == "no-cache"
+    assert response.headers["expires"] == "0"
     assert "Fingerfood production UI" in response.text
 
 
@@ -35,7 +38,15 @@ def test_asset_is_served(frontend_dist: Path) -> None:
     response = TestClient(app).get("/assets/app.js")
 
     assert response.status_code == 200
+    assert response.headers["cache-control"] == "public, max-age=31536000, immutable"
     assert response.text == "window.fingerfood = true;"
+
+
+def test_direct_index_is_never_cached(frontend_dist: Path) -> None:
+    response = TestClient(app).get("/index.html")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"
 
 
 def test_missing_asset_does_not_use_spa_fallback(frontend_dist: Path) -> None:
@@ -49,6 +60,7 @@ def test_unknown_frontend_route_uses_spa_fallback(frontend_dist: Path) -> None:
     response = TestClient(app).get("/angebot/preview")
 
     assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"
     assert "Fingerfood production UI" in response.text
 
 
