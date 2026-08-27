@@ -312,6 +312,15 @@ export function createInitialCustomerAddressInput(): CustomerAddressInput {
   };
 }
 
+export function normalizeCustomerAddressCountry(
+  address: CustomerAddressInput
+): CustomerAddressInput {
+  return {
+    ...address,
+    country: address.country.trim() || "DE",
+  };
+}
+
 export function createInitialDeliveryFulfillmentDefinition(): DeliveryFulfillmentDefinition {
   return {
     fulfillmentMode: "UNKNOWN",
