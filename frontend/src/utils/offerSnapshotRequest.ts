@@ -381,10 +381,6 @@ const PREPARE_ERROR_MESSAGES: Record<string, string> = {
     "Die Angebotsdaten sind widersprüchlich oder unvollständig. Bitte Positionen, Personenzahl und Pauschalen prüfen.",
   stale_catalog_positions:
     "Der Entwurf enthält veraltete Katalogpositionen. Bitte die Seite neu laden; bekannte Positionen werden automatisch auf den aktuellen Katalog aktualisiert.",
-  invalid_charges_definition:
-    "Die Pauschalen- oder Lieferkonfiguration ist ungültig. Bitte Pauschalen und Rückholung prüfen.",
-  guest_count_mismatch:
-    "Die Personenzahl im Angebot ist widersprüchlich. Bitte die Personenzahl prüfen.",
   core_fulfillment_persist_failed:
     "Lieferart oder Adressdaten konnten nicht in Core gespeichert werden. Bitte die Anfrage neu öffnen und erneut versuchen.",
   core_offer_prepare_failed:
