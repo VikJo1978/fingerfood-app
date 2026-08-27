@@ -71,14 +71,23 @@ if grep -RInE \
   echo 'ERROR: production bundle is not deployment-neutral'
   exit 1
 fi
-
-ssh viktor@100.109.6.74 \
-  'mkdir -p /home/viktor/fingerfood-runtime/frontend-dist'
-scp -r dist/. \
-  viktor@100.109.6.74:/home/viktor/fingerfood-runtime/frontend-dist/
 ```
 
-Replacing files under `frontend-dist` does not require a backend restart.
+The deployment script uploads the build to a sibling staging directory,
+verifies the uploaded `index.html` checksum, then swaps the complete release
+directory into place. It does **not** merge a new build into the old one.
+That matters because Vite asset names are hashed: leaving obsolete assets on
+disk allows an old browser-cached HTML shell to keep resolving an obsolete UI.
+
+The server cache policy is intentionally split:
+
+- SPA shell / `index.html`: `no-store, no-cache, must-revalidate`;
+- hashed `/assets/*`: one-year `immutable` caching;
+- other direct static files: revalidate.
+
+Static frontend replacement does not require a backend restart when only
+frontend files changed. A change to the FastAPI static-serving code itself
+does require restarting `fingerfood-app`.
 
 ## Runtime checks
 

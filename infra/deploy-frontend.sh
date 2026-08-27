@@ -20,8 +20,38 @@ if grep -RInE "$forbidden_bundle_pattern" dist; then
   exit 1
 fi
 
-ssh "$REMOTE" "mkdir -p '$REMOTE_DIST'"
-scp -r dist/. "$REMOTE:$REMOTE_DIST/"
+REMOTE_STAGE="${REMOTE_DIST}.incoming"
+REMOTE_PREVIOUS="${REMOTE_DIST}.previous"
+
+ssh "$REMOTE" "rm -rf '$REMOTE_STAGE' '$REMOTE_PREVIOUS' && mkdir -p '$REMOTE_STAGE'"
+scp -r dist/. "$REMOTE:$REMOTE_STAGE/"
+
+local_index_sha="$(shasum -a 256 dist/index.html | awk '{print $1}')"
+remote_index_sha="$(
+  ssh "$REMOTE" "sha256sum '$REMOTE_STAGE/index.html' | awk '{print \$1}'"
+)"
+if [[ "$local_index_sha" != "$remote_index_sha" ]]; then
+  ssh "$REMOTE" "rm -rf '$REMOTE_STAGE'"
+  echo "ERROR: uploaded frontend index checksum mismatch" >&2
+  exit 1
+fi
+
+ssh "$REMOTE" "
+  set -eu
+  rm -rf '$REMOTE_PREVIOUS'
+  if [ -e '$REMOTE_DIST' ]; then
+    mv '$REMOTE_DIST' '$REMOTE_PREVIOUS'
+  fi
+  if mv '$REMOTE_STAGE' '$REMOTE_DIST'; then
+    rm -rf '$REMOTE_PREVIOUS'
+  else
+    if [ -e '$REMOTE_PREVIOUS' ]; then
+      mv '$REMOTE_PREVIOUS' '$REMOTE_DIST'
+    fi
+    exit 1
+  fi
+"
 
 echo "Frontend deployed to $REMOTE:$REMOTE_DIST"
-echo "Static file replacement does not require a backend restart."
+echo "Previous hashed assets were removed by the release-directory swap."
+echo "Static frontend replacement does not require a backend restart."
