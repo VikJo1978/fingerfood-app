@@ -185,9 +185,18 @@ describe("prepareOfferInCore", () => {
   });
 
   it.each([
-    ["invalid_offer_snapshot", "Die Angebotsdaten sind widersprüchlich oder unvollständig. Bitte Positionen, Personenzahl und Pauschalen prüfen."],
-    ["core_fulfillment_persist_failed", "Lieferart oder Adressdaten konnten nicht in Core gespeichert werden. Bitte die Anfrage neu öffnen und erneut versuchen."],
-    ["core_offer_prepare_failed", "Core konnte das Angebot nicht anlegen. Die Eingaben wurden nicht als Angebot übernommen."],
+    [
+      "invalid_offer_snapshot",
+      "Die Angebotsdaten sind widersprüchlich oder unvollständig. Bitte Positionen, Personenzahl und Pauschalen prüfen.",
+    ],
+    [
+      "core_fulfillment_persist_failed",
+      "Lieferart oder Adressdaten konnten nicht in Core gespeichert werden. Bitte die Anfrage neu öffnen und erneut versuchen.",
+    ],
+    [
+      "core_offer_prepare_failed",
+      "Core konnte das Angebot nicht anlegen. Die Eingaben wurden nicht als Angebot übernommen.",
+    ],
   ])("maps known later prepare failure %s to an actionable message", async (code, expected) => {
     vi.stubGlobal(
       "fetch",
