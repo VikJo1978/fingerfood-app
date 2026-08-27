@@ -217,7 +217,7 @@ export function HomePage() {
   const clampPersons = (n: number) => Math.min(5000, Math.max(0, Math.round(n) || 0));
 
   const handlePrepareOffer = useCallback((transfer: InquiryToConfiguratorTransferV1) => {
-    const { planning, orderContextPrefill: pre } = transfer;
+    const { planning, orderContextPrefill: pre, fulfillmentPrefill } = transfer;
     const remarksTrim = pre.remarks.trim();
     setOfferDraft((d) => ({
       ...d,
@@ -227,6 +227,20 @@ export function HomePage() {
         planning.budgetEnabled && planning.budget != null
           ? Math.max(0, planning.budget)
           : d.totalBudget,
+      chargesDefinition:
+        fulfillmentPrefill === undefined
+          ? d.chargesDefinition
+          : {
+              ...d.chargesDefinition,
+              delivery: {
+                ...d.chargesDefinition.delivery,
+                fulfillment: {
+                  ...fulfillmentPrefill,
+                  invoiceAddress: { ...fulfillmentPrefill.invoiceAddress },
+                  deliveryAddress: { ...fulfillmentPrefill.deliveryAddress },
+                },
+              },
+            },
       orderContext: {
         ...d.orderContext,
         companyName: pre.companyName,
