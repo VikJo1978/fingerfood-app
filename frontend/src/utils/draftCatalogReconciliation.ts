@@ -6,10 +6,7 @@ export interface DraftCatalogReconciliationResult {
   unresolvedTitles: string[];
 }
 
-function currentLineSnapshot(
-  line: OfferLine,
-  item: CatalogItem
-): OfferLine["snapshot"] {
+function currentLineSnapshot(line: OfferLine, item: CatalogItem): OfferLine["snapshot"] {
   const hasSurcharge = item.surcharge_amount != null && !!item.surcharge_label;
   return {
     title: item.name,
