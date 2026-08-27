@@ -40,6 +40,7 @@ import {
 import {
   buildOfferSnapshotRequest,
   prepareAndNavigateToCoreOffer,
+  prepareFulfillmentBlocker,
   prepareOfferErrorMessage,
 } from "../utils/offerSnapshotRequest";
 import {
@@ -616,6 +617,12 @@ export function HomePage() {
     ) {
       setPrepareStatus("error");
       setPrepareMessage(sessionNotice ?? "Mitarbeiteranmeldung erforderlich.");
+      return;
+    }
+    const fulfillmentBlocker = prepareFulfillmentBlocker(offerDraft.chargesDefinition);
+    if (fulfillmentBlocker !== null) {
+      setPrepareStatus("error");
+      setPrepareMessage(fulfillmentBlocker);
       return;
     }
     if (!offerDraft.orderContext.eventDate) {
