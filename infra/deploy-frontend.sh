@@ -20,8 +20,8 @@ if grep -RInE "$forbidden_bundle_pattern" dist; then
   exit 1
 fi
 
-REMOTE_STAGE="${REMOTE_DIST}.incoming.$"
-REMOTE_PREVIOUS="${REMOTE_DIST}.previous.$"
+REMOTE_STAGE="${REMOTE_DIST}.incoming"
+REMOTE_PREVIOUS="${REMOTE_DIST}.previous"
 
 ssh "$REMOTE" "rm -rf '$REMOTE_STAGE' '$REMOTE_PREVIOUS' && mkdir -p '$REMOTE_STAGE'"
 scp -r dist/. "$REMOTE:$REMOTE_STAGE/"
