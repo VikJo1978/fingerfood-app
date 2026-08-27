@@ -211,6 +211,34 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     expect(screen.getByDisplayValue("22765")).toBeTruthy();
   });
 
+  it("defaults blank countries from a Core handoff to Germany", async () => {
+    const transfer: InquiryToConfiguratorTransferV1 = {
+      ...handoffTransferWithFulfillment,
+      fulfillmentPrefill: {
+        ...handoffTransferWithFulfillment.fulfillmentPrefill!,
+        invoiceAddress: {
+          ...handoffTransferWithFulfillment.fulfillmentPrefill!.invoiceAddress,
+          country: "",
+        },
+        deliveryAddress: {
+          ...handoffTransferWithFulfillment.fulfillmentPrefill!.deliveryAddress,
+          country: "",
+        },
+      },
+    };
+    window.location.hash = handoffFragment(INQUIRY_ID, transfer);
+    render(<HomePage />);
+    await act(async () => {});
+    await screen.findByText("Fingerfood Paket");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+
+    const countries = screen.getAllByLabelText("Land") as HTMLSelectElement[];
+    expect(countries).toHaveLength(2);
+    expect(countries[0].value).toBe("DE");
+    expect(countries[1].value).toBe("DE");
+  });
+
   it("shows the same recipient, address, and event date/time in Angebotsvorschau", async () => {
     await renderAfterHandoff();
 

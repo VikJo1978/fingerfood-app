@@ -308,7 +308,16 @@ export function createInitialCustomerAddressInput(): CustomerAddressInput {
     street: "",
     postalCode: "",
     city: "",
-    country: "",
+    country: "DE",
+  };
+}
+
+export function normalizeCustomerAddressCountry(
+  address: CustomerAddressInput
+): CustomerAddressInput {
+  return {
+    ...address,
+    country: address.country.trim() || "DE",
   };
 }
 

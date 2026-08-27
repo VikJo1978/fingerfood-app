@@ -17,6 +17,40 @@ const fieldClass =
 const selectClass =
   "w-full rounded-control border border-line bg-white px-3 py-2 text-sm text-ink transition focus:border-accent";
 
+const COUNTRY_OPTIONS = [
+  ["DE", "Deutschland"],
+  ["AT", "Österreich"],
+  ["CH", "Schweiz"],
+  ["NL", "Niederlande"],
+  ["BE", "Belgien"],
+  ["LU", "Luxemburg"],
+  ["FR", "Frankreich"],
+  ["DK", "Dänemark"],
+  ["PL", "Polen"],
+  ["CZ", "Tschechien"],
+  ["IT", "Italien"],
+  ["ES", "Spanien"],
+  ["PT", "Portugal"],
+  ["SE", "Schweden"],
+  ["NO", "Norwegen"],
+  ["FI", "Finnland"],
+  ["IE", "Irland"],
+  ["GB", "Vereinigtes Königreich"],
+  ["GR", "Griechenland"],
+  ["HR", "Kroatien"],
+  ["SI", "Slowenien"],
+  ["SK", "Slowakei"],
+  ["HU", "Ungarn"],
+  ["RO", "Rumänien"],
+  ["BG", "Bulgarien"],
+  ["EE", "Estland"],
+  ["LV", "Lettland"],
+  ["LT", "Litauen"],
+] as const;
+
+const COUNTRY_CODES = new Set<string>(COUNTRY_OPTIONS.map(([code]) => code));
+const OTHER_COUNTRY = "__OTHER__";
+
 function fulfillment(charges: ChargesDefinition): DeliveryFulfillmentDefinition {
   return charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
 }
@@ -82,12 +116,38 @@ function AddressFields({
       </div>
       <label className="grid gap-1">
         <span className={labelClass}>Land</span>
-        <input
-          className={fieldClass}
-          value={address.country}
-          onChange={(event) => onChange(setAddress(address, "country", event.target.value))}
-        />
+        <select
+          className={selectClass}
+          value={COUNTRY_CODES.has(address.country) ? address.country : OTHER_COUNTRY}
+          onChange={(event) =>
+            onChange(
+              setAddress(
+                address,
+                "country",
+                event.target.value === OTHER_COUNTRY ? "" : event.target.value
+              )
+            )
+          }
+        >
+          {COUNTRY_OPTIONS.map(([code, label]) => (
+            <option key={code} value={code}>
+              {label}
+            </option>
+          ))}
+          <option value={OTHER_COUNTRY}>Anderes Land</option>
+        </select>
       </label>
+      {!COUNTRY_CODES.has(address.country) ? (
+        <label className="grid gap-1">
+          <span className={labelClass}>Anderes Land</span>
+          <input
+            className={fieldClass}
+            value={address.country}
+            onChange={(event) => onChange(setAddress(address, "country", event.target.value))}
+            placeholder="Land eingeben"
+          />
+        </label>
+      ) : null}
     </fieldset>
   );
 }

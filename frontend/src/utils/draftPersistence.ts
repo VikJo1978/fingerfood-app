@@ -9,6 +9,7 @@ import {
   createInitialChargesDefinition,
   createInitialDeliveryFulfillmentDefinition,
   createInitialReturnLogisticsDefinition,
+  normalizeCustomerAddressCountry,
 } from "../types";
 import { normalizeBudgetDefinition } from "./budgetNormalization";
 
@@ -257,6 +258,8 @@ export function normalizeRestoredOfferDraft(value: unknown): OfferDraft | null {
   if (!isOfferDraftShape(value)) return null;
   const draft = value;
   const chargesDefinition = draft.chargesDefinition ?? createInitialChargesDefinition();
+  const fulfillment =
+    chargesDefinition.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
   return {
     ...draft,
     ...normalizeBudgetDefinition(draft),
@@ -264,8 +267,11 @@ export function normalizeRestoredOfferDraft(value: unknown): OfferDraft | null {
       ...chargesDefinition,
       delivery: {
         ...chargesDefinition.delivery,
-        fulfillment:
-          chargesDefinition.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition(),
+        fulfillment: {
+          ...fulfillment,
+          invoiceAddress: normalizeCustomerAddressCountry(fulfillment.invoiceAddress),
+          deliveryAddress: normalizeCustomerAddressCountry(fulfillment.deliveryAddress),
+        },
       },
       returnLogistics:
         chargesDefinition.returnLogistics ?? createInitialReturnLogisticsDefinition(),

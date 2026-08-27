@@ -164,6 +164,33 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     );
   });
 
+  it("normalizes blank legacy address countries to DE", () => {
+    const storage = new FakeStorage();
+    const draft = createInitialOfferDraft();
+    draft.chargesDefinition.delivery.fulfillment = {
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+      invoiceAddress: {
+        street: "Brooksheide 3",
+        postalCode: "22549",
+        city: "Hamburg",
+        country: "",
+      },
+      deliveryAddress: {
+        street: "Auf dem Königslande 4",
+        postalCode: "22041",
+        city: "Hamburg",
+        country: "",
+      },
+    };
+
+    saveDraftToSession(INQUIRY_A, draft, storage);
+    const restored = readDraftFromSession(INQUIRY_A, storage);
+
+    expect(restored?.chargesDefinition.delivery.fulfillment?.invoiceAddress.country).toBe("DE");
+    expect(restored?.chargesDefinition.delivery.fulfillment?.deliveryAddress.country).toBe("DE");
+  });
+
   it("isolates different Inquiries — draft saved under Inquiry A never returns for Inquiry B", () => {
     const storage = new FakeStorage();
     saveDraftToSession(INQUIRY_A, draftWithBudget({ persons: 11 }), storage);
