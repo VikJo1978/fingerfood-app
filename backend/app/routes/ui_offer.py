@@ -134,6 +134,20 @@ def _parse_prepare_request(body_bytes: bytes) -> UiOfferPrepareRequest:
     return parsed
 
 
+def _address_is_complete(address: UiCustomerAddress | None) -> bool:
+    if address is None:
+        return False
+    return all(
+        value.strip()
+        for value in (
+            address.street,
+            address.postal_code,
+            address.city,
+            address.country,
+        )
+    )
+
+
 def _validate_fulfillment_context(fulfillment: UiFulfillmentContext) -> None:
     if fulfillment.fulfillment_mode == "UNKNOWN":
         raise _invalid_request(status_code=422, code="fulfillment_mode_required")
@@ -144,10 +158,14 @@ def _validate_fulfillment_context(fulfillment: UiFulfillmentContext) -> None:
     if fulfillment.delivery_address_mode == "SAME_AS_INVOICE":
         if fulfillment.invoice_address is None:
             raise _invalid_request(status_code=422, code="invoice_address_required")
+        if not _address_is_complete(fulfillment.invoice_address):
+            raise _invalid_request(status_code=422, code="invoice_address_incomplete")
         return
     if fulfillment.delivery_address_mode == "SEPARATE":
         if fulfillment.delivery_address is None:
             raise _invalid_request(status_code=422, code="delivery_address_required")
+        if not _address_is_complete(fulfillment.delivery_address):
+            raise _invalid_request(status_code=422, code="delivery_address_incomplete")
         return
     raise _invalid_request(status_code=422, code="delivery_address_mode_required")
 
