@@ -27,6 +27,22 @@ function renderSection() {
 }
 
 describe("DeliveryFulfillmentSection", () => {
+  it("defaults country to Germany and allows an explicit dropdown override", () => {
+    const state = renderSection();
+
+    fireEvent.change(screen.getByLabelText("Erfüllung"), {
+      target: { value: "DELIVERY" },
+    });
+
+    const countrySelect = screen.getByLabelText("Land") as HTMLSelectElement;
+    expect(countrySelect.value).toBe("DE");
+    expect(state.current().delivery.fulfillment?.invoiceAddress.country).toBe("DE");
+
+    fireEvent.change(countrySelect, { target: { value: "AT" } });
+
+    expect(state.current().delivery.fulfillment?.invoiceAddress.country).toBe("AT");
+  });
+
   it("starts unresolved and lets the operator choose pickup", () => {
     const state = renderSection();
     expect((screen.getByLabelText("Erfüllung") as HTMLSelectElement).value).toBe("UNKNOWN");
