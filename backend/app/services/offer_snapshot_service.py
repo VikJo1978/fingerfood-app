@@ -429,6 +429,13 @@ def build_offer_snapshot_v2(
     guest_count = _authoritative_guest_count(offer, event)
 
     load = adapter.load_items_for_compose()
+    unknown_line_ids = [
+        line.item_id for line in offer.lines if line.item_id not in load.items
+    ]
+    if unknown_line_ids:
+        raise ValueError(
+            "unknown catalog positions: " + ", ".join(sorted(set(unknown_line_ids)))
+        )
     priced = calculate_offer_cents(
         load.items,
         offer,
