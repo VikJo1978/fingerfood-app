@@ -71,6 +71,7 @@ if grep -RInE \
   echo 'ERROR: production bundle is not deployment-neutral'
   exit 1
 fi
+```
 
 The deployment script uploads the build to a sibling staging directory,
 verifies the uploaded `index.html` checksum, then swaps the complete release
@@ -87,7 +88,6 @@ The server cache policy is intentionally split:
 Static frontend replacement does not require a backend restart when only
 frontend files changed. A change to the FastAPI static-serving code itself
 does require restarting `fingerfood-app`.
-```
 
 ## Runtime checks
 
