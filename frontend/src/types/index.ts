@@ -308,7 +308,7 @@ export function createInitialCustomerAddressInput(): CustomerAddressInput {
     street: "",
     postalCode: "",
     city: "",
-    country: "",
+    country: "DE",
   };
 }
 
