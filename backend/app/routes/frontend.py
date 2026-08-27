@@ -9,6 +9,14 @@ from app.core.config import settings
 
 router = APIRouter(include_in_schema=False)
 
+_SPA_SHELL_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+_REVALIDATE_HEADERS = {"Cache-Control": "no-cache, must-revalidate, max-age=0"}
+_IMMUTABLE_ASSET_HEADERS = {"Cache-Control": "public, max-age=31536000, immutable"}
+
 
 def _configured_dist() -> Path:
     configured = settings.frontend_dist_path
@@ -39,7 +47,11 @@ def frontend_spa(frontend_path: str) -> Response:
     dist = _configured_dist()
     static_file = _static_file(dist, frontend_path) if frontend_path else None
     if static_file is not None:
-        return FileResponse(static_file)
+        if frontend_path.startswith("assets/"):
+            return FileResponse(static_file, headers=_IMMUTABLE_ASSET_HEADERS)
+        if static_file.name == "index.html":
+            return FileResponse(static_file, headers=_SPA_SHELL_HEADERS)
+        return FileResponse(static_file, headers=_REVALIDATE_HEADERS)
     if frontend_path.startswith("assets/"):
         raise HTTPException(status_code=404, detail="Not Found")
-    return FileResponse(dist / "index.html")
+    return FileResponse(dist / "index.html", headers=_SPA_SHELL_HEADERS)
