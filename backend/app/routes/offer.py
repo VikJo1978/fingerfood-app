@@ -21,13 +21,8 @@ def safe_error_detail(code: str, message: str) -> dict[str, str]:
 
 
 def _snapshot_build_error_code(exc: ValueError) -> str:
-    message = str(exc)
-    if message.startswith("unknown catalog positions:"):
+    if str(exc).startswith("unknown catalog positions:"):
         return "stale_catalog_positions"
-    if message.startswith("invalid charges_definition:"):
-        return "invalid_charges_definition"
-    if "guest count mismatch:" in message:
-        return "guest_count_mismatch"
     return "invalid_offer_snapshot"
 
 
