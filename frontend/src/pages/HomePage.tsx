@@ -62,6 +62,7 @@ import {
   type DraftPersistenceScope,
 } from "../utils/draftPersistence";
 import { formatDateDe } from "../utils/formatDate";
+import { reconcileDraftCatalogLines } from "../utils/draftCatalogReconciliation";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -707,13 +708,26 @@ export function HomePage() {
       setPrepareMessage("Bitte zusätzliche Geschirrpositionen vollständig ausfüllen.");
       return;
     }
+    const reconciliation = reconcileDraftCatalogLines(offerDraft, catalog);
+    if (reconciliation.unresolvedTitles.length > 0) {
+      setPrepareStatus("error");
+      setPrepareMessage(
+        `Diese Positionen stammen aus einem älteren Katalog und konnten nicht eindeutig aktualisiert werden: ${reconciliation.unresolvedTitles.join(", ")}.`
+      );
+      return;
+    }
+    const draftForPrepare = reconciliation.draft;
+    if (reconciliation.reconciledTitles.length > 0) {
+      setOfferDraft(draftForPrepare);
+    }
+
     setPrepareStatus("preparing");
     setPrepareMessage(null);
     try {
       const body =
         sessionStatus === "disabled"
-          ? buildOfferSnapshotRequest(offerDraft, importedInquiryId, currentDraftId)
-          : buildOfferSnapshotRequest(offerDraft, null, currentDraftId, prepareContextId);
+          ? buildOfferSnapshotRequest(draftForPrepare, importedInquiryId, currentDraftId)
+          : buildOfferSnapshotRequest(draftForPrepare, null, currentDraftId, prepareContextId);
       await prepareAndNavigateToCoreOffer(body, {
         onPrepared: (result) => {
           clearStoredCoreInquiryHandoff();
@@ -728,6 +742,7 @@ export function HomePage() {
       setPrepareMessage(prepareOfferErrorMessage(error));
     }
   }, [
+    catalog,
     currentDraftId,
     draftScope,
     importedInquiryId,
