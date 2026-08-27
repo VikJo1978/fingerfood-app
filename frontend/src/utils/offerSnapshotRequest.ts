@@ -137,6 +137,17 @@ function addressToWire(address: CustomerAddressInput): OfferPrepareAddress | nul
   };
 }
 
+function addressIsComplete(address: CustomerAddressInput): boolean {
+  const wire = addressToWire(address);
+  return (
+    wire !== null &&
+    wire.street !== "" &&
+    wire.postal_code !== "" &&
+    wire.city !== "" &&
+    wire.country !== ""
+  );
+}
+
 export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepareFulfillment {
   const current = normalizedFulfillment(charges);
   return {
@@ -164,15 +175,15 @@ export function prepareFulfillmentBlocker(charges: ChargesDefinition): string | 
   }
   if (
     current.deliveryAddressMode === "SAME_AS_INVOICE" &&
-    addressToWire(current.invoiceAddress) === null
+    !addressIsComplete(current.invoiceAddress)
   ) {
-    return "Bitte zuerst die Rechnungsadresse angeben.";
+    return "Bitte die Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
   }
   if (
     current.deliveryAddressMode === "SEPARATE" &&
-    addressToWire(current.deliveryAddress) === null
+    !addressIsComplete(current.deliveryAddress)
   ) {
-    return "Bitte zuerst die abweichende Lieferadresse angeben.";
+    return "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
   }
   return null;
 }
@@ -372,7 +383,11 @@ const PREPARE_ERROR_MESSAGES: Record<string, string> = {
   fulfillment_mode_required: "Bitte zuerst Lieferung oder Selbstabholung wählen.",
   delivery_address_mode_required: "Bitte zuerst auswählen, welche Lieferadresse verwendet wird.",
   invoice_address_required: "Bitte zuerst die Rechnungsadresse angeben.",
+  invoice_address_incomplete:
+    "Bitte die Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben.",
   delivery_address_required: "Bitte zuerst die abweichende Lieferadresse angeben.",
+  delivery_address_incomplete:
+    "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben.",
   prepare_context_expired:
     "Die Angebotsvorbereitung ist abgelaufen. Bitte die Anfrage erneut öffnen.",
   prepare_context_consumed:
