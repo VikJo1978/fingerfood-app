@@ -4,6 +4,29 @@ import { createInitialChargesDefinition } from "../../../types";
 import { ChargeConfiguratorModal } from "../ChargeConfiguratorModal";
 
 describe("ChargeConfiguratorModal return logistics", () => {
+  it("renders through a body portal with the overlay as the Safari-safe scroll container", () => {
+    const charges = createInitialChargesDefinition();
+    render(
+      <ChargeConfiguratorModal
+        open
+        charges={charges}
+        persons={20}
+        onClose={() => undefined}
+        onChange={() => undefined}
+        createLineId={() => "line-1"}
+      />
+    );
+
+    const overlay = screen.getByTestId("charge-configurator-overlay");
+    const dialog = screen.getByRole("dialog", { name: "Pauschalen & Lieferung" });
+
+    expect(overlay.parentElement).toBe(document.body);
+    expect(overlay.className).toContain("overflow-y-auto");
+    expect(overlay.className).toContain("overscroll-contain");
+    expect(dialog.parentElement).toBe(overlay);
+    expect(screen.getByTestId("charge-configurator-content")).toBeTruthy();
+  });
+
   it("shows pickup window and surcharge only for SAME_DAY", () => {
     const onChange = vi.fn();
     const charges = createInitialChargesDefinition();

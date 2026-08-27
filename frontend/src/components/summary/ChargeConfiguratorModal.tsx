@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   type ChargesDefinition,
   createInitialReturnLogisticsDefinition,
@@ -127,19 +128,20 @@ export function ChargeConfiguratorModal({
       ? charges.dishware.pauschalePerPersonCents * persons
       : 0;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-ink/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Pauschalen & Lieferung"
+      data-testid="charge-configurator-overlay"
+      className="fixed inset-0 z-[110] overflow-y-auto overscroll-contain bg-ink/50 p-4"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[min(92vh,46rem)] w-full max-w-2xl flex-col rounded-card border border-line bg-white shadow-2xl"
+        className="mx-auto flex w-full max-w-2xl flex-col rounded-card border border-line bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Pauschalen & Lieferung"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-3 rounded-t-card border-b border-line bg-white px-5 py-4">
           <h2 className="text-lg font-bold text-ink">Pauschalen & Lieferung</h2>
           <button
             type="button"
@@ -150,7 +152,7 @@ export function ChargeConfiguratorModal({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div data-testid="charge-configurator-content" className="space-y-5 px-5 py-4">
           <section className="grid gap-3 border-b border-line pb-5">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <label className="grid gap-1.5">
@@ -497,6 +499,7 @@ export function ChargeConfiguratorModal({
           </section>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
