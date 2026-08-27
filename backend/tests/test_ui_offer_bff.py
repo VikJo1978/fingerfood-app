@@ -460,3 +460,40 @@ def test_core_client_get_inquiry_sends_bearer_header(
     headers = captured["headers"]
     assert isinstance(headers, dict)
     assert headers["Authorization"] == "Bearer core-secret-token"
+
+
+def test_delivery_fulfillment_rejects_missing_country_for_separate_address() -> None:
+    fulfillment = ui_offer_routes.UiFulfillmentContext(
+        fulfillment_mode="DELIVERY",
+        delivery_address_mode="SEPARATE",
+        invoice_address=None,
+        delivery_address=ui_offer_routes.UiCustomerAddress(
+            street="Auf dem Königslande 4",
+            postal_code="22041",
+            city="Hamburg",
+            country="",
+        ),
+    )
+
+    with pytest.raises(Exception) as exc_info:
+        ui_offer_routes._validate_fulfillment_context(fulfillment)
+
+    exc = exc_info.value
+    assert getattr(exc, "status_code", None) == 422
+    assert getattr(exc, "detail", None) == {"code": "delivery_address_incomplete"}
+
+
+def test_delivery_fulfillment_accepts_complete_separate_address() -> None:
+    fulfillment = ui_offer_routes.UiFulfillmentContext(
+        fulfillment_mode="DELIVERY",
+        delivery_address_mode="SEPARATE",
+        invoice_address=None,
+        delivery_address=ui_offer_routes.UiCustomerAddress(
+            street="Auf dem Königslande 4",
+            postal_code="22041",
+            city="Hamburg",
+            country="DE",
+        ),
+    )
+
+    ui_offer_routes._validate_fulfillment_context(fulfillment)

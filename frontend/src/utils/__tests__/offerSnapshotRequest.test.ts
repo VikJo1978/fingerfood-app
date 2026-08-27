@@ -420,7 +420,7 @@ describe("prepare fulfillment preflight", () => {
       deliveryAddressMode: "SAME_AS_INVOICE",
     };
     expect(prepareFulfillmentBlocker(sameAsInvoice)).toBe(
-      "Bitte zuerst die Rechnungsadresse angeben."
+      "Bitte die Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben."
     );
 
     const separate = createInitialChargesDefinition();
@@ -430,8 +430,44 @@ describe("prepare fulfillment preflight", () => {
       deliveryAddressMode: "SEPARATE",
     };
     expect(prepareFulfillmentBlocker(separate)).toBe(
-      "Bitte zuerst die abweichende Lieferadresse angeben."
+      "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
     );
+  });
+
+  it("blocks a delivery address that is otherwise filled but has no country", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      ...charges.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+      deliveryAddress: {
+        street: "Auf dem Königslande 4",
+        postalCode: "22041",
+        city: "Hamburg",
+        country: "",
+      },
+    };
+
+    expect(prepareFulfillmentBlocker(charges)).toBe(
+      "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
+    );
+  });
+
+  it("allows a complete separate delivery address", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      ...charges.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+      deliveryAddress: {
+        street: "Auf dem Königslande 4",
+        postalCode: "22041",
+        city: "Hamburg",
+        country: "DE",
+      },
+    };
+
+    expect(prepareFulfillmentBlocker(charges)).toBeNull();
   });
 });
 
