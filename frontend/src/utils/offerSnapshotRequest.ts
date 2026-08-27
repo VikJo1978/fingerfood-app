@@ -179,10 +179,7 @@ export function prepareFulfillmentBlocker(charges: ChargesDefinition): string | 
   ) {
     return "Bitte die Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
   }
-  if (
-    current.deliveryAddressMode === "SEPARATE" &&
-    !addressIsComplete(current.deliveryAddress)
-  ) {
+  if (current.deliveryAddressMode === "SEPARATE" && !addressIsComplete(current.deliveryAddress)) {
     return "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
   }
   return null;
