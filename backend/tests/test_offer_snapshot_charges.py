@@ -346,6 +346,46 @@ def test_both_none_does_not_require_guest_count(tmp_path: Path) -> None:
     assert "charges_definition" in snapshot
 
 
+def test_unknown_catalog_position_is_rejected_instead_of_silently_dropped(
+    tmp_path: Path,
+) -> None:
+    bad_offer = OfferRequest(
+        persons=_GUEST_COUNT,
+        lines=[
+            OfferLineIn(
+                item_id="legacy-missing-id",
+                quantity_mode="total",
+                quantity=10,
+                surcharge_selected=False,
+            )
+        ],
+    )
+    with pytest.raises(ValueError, match="unknown catalog positions: legacy-missing-id"):
+        build_offer_snapshot_v2(
+            adapter=_adapter(tmp_path),
+            inquiry_id=str(uuid.uuid4()),
+            snapshot_id=str(uuid.uuid4()),
+            valid_until=date(2026, 7, 30),
+            recipient={
+                "company_name": "Example",
+                "contact_name": "Contact",
+                "email": "a@example.invalid",
+                "postal_address": "Address",
+            },
+            event={
+                "event_date": "2026-08-20",
+                "time_window_text": "18:00–22:00",
+                "location_text": "Hamburg",
+                "guest_count": _GUEST_COUNT,
+                "planning_mode": "caterer_suggestion",
+            },
+            customer_text={"title": "Pasta", "introduction": "Intro", "notes": ""},
+            payment_terms={"method": "RECHNUNG", "customer_visible_text": "Rechnung"},
+            offer=bad_offer,
+            charges_definition=_charges(),
+        )
+
+
 # --- malformed payload rejection ----------------------------------------------------
 
 
