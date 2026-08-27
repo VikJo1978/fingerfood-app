@@ -19,8 +19,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isCustomerAddress(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.street === "string" &&
+    typeof value.postalCode === "string" &&
+    typeof value.city === "string" &&
+    typeof value.country === "string"
+  );
+}
+
+function isFulfillmentPrefill(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (!["UNKNOWN", "PICKUP", "DELIVERY"].includes(String(value.fulfillmentMode))) return false;
+  if (!["UNKNOWN", "SAME_AS_INVOICE", "SEPARATE"].includes(String(value.deliveryAddressMode))) {
+    return false;
+  }
+  return isCustomerAddress(value.invoiceAddress) && isCustomerAddress(value.deliveryAddress);
+}
+
 function isTransfer(value: unknown): value is InquiryToConfiguratorTransferV1 {
-  return isRecord(value) && isRecord(value.planning) && isRecord(value.orderContextPrefill);
+  return (
+    isRecord(value) &&
+    isRecord(value.planning) &&
+    isRecord(value.orderContextPrefill) &&
+    (value.fulfillmentPrefill === undefined || isFulfillmentPrefill(value.fulfillmentPrefill))
+  );
 }
 
 function parseExchangeResponse(value: unknown): ExchangedConfiguratorHandoff | null {

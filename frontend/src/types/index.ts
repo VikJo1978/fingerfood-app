@@ -285,6 +285,12 @@ export interface ConfiguratorOrderContextPrefillV1 {
 export interface InquiryToConfiguratorTransferV1 {
   planning: ConfiguratorPlanningContextV1;
   orderContextPrefill: ConfiguratorOrderContextPrefillV1;
+  /**
+   * Optional for rolling compatibility with older Core deployments.
+   * When present, these are already-persisted Core facts and must prefill
+   * the matching Configurator controls instead of asking the operator twice.
+   */
+  fulfillmentPrefill?: DeliveryFulfillmentDefinition;
 }
 
 export function createInitialOrderContextV1(): OrderContextV1 {

@@ -184,6 +184,36 @@ describe("prepareOfferInCore", () => {
     );
   });
 
+  it.each([
+    [
+      "invalid_offer_snapshot",
+      "Die Angebotsdaten sind widersprüchlich oder unvollständig. Bitte Positionen, Personenzahl und Pauschalen prüfen.",
+    ],
+    [
+      "core_fulfillment_persist_failed",
+      "Lieferart oder Adressdaten konnten nicht in Core gespeichert werden. Bitte die Anfrage neu öffnen und erneut versuchen.",
+    ],
+    [
+      "core_offer_prepare_failed",
+      "Core konnte das Angebot nicht anlegen. Die Eingaben wurden nicht als Angebot übernommen.",
+    ],
+  ])("maps known later prepare failure %s to an actionable message", async (code, expected) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ detail: { code } }, { status: 422 }))
+    );
+
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    let caught: unknown;
+    try {
+      await prepareOfferInCore(body);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(prepareOfferErrorMessage(caught)).toBe(expected);
+  });
+
   it("never echoes unknown backend detail codes or response messages", async () => {
     vi.stubGlobal(
       "fetch",

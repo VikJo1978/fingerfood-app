@@ -76,6 +76,30 @@ const handoffTransfer: InquiryToConfiguratorTransferV1 = {
   },
 };
 
+const handoffTransferWithFulfillment: InquiryToConfiguratorTransferV1 = {
+  ...handoffTransfer,
+  orderContextPrefill: {
+    ...handoffTransfer.orderContextPrefill,
+    billingAddress: "Rechnungsweg 7, 22549 Hamburg, DE",
+  },
+  fulfillmentPrefill: {
+    fulfillmentMode: "DELIVERY",
+    deliveryAddressMode: "SEPARATE",
+    invoiceAddress: {
+      street: "Rechnungsweg 7",
+      postalCode: "22549",
+      city: "Hamburg",
+      country: "DE",
+    },
+    deliveryAddress: {
+      street: "Festplatz 3",
+      postalCode: "22765",
+      city: "Hamburg",
+      country: "DE",
+    },
+  },
+};
+
 const handoffTransferB: InquiryToConfiguratorTransferV1 = {
   planning: {
     persons: 12,
@@ -169,6 +193,22 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     expect(screen.getByDisplayValue("2026-07-31")).toBeTruthy();
     expect(screen.getByDisplayValue("12:25")).toBeTruthy();
     expect(screen.getByDisplayValue("Musterstraße 1, 22549 Hamburg")).toBeTruthy();
+  });
+
+  it("prefills fulfillment and both addresses from Core instead of asking twice", async () => {
+    window.location.hash = handoffFragment(INQUIRY_ID, handoffTransferWithFulfillment);
+    render(<HomePage />);
+    await act(async () => {});
+    await screen.findByText("Fingerfood Paket");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+
+    expect((screen.getByLabelText("Erfüllung") as HTMLSelectElement).value).toBe("DELIVERY");
+    expect((screen.getByLabelText("Lieferadresse") as HTMLSelectElement).value).toBe("SEPARATE");
+    expect(screen.getByDisplayValue("Rechnungsweg 7")).toBeTruthy();
+    expect(screen.getByDisplayValue("22549")).toBeTruthy();
+    expect(screen.getByDisplayValue("Festplatz 3")).toBeTruthy();
+    expect(screen.getByDisplayValue("22765")).toBeTruthy();
   });
 
   it("shows the same recipient, address, and event date/time in Angebotsvorschau", async () => {
