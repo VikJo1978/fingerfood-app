@@ -42,6 +42,29 @@ function isNullablePersons(value: unknown): value is number | null {
   );
 }
 
+function isCustomerAddress(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    isText(value.street, 500) &&
+    isText(value.postalCode, 500) &&
+    isText(value.city, 500) &&
+    isText(value.country, 500)
+  );
+}
+
+function isFulfillmentPrefill(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (!["UNKNOWN", "PICKUP", "DELIVERY"].includes(String(value.fulfillmentMode))) {
+    return false;
+  }
+  if (
+    !["UNKNOWN", "SAME_AS_INVOICE", "SEPARATE"].includes(String(value.deliveryAddressMode))
+  ) {
+    return false;
+  }
+  return isCustomerAddress(value.invoiceAddress) && isCustomerAddress(value.deliveryAddress);
+}
+
 function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string") return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -84,7 +107,8 @@ function isTransfer(value: unknown): value is InquiryToConfiguratorTransferV1 {
     isText(prefill.eventTime) &&
     isText(prefill.location) &&
     isText(prefill.billingAddress) &&
-    isText(prefill.remarks)
+    isText(prefill.remarks) &&
+    (value.fulfillmentPrefill === undefined || isFulfillmentPrefill(value.fulfillmentPrefill))
   );
 }
 
