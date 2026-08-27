@@ -27,7 +27,7 @@ import type {
   OfferLine,
   QuantityMode,
 } from "../types";
-import { createInitialOfferDraft } from "../types";
+import { createInitialOfferDraft, normalizeCustomerAddressCountry } from "../types";
 import { filterCatalog } from "../utils/filterCatalog";
 import { UuidGenerationError, generateUuidV4 } from "../utils/uuid";
 import {
@@ -237,8 +237,12 @@ export function HomePage() {
                 ...d.chargesDefinition.delivery,
                 fulfillment: {
                   ...fulfillmentPrefill,
-                  invoiceAddress: { ...fulfillmentPrefill.invoiceAddress },
-                  deliveryAddress: { ...fulfillmentPrefill.deliveryAddress },
+                  invoiceAddress: normalizeCustomerAddressCountry(
+                    fulfillmentPrefill.invoiceAddress
+                  ),
+                  deliveryAddress: normalizeCustomerAddressCountry(
+                    fulfillmentPrefill.deliveryAddress
+                  ),
                 },
               },
             },
