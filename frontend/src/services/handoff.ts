@@ -32,9 +32,7 @@ function isCustomerAddress(value: unknown): boolean {
 function isFulfillmentPrefill(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (!["UNKNOWN", "PICKUP", "DELIVERY"].includes(String(value.fulfillmentMode))) return false;
-  if (
-    !["UNKNOWN", "SAME_AS_INVOICE", "SEPARATE"].includes(String(value.deliveryAddressMode))
-  ) {
+  if (!["UNKNOWN", "SAME_AS_INVOICE", "SEPARATE"].includes(String(value.deliveryAddressMode))) {
     return false;
   }
   return isCustomerAddress(value.invoiceAddress) && isCustomerAddress(value.deliveryAddress);
