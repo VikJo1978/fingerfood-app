@@ -15,10 +15,7 @@ import {
   createInitialDeliveryFulfillmentDefinition,
   createInitialReturnLogisticsDefinition,
 } from "../types";
-import {
-  PAYMENT_METHOD_CUSTOMER_TEXT,
-  paymentMethodBlocker,
-} from "./paymentMethod";
+import { PAYMENT_METHOD_CUSTOMER_TEXT, paymentMethodBlocker } from "./paymentMethod";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
 /** OFFER_BUDGET_DEFINITION_V1 wire shape — matches the Core snapshot
