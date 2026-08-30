@@ -39,6 +39,7 @@ function draftWithFulfillment(
     budgetBasis: "gross",
     budgetScope: "full_offer",
     chargesDefinition: charges,
+    paymentMethod: "RECHNUNG",
     lines: [],
     orderContext: {
       companyName: "Example GmbH",
