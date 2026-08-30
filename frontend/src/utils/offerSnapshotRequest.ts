@@ -8,12 +8,17 @@ import type {
   DeliveryFulfillmentDefinition,
   OfferDraft,
   OrderContextV1,
+  PaymentMethod,
   ReturnLogisticsDefinition,
 } from "../types";
 import {
   createInitialDeliveryFulfillmentDefinition,
   createInitialReturnLogisticsDefinition,
 } from "../types";
+import {
+  PAYMENT_METHOD_CUSTOMER_TEXT,
+  paymentMethodBlocker,
+} from "./paymentMethod";
 import { CANONICAL_UUID_V4, generateUuidV4 } from "./uuid";
 
 /** OFFER_BUDGET_DEFINITION_V1 wire shape — matches the Core snapshot
@@ -261,7 +266,7 @@ export interface OfferSnapshotRequestBody {
     notes: string;
   };
   payment_terms: {
-    method: "RECHNUNG";
+    method: PaymentMethod;
     customer_visible_text: string;
   };
   offer: ReturnType<typeof offerDraftToCalculateBody>;
@@ -300,6 +305,11 @@ export function buildOfferSnapshotRequest(
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
   const deliveryTiming = canonicalDeliveryTiming(ctx);
+  const paymentBlocker = paymentMethodBlocker(ctx.companyName, draft.paymentMethod);
+  if (paymentBlocker !== null || draft.paymentMethod === undefined) {
+    throw new Error("invalid_payment_method");
+  }
+  const paymentMethod = draft.paymentMethod;
   return {
     ...(contextId ? { context_id: contextId } : { inquiry_id: inquiryId ?? "" }),
     snapshot_id: generateUuidV4(),
@@ -326,8 +336,8 @@ export function buildOfferSnapshotRequest(
       notes: remarks,
     },
     payment_terms: {
-      method: "RECHNUNG",
-      customer_visible_text: "Zahlung per Rechnung",
+      method: paymentMethod,
+      customer_visible_text: PAYMENT_METHOD_CUSTOMER_TEXT[paymentMethod],
     },
     offer: { ...offerDraftToCalculateBody(draft), persons: guestCount },
     fulfillment: buildPrepareFulfillment(draft.chargesDefinition),
