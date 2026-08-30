@@ -388,11 +388,7 @@ describe("payment method in the Core snapshot payload", () => {
     ["RECHNUNG", "Zahlung per Rechnung"],
     ["BAR_VOR_ORT", "Barzahlung vor Ort"],
   ] as const)("sends %s with canonical customer-visible text", (method, text) => {
-    const body = buildOfferSnapshotRequest(
-      { ...draft, paymentMethod: method },
-      "inq-1",
-      null
-    );
+    const body = buildOfferSnapshotRequest({ ...draft, paymentMethod: method }, "inq-1", null);
 
     expect(body.payment_terms).toEqual({
       method,
@@ -434,11 +430,8 @@ describe("payment method in the Core snapshot payload", () => {
     ).toBe("BAR_VOR_ORT");
 
     expect(
-      buildOfferSnapshotRequest(
-        { ...draft, paymentMethod: "BAR_VOR_ORT" },
-        "inq-1",
-        null
-      ).payment_terms.method
+      buildOfferSnapshotRequest({ ...draft, paymentMethod: "BAR_VOR_ORT" }, "inq-1", null)
+        .payment_terms.method
     ).toBe("BAR_VOR_ORT");
   });
 });
