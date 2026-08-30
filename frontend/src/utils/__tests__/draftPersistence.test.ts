@@ -67,6 +67,7 @@ describe("saveDraftToSession / readDraftFromSession", () => {
       budgetType: "per_person",
       budgetBasis: "net",
       budgetScope: "positions_only",
+      paymentMethod: "BAR_VOR_ORT",
       chargesDefinition: {
         buffet: { baseMode: "PAUSCHALE", pauschalePerPersonCents: 75 },
         delivery: { amountCents: 0 },
@@ -92,6 +93,7 @@ describe("saveDraftToSession / readDraftFromSession", () => {
     expect(restored?.budgetType).toBe("per_person");
     expect(restored?.budgetBasis).toBe("net");
     expect(restored?.budgetScope).toBe("positions_only");
+    expect(restored?.paymentMethod).toBe("BAR_VOR_ORT");
     expect(restored?.chargesDefinition.delivery.amountCents).toBe(0);
     expect(restored?.chargesDefinition.buffet.baseMode).toBe("PAUSCHALE");
     expect(restored?.chargesDefinition.dishware.additionalLines).toEqual([
@@ -189,6 +191,16 @@ describe("saveDraftToSession / readDraftFromSession", () => {
 
     expect(restored?.chargesDefinition.delivery.fulfillment?.invoiceAddress.country).toBe("DE");
     expect(restored?.chargesDefinition.delivery.fulfillment?.deliveryAddress.country).toBe("DE");
+  });
+
+  it("keeps payment method unset for legacy drafts that predate the selector", () => {
+    const storage = new FakeStorage();
+    const draft = createInitialOfferDraft();
+
+    saveDraftToSession(INQUIRY_A, draft, storage);
+    const restored = readDraftFromSession(INQUIRY_A, storage);
+
+    expect(restored?.paymentMethod).toBeUndefined();
   });
 
   it("isolates different Inquiries — draft saved under Inquiry A never returns for Inquiry B", () => {
