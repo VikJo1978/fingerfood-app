@@ -189,6 +189,9 @@ describe("Configurator draft session persistence — Core-handoff flow", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
     fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    fireEvent.change(screen.getByLabelText("Zahlungsart"), {
+      target: { value: "RECHNUNG" },
+    });
 
     vi.stubGlobal(
       "fetch",
