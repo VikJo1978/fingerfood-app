@@ -151,6 +151,7 @@ export type ChargeBaseMode = "NONE" | "PAUSCHALE";
 export type ReturnMode = "NEXT_WORKING_DAY" | "SAME_DAY";
 export type FulfillmentMode = "UNKNOWN" | "PICKUP" | "DELIVERY";
 export type DeliveryAddressMode = "UNKNOWN" | "SAME_AS_INVOICE" | "SEPARATE";
+export type PaymentMethod = "VORKASSE" | "RECHNUNG" | "BAR_VOR_ORT";
 
 export interface CustomerAddressInput {
   street: string;
@@ -216,6 +217,8 @@ export interface OfferDraft {
   budgetBasis: BudgetBasis;
   budgetScope: BudgetScope;
   chargesDefinition: ChargesDefinition;
+  /** Mandatory before Offer prepare. Optional only for legacy draft restore. */
+  paymentMethod?: PaymentMethod;
   lines: OfferLine[];
   /** Populated when server calculation is wired; optional for local-only flow. */
   warnings?: OfferWarning[];
