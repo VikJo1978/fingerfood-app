@@ -497,3 +497,50 @@ def test_delivery_fulfillment_accepts_complete_separate_address() -> None:
     )
 
     ui_offer_routes._validate_fulfillment_context(fulfillment)
+
+
+@pytest.mark.parametrize(
+    ("method", "text"),
+    [
+        ("VORKASSE", "Zahlung per Vorkasse"),
+        ("BAR_VOR_ORT", "Barzahlung vor Ort"),
+    ],
+)
+def test_private_customer_allows_vorkasse_and_cash(method: str, text: str) -> None:
+    terms = ui_offer_routes.UiPaymentTerms(
+        method=method,
+        customer_visible_text=text,
+    )
+
+    ui_offer_routes._validate_payment_terms(terms, company_name="")
+
+
+def test_private_customer_rejects_invoice_payment() -> None:
+    terms = ui_offer_routes.UiPaymentTerms(
+        method="RECHNUNG",
+        customer_visible_text="Zahlung per Rechnung",
+    )
+
+    with pytest.raises(Exception) as exc_info:
+        ui_offer_routes._validate_payment_terms(terms, company_name="")
+
+    exc = exc_info.value
+    assert getattr(exc, "status_code", None) == 422
+    assert getattr(exc, "detail", None) == {"code": "private_invoice_not_allowed"}
+
+
+@pytest.mark.parametrize(
+    ("method", "text"),
+    [
+        ("VORKASSE", "Zahlung per Vorkasse"),
+        ("RECHNUNG", "Zahlung per Rechnung"),
+        ("BAR_VOR_ORT", "Barzahlung vor Ort"),
+    ],
+)
+def test_company_customer_allows_all_three_payment_methods(method: str, text: str) -> None:
+    terms = ui_offer_routes.UiPaymentTerms(
+        method=method,
+        customer_visible_text=text,
+    )
+
+    ui_offer_routes._validate_payment_terms(terms, company_name="Example GmbH")

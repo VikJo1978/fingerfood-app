@@ -4,6 +4,7 @@ import type {
   OfferDraft,
   OfferLine,
   OrderContextV1,
+  PaymentMethod,
 } from "../types";
 import {
   createInitialChargesDefinition,
@@ -215,6 +216,10 @@ function isChargesDefinition(value: unknown): value is ChargesDefinition {
   return value.dishware.additionalLines.every(isDishwareAdditionalLine);
 }
 
+function isPaymentMethod(value: unknown): value is PaymentMethod {
+  return value === "VORKASSE" || value === "RECHNUNG" || value === "BAR_VOR_ORT";
+}
+
 function isOfferDraftShape(value: unknown): value is OfferDraft {
   if (!isRecord(value)) return false;
   if (!isOrderContext(value.orderContext)) return false;
@@ -228,6 +233,7 @@ function isOfferDraftShape(value: unknown): value is OfferDraft {
   if (value.chargesDefinition !== undefined && !isChargesDefinition(value.chargesDefinition)) {
     return false;
   }
+  if (value.paymentMethod !== undefined && !isPaymentMethod(value.paymentMethod)) return false;
   if (!Array.isArray(value.lines) || !value.lines.every(isOfferLine)) return false;
   return true;
 }

@@ -70,6 +70,11 @@ class UiFulfillmentContext(BaseModel):
     delivery_address: UiCustomerAddress | None = None
 
 
+class UiPaymentTerms(BaseModel):
+    method: Literal["VORKASSE", "RECHNUNG", "BAR_VOR_ORT"]
+    customer_visible_text: str
+
+
 class UiOfferPrepareRequest(BaseModel):
     inquiry_id: str | None = None
     context_id: str | None = None
@@ -78,7 +83,7 @@ class UiOfferPrepareRequest(BaseModel):
     recipient: dict[str, str]
     event: dict[str, object]
     customer_text: dict[str, str]
-    payment_terms: dict[str, str]
+    payment_terms: UiPaymentTerms
     offer: dict[str, object]
     # Optional only for a rolling deploy: old browser builds may omit it.
     # The new configurator always sends it and gets strict validation below.
@@ -168,6 +173,15 @@ def _validate_fulfillment_context(fulfillment: UiFulfillmentContext) -> None:
             raise _invalid_request(status_code=422, code="delivery_address_incomplete")
         return
     raise _invalid_request(status_code=422, code="delivery_address_mode_required")
+
+
+def _validate_payment_terms(
+    payment_terms: UiPaymentTerms,
+    *,
+    company_name: str,
+) -> None:
+    if payment_terms.method == "RECHNUNG" and not company_name.strip():
+        raise _invalid_request(status_code=422, code="private_invoice_not_allowed")
 
 
 def _address_mapping(address: UiCustomerAddress | None) -> dict[str, object] | None:
@@ -306,15 +320,17 @@ def _trusted_prepare_body(
     payload.pop("context_id", None)
     payload.pop("fulfillment", None)
     payload["inquiry_id"] = context.inquiry_id
-    company_name = _as_text(prefill.get("companyName"), "Angebot")
-    contact_name = _as_text(prefill.get("contactPerson"), company_name)
+    company_name = _as_text(prefill.get("companyName"))
+    _validate_payment_terms(request_body.payment_terms, company_name=company_name)
+    recipient_company_name = company_name or "Angebot"
+    contact_name = _as_text(prefill.get("contactPerson"), recipient_company_name)
     event_date = _as_text(prefill.get("eventDate"))
     event_time = _as_text(prefill.get("eventTime"), "–")
     location = _as_text(prefill.get("location"), "–")
     billing_address = _as_text(prefill.get("billingAddress")) or location
     remarks = _as_text(prefill.get("remarks")).strip()
     payload["recipient"] = {
-        "company_name": company_name,
+        "company_name": recipient_company_name,
         "contact_name": contact_name,
         "email": _as_text(prefill.get("email"), "kunde@example.invalid"),
         "postal_address": billing_address,
@@ -326,7 +342,7 @@ def _trusted_prepare_body(
         "location_text": location,
     }
     payload["customer_text"] = {
-        "title": company_name,
+        "title": recipient_company_name,
         "introduction": remarks or "Angebot erstellt im Configurator.",
         "notes": remarks,
     }
@@ -337,6 +353,10 @@ def _trusted_prepare_body(
 
 
 def _untrusted_prepare_body(request_body: UiOfferPrepareRequest) -> OfferSnapshotBuildRequest:
+    _validate_payment_terms(
+        request_body.payment_terms,
+        company_name=_as_text(request_body.recipient.get("company_name")),
+    )
     payload = request_body.model_dump(exclude_none=True)
     payload.pop("fulfillment", None)
     try:

@@ -1,6 +1,7 @@
 import logo from "../../assets/silberloeffel-logo.jpg";
 import type { CatalogItem, OfferDraft, OfferLine } from "../../types";
 import { formatDateDe } from "../../utils/formatDate";
+import { PAYMENT_METHOD_CUSTOMER_TEXT } from "../../utils/paymentMethod";
 import {
   computeOfferLineTotal,
   formatCurrency,
@@ -329,8 +330,12 @@ export function OfferPreview({
           </section>
 
           <p className="text-xs text-slate-600">
-            Zahlbar sofort rein netto nach Erhalt der Rechnung. Alle Preise verstehen sich zzgl. der
-            zum Zeitpunkt der Rechnungsstellung gültigen Mehrwertsteuer.
+            Zahlungsart:{" "}
+            {draft.paymentMethod
+              ? PAYMENT_METHOD_CUSTOMER_TEXT[draft.paymentMethod]
+              : "noch nicht gewählt"}
+            . Alle Preise verstehen sich zzgl. der zum Zeitpunkt der Rechnungsstellung gültigen
+            Mehrwertsteuer.
           </p>
 
           <section className="rounded-lg border border-amber-100 bg-amber-50/80 px-4 py-3 text-xs leading-relaxed text-amber-950">

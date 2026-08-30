@@ -173,6 +173,10 @@ async function renderAfterHandoff() {
   await screen.findByText("Fingerfood Paket");
 }
 
+function selectCompanyPayment(method: "VORKASSE" | "RECHNUNG" | "BAR_VOR_ORT" = "RECHNUNG") {
+  fireEvent.change(screen.getByLabelText("Zahlungsart"), { target: { value: method } });
+}
+
 beforeEach(() => {
   vi.stubGlobal("crypto", { getRandomValues: realGetRandomValues });
 });
@@ -270,6 +274,7 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     await renderAfterHandoff();
 
     fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    selectCompanyPayment();
     const fetchMock = vi.fn(async () =>
       Response.json({ offer_id: "11111111-1111-4111-8111-111111111111" }, { status: 201 })
     );
@@ -283,6 +288,27 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     expect(screen.getByText("Bitte zuerst Lieferung oder Selbstabholung wählen.")).toBeTruthy();
   });
 
+  it("blocks prepare until a payment method is selected", async () => {
+    await renderAfterHandoff();
+
+    fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+
+    const fetchMock = vi.fn(async () =>
+      Response.json({ offer_id: "11111111-1111-4111-8111-111111111111" }, { status: 201 })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Angebot in Core vorbereiten" }));
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText("Bitte zuerst eine Zahlungsart auswählen.")).toBeTruthy();
+  });
+
   it("carries recipient, address, and event date/time into the generated OfferSnapshot", async () => {
     await renderAfterHandoff();
 
@@ -290,6 +316,7 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
     fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    selectCompanyPayment();
 
     // Capture the exact JSON body sent to the prepare-offer endpoint.
     let capturedBody: Record<string, unknown> | null = null;
@@ -456,6 +483,7 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
     fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
     fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    selectCompanyPayment();
 
     vi.stubGlobal(
       "fetch",

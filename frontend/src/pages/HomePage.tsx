@@ -63,6 +63,7 @@ import {
 } from "../utils/draftPersistence";
 import { formatDateDe } from "../utils/formatDate";
 import { reconcileDraftCatalogLines } from "../utils/draftCatalogReconciliation";
+import { paymentMethodBlocker } from "../utils/paymentMethod";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -562,6 +563,7 @@ export function HomePage() {
     return {
       meta: {
         orderContext: offerDraft.orderContext,
+        paymentMethod: offerDraft.paymentMethod ?? null,
         persons: offerDraft.persons,
         budgetEnabled: offerDraft.budgetEnabled,
         totalBudgetEUR: offerDraft.budgetEnabled ? offerDraft.totalBudget : null,
@@ -636,6 +638,15 @@ export function HomePage() {
     ) {
       setPrepareStatus("error");
       setPrepareMessage(sessionNotice ?? "Mitarbeiteranmeldung erforderlich.");
+      return;
+    }
+    const paymentBlocker = paymentMethodBlocker(
+      offerDraft.orderContext.companyName,
+      offerDraft.paymentMethod
+    );
+    if (paymentBlocker !== null) {
+      setPrepareStatus("error");
+      setPrepareMessage(paymentBlocker);
       return;
     }
     const fulfillmentBlocker = prepareFulfillmentBlocker(offerDraft.chargesDefinition);
@@ -847,11 +858,15 @@ export function HomePage() {
 
             <OrderContextCard
               orderContext={offerDraft.orderContext}
+              paymentMethod={offerDraft.paymentMethod}
               onOrderContextChange={(patch) =>
                 setOfferDraft((d) => ({
                   ...d,
                   orderContext: { ...d.orderContext, ...patch },
                 }))
+              }
+              onPaymentMethodChange={(paymentMethod) =>
+                setOfferDraft((d) => ({ ...d, paymentMethod }))
               }
             />
 
