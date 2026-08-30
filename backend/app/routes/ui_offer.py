@@ -75,13 +75,6 @@ class UiPaymentTerms(BaseModel):
     customer_visible_text: str
 
 
-_PAYMENT_CUSTOMER_TEXT = {
-    "VORKASSE": "Zahlung per Vorkasse",
-    "RECHNUNG": "Zahlung per Rechnung",
-    "BAR_VOR_ORT": "Barzahlung vor Ort",
-}
-
-
 class UiOfferPrepareRequest(BaseModel):
     inquiry_id: str | None = None
     context_id: str | None = None
@@ -187,8 +180,6 @@ def _validate_payment_terms(
     *,
     company_name: str,
 ) -> None:
-    if payment_terms.customer_visible_text != _PAYMENT_CUSTOMER_TEXT[payment_terms.method]:
-        raise _invalid_request(status_code=422, code="payment_terms_invalid")
     if payment_terms.method == "RECHNUNG" and not company_name.strip():
         raise _invalid_request(status_code=422, code="private_invoice_not_allowed")
 
