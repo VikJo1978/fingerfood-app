@@ -387,6 +387,9 @@ export function parseOfferPrepareResponse(value: unknown): OfferPrepareResponse 
 }
 
 const PREPARE_ERROR_MESSAGES: Record<string, string> = {
+  private_invoice_not_allowed:
+    "Rechnung ist nur für Firmenkunden zulässig. Bitte Vorkasse oder Bar vor Ort wählen.",
+  payment_terms_invalid: "Die Zahlungsart ist ungültig. Bitte neu auswählen.",
   fulfillment_mode_required: "Bitte zuerst Lieferung oder Selbstabholung wählen.",
   delivery_address_mode_required: "Bitte zuerst auswählen, welche Lieferadresse verwendet wird.",
   invoice_address_required: "Bitte zuerst die Rechnungsadresse angeben.",
