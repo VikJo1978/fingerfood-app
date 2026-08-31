@@ -51,7 +51,11 @@ import {
   storeCoreInquiryHandoff,
   CORE_INQUIRY_FRAGMENT_PREFIX,
 } from "../utils/coreInquiryHandoff";
-import { consumeCoreHandoffCode } from "../utils/coreEmployeeHandoff";
+import {
+  consumeCoreHandoffCode,
+  readCoreHandoffHistoryMarker,
+  writeCoreHandoffHistoryMarker,
+} from "../utils/coreEmployeeHandoff";
 import {
   clearDraftFromSession,
   normalizeRestoredOfferDraft,
@@ -355,6 +359,24 @@ export function HomePage() {
 
       const result = consumeCoreHandoffCode(window.location, window.history);
       if (!result.present) {
+        const employeeMarker = readCoreHandoffHistoryMarker(window.history);
+        if (employeeMarker !== null) {
+          const scope: DraftPersistenceScope = {
+            kind: "handoff",
+            contextId: employeeMarker.context_id,
+          };
+          const restored = readDraftStateFromSession(scope);
+          if (restored !== null) {
+            setOfferDraft(restored.draft);
+            setCurrentDraftId(restored.backendDraftId);
+            setDraftScope(scope);
+            setImportedInquiryId(null);
+            setPrepareContextId(employeeMarker.context_id);
+            setPageMode("configurator");
+          }
+          return;
+        }
+
         const manualMarker = readManualDraftHistoryMarker(window.history);
         if (manualMarker === null) return;
         const restoredManual = readDraftStateFromSession({ kind: "manual" });
@@ -382,6 +404,7 @@ export function HomePage() {
         handlePrepareOffer(exchanged.transfer);
         setImportedInquiryId(null);
         setPrepareContextId(exchanged.context_id);
+        writeCoreHandoffHistoryMarker(exchanged.context_id, window.location, window.history);
         restoreScopedDraft({
           kind: "handoff",
           contextId: exchanged.context_id,

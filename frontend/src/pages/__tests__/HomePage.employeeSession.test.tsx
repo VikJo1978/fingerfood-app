@@ -221,6 +221,77 @@ describe("HomePage employee-session gating", () => {
     expect(body).not.toHaveProperty("inquiry_id");
   });
 
+  it("restores the same trusted employee handoff after a history-entry remount", async () => {
+    fetchUiSessionMock.mockResolvedValue(authenticatedSessionResult);
+    exchangeCoreHandoffMock.mockResolvedValueOnce({
+      context_id: "trusted-context-1",
+      operation: "prepare_first_offer",
+      transfer: handoffTransfer,
+      expires_at: "2026-08-04T10:15:00+00:00",
+    });
+    prepareAndNavigateToCoreOfferMock.mockResolvedValueOnce({
+      offer_id: "33333333-3333-4333-8333-333333333333",
+    });
+    window.history.replaceState(null, "", "/#core-handoff=opaqueCode123");
+
+    const first = render(<HomePage />);
+    await act(async () => {});
+    await screen.findByDisplayValue("Musterfirma GmbH");
+    expect(window.location.hash).toBe("");
+    expect(window.history.state).toEqual({
+      schema_version: "fingerfood.core-handoff-history.v1",
+      context_id: "trusted-context-1",
+    });
+    first.unmount();
+
+    render(<HomePage />);
+    await act(async () => {});
+    await screen.findByDisplayValue("Musterfirma GmbH");
+
+    expect(exchangeCoreHandoffMock).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Angebotsvorschau anzeigen" })).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Zum Angebot hinzufügen" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+    fireEvent.change(screen.getByLabelText("Erfüllung"), { target: { value: "PICKUP" } });
+    fireEvent.click(screen.getByRole("button", { name: "Schließen" }));
+    fireEvent.change(screen.getByLabelText("Zahlungsart"), {
+      target: { value: "RECHNUNG" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Angebot in Core vorbereiten" }));
+
+    await waitFor(() => {
+      expect(prepareAndNavigateToCoreOfferMock).toHaveBeenCalledOnce();
+    });
+    const [body] = prepareAndNavigateToCoreOfferMock.mock.calls[0];
+    expect(body).toMatchObject({ context_id: "trusted-context-1" });
+    expect(body).not.toHaveProperty("inquiry_id");
+  });
+
+  it("does not restore an employee handoff on a fresh direct visit without its history marker", async () => {
+    fetchUiSessionMock.mockResolvedValue(authenticatedSessionResult);
+    exchangeCoreHandoffMock.mockResolvedValueOnce({
+      context_id: "trusted-context-1",
+      operation: "prepare_first_offer",
+      transfer: handoffTransfer,
+      expires_at: "2026-08-04T10:15:00+00:00",
+    });
+    window.history.replaceState(null, "", "/#core-handoff=opaqueCode123");
+
+    const first = render(<HomePage />);
+    await act(async () => {});
+    await screen.findByDisplayValue("Musterfirma GmbH");
+    first.unmount();
+
+    window.history.replaceState(null, "", "/");
+    render(<HomePage />);
+    await act(async () => {});
+
+    expect(screen.queryByRole("button", { name: "Angebotsvorschau anzeigen" })).toBeNull();
+    expect(screen.queryByDisplayValue("Musterfirma GmbH")).toBeNull();
+    expect(exchangeCoreHandoffMock).toHaveBeenCalledOnce();
+  });
+
   it("keeps prepare disabled when handoff exchange fails", async () => {
     fetchUiSessionMock.mockResolvedValueOnce(authenticatedSessionResult);
     exchangeCoreHandoffMock.mockRejectedValueOnce(new Error("handoff_exchange_failed"));
