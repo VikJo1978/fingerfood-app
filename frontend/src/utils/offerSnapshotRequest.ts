@@ -79,12 +79,27 @@ function canonicalLocalTime(value: string | undefined): string {
   return normalized;
 }
 
-function canonicalDeliveryTiming(context: OrderContextV1): Record<string, string> {
+function canonicalEventTiming(context: OrderContextV1): Record<string, string> {
+  const deliveryTime = context.deliveryTime?.trim() ?? "";
+  const eventStartTime = context.eventStartTime?.trim() ?? "";
+  const exact: Record<string, string> = {};
+  if (deliveryTime) {
+    exact.delivery_time_local = canonicalLocalTime(deliveryTime);
+  }
+  if (eventStartTime) {
+    exact.event_start_local = canonicalLocalTime(eventStartTime);
+  }
+  if (deliveryTime) {
+    return exact;
+  }
+
+  // Backward compatibility for old saved drafts only. New UI never creates
+  // these fields and never invents an end time from the exact delivery time.
   const serviceDate = context.deliveryDate?.trim() ?? "";
   const start = context.deliveryWindowStart?.trim() ?? "";
   const end = context.deliveryWindowEnd?.trim() ?? "";
   const supplied = [serviceDate, start, end].filter(Boolean).length;
-  if (supplied === 0) return {};
+  if (supplied === 0) return exact;
   if (supplied !== 3 || !/^\d{4}-\d{2}-\d{2}$/.test(serviceDate)) {
     throw new Error("invalid_delivery_window");
   }
@@ -92,6 +107,7 @@ function canonicalDeliveryTiming(context: OrderContextV1): Record<string, string
   const canonicalEnd = canonicalLocalTime(end);
   if (canonicalStart >= canonicalEnd) throw new Error("invalid_delivery_window");
   return {
+    ...exact,
     delivery_date_local: serviceDate,
     delivery_window_start_local: canonicalStart,
     delivery_window_end_local: canonicalEnd,
@@ -256,6 +272,8 @@ export interface OfferSnapshotRequestBody {
     delivery_date_local?: string;
     delivery_window_start_local?: string;
     delivery_window_end_local?: string;
+    delivery_time_local?: string;
+    event_start_local?: string;
   };
   customer_text: {
     title: string;
@@ -301,7 +319,7 @@ export function buildOfferSnapshotRequest(
   const remarks = ctx.remarks?.trim() ?? "";
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
-  const deliveryTiming = canonicalDeliveryTiming(ctx);
+  const eventTiming = canonicalEventTiming(ctx);
   const paymentBlocker = paymentMethodBlocker(ctx.companyName, draft.paymentMethod);
   if (paymentBlocker !== null || draft.paymentMethod === undefined) {
     throw new Error("invalid_payment_method");
@@ -321,11 +339,11 @@ export function buildOfferSnapshotRequest(
     },
     event: {
       event_date: ctx.eventDate,
-      time_window_text: ctx.eventTime.trim() || "–",
+      time_window_text: ctx.eventStartTime?.trim() || ctx.eventTime.trim() || "–",
       location_text: location,
       guest_count: guestCount,
       planning_mode: "caterer_suggestion",
-      ...deliveryTiming,
+      ...eventTiming,
     },
     customer_text: {
       title: company,
