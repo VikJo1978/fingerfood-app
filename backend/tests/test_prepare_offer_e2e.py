@@ -7,7 +7,7 @@ import queue
 import sys
 import threading
 import uuid
-from datetime import date
+from datetime import date, time
 from pathlib import Path
 
 import httpx
@@ -244,6 +244,74 @@ def test_catalog_to_core_prepare_offer_preserves_allergens(
     api_position = detail.json()["versions"][0]["variants"][0]["positions"][0]
     assert api_position["allergens"] == ["A", "G"]
     assert api_position["unit_net_cents"] == 1200
+
+
+def test_catalog_to_core_prepare_offer_preserves_exact_timing(
+    tmp_path: Path, core_api: tuple[str, Path, str]
+) -> None:
+    """Exact timing crosses the real Configurator -> Core boundary unchanged."""
+    base, db, inquiry_id = core_api
+    items_path = tmp_path / "items.json"
+    _write_items(items_path)
+    catalog_client = CatalogClient(
+        "http://catalog.test", "token", transport=_mock_transport()
+    )
+    adapter = CatalogAdapter(catalog_client, items_path=items_path)
+    offer = OfferRequest(
+        persons=10,
+        lines=[
+            OfferLineIn(
+                item_id=_SOURCE_ID,
+                quantity_mode="total",
+                quantity=10,
+                surcharge_selected=False,
+            )
+        ],
+    )
+    snapshot = build_offer_snapshot_v2(
+        adapter=adapter,
+        inquiry_id=inquiry_id,
+        snapshot_id=str(uuid.uuid4()),
+        valid_until=date(2026, 7, 30),
+        recipient={
+            "company_name": "Example",
+            "contact_name": "Contact",
+            "email": "a@example.invalid",
+            "postal_address": "Address",
+        },
+        event={
+            "event_date": "2026-08-20",
+            "time_window_text": "18:00",
+            "location_text": "Hamburg",
+            "guest_count": 10,
+            "planning_mode": "caterer_suggestion",
+            "event_start_local": "18:00",
+            "delivery_time_local": "16:30",
+        },
+        customer_text={"title": "Pasta", "introduction": "Intro", "notes": ""},
+        payment_terms={"method": "RECHNUNG", "customer_visible_text": "Rechnung"},
+        offer=offer,
+    )
+
+    core = CoreOfficeClient(base, _TOKEN)
+    result = core.prepare_offer(inquiry_id, snapshot)
+
+    from catering_system.repositories.sqlite_offer_repository import (
+        SQLiteOfferRepository,
+    )
+
+    repo = SQLiteOfferRepository(db)
+    try:
+        stored = repo.get(result["offer_id"])
+        assert stored is not None
+        version = stored.versions[0]
+        assert version.event_start_local == time(18, 0)
+        assert version.delivery_time_local == time(16, 30)
+        assert version.delivery_date_local is None
+        assert version.delivery_window_start_local is None
+        assert version.delivery_window_end_local is None
+    finally:
+        repo.close()
 
 
 def test_catalog_to_core_prepare_offer_preserves_budget_definition(
