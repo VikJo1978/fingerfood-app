@@ -221,7 +221,15 @@ describe("HomePage employee-session gating", () => {
     expect(body).toMatchObject({
       context_id: "trusted-context-1",
       recipient: { company_name: "Musterfirma GmbH" },
+      event: {
+        event_date: "2026-07-31",
+        delivery_time_local: "16:30",
+        event_start_local: "18:00",
+      },
     });
+    expect(body.event).not.toHaveProperty("delivery_date_local");
+    expect(body.event).not.toHaveProperty("delivery_window_start_local");
+    expect(body.event).not.toHaveProperty("delivery_window_end_local");
     expect(body).not.toHaveProperty("inquiry_id");
   });
 
