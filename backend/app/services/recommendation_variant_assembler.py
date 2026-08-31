@@ -56,8 +56,9 @@ def assemble_variant(
     """Assemble one variant from candidates already ranked for ``kind``.
 
     Per-person positions scale with guest count. Piece positions use explicit demand
-    when supplied and otherwise fall back to the catalog minimum. The fallback is
-    exposed in line explanations so it cannot masquerade as a serving estimate.
+    when supplied and otherwise default to one piece per guest, while still respecting
+    the catalog minimum. This makes automatically generated variants meaningful for
+    the stated guest count instead of treating min_order as a serving estimate.
     """
 
     if guest_count <= 0:
@@ -210,7 +211,11 @@ def _quantity_for_item(
 
     requested = piece_quantity_by_item_id.get(item.id)
     if requested is None:
-        return item.min_order, ("quantity uses catalog minimum fallback",)
+        quantity = max(item.min_order, guest_count)
+        explanations = ["quantity defaults to one piece per guest"]
+        if quantity != guest_count:
+            explanations.append("catalog minimum applied")
+        return quantity, tuple(explanations)
 
     quantity = max(item.min_order, requested)
     explanations = ["quantity from explicit piece demand"]
