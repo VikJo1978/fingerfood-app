@@ -91,6 +91,10 @@ function isOrderContext(value: unknown): value is OrderContextV1 {
     typeof value.eventDate === "string" &&
     typeof value.eventTime === "string" &&
     typeof value.location === "string" &&
+    isOptionalString(value.deliveryTime, 5) &&
+    (value.deliveryTime === undefined || CANONICAL_LOCAL_TIME_RE.test(value.deliveryTime)) &&
+    isOptionalString(value.eventStartTime, 5) &&
+    (value.eventStartTime === undefined || CANONICAL_LOCAL_TIME_RE.test(value.eventStartTime)) &&
     isOptionalString(value.deliveryDate, 10) &&
     isOptionalString(value.deliveryWindowStart, 5) &&
     isOptionalString(value.deliveryWindowEnd, 5) &&
