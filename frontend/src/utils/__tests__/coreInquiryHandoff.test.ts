@@ -97,7 +97,8 @@ describe("Core Inquiry handoff", () => {
     expect(visibleForm).toContain('value="joerg@example.test"');
     expect(visibleForm).toContain('value="040 12345"');
     expect(visibleForm).toContain('value="2026-10-03"');
-    expect(visibleForm).toContain('value="18:30–23:00"');
+    expect(visibleForm).toContain('aria-label="Beginn Veranstaltung"');
+    expect(visibleForm).toContain('value="18:30"');
     expect(visibleForm).toContain('value="Große Bleichen 1, Hamburg"');
     expect(visibleForm).toContain("Wunsch: vegetarisch");
   });

@@ -126,8 +126,13 @@ export interface OrderContextV1 {
   email?: string;
   phone?: string;
   eventDate: string;
+  /** Legacy/free-text event timing retained for saved-draft compatibility. */
   eventTime: string;
-  /** Explicit machine-usable delivery timing. Never inferred from eventTime. */
+  /** Exact operator-entered local start time for the event. */
+  eventStart?: string;
+  /** Exact operator-entered local delivery time on eventDate. */
+  deliveryTime?: string;
+  /** Legacy structured delivery-window fields retained for saved-draft compatibility. */
   deliveryDate?: string;
   deliveryWindowStart?: string;
   deliveryWindowEnd?: string;

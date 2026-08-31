@@ -722,6 +722,36 @@ describe("charges_definition in the Core snapshot payload", () => {
 });
 
 describe("canonical logistics timing in the Core snapshot payload", () => {
+  it("sends exact delivery and event-start times without inventing a window end", () => {
+    const body = buildOfferSnapshotRequest(
+      {
+        ...draft,
+        orderContext: {
+          ...draft.orderContext,
+          eventStart: "18:00",
+          deliveryTime: "16:30",
+          // Legacy values may still exist in an old restored draft; an explicit
+          // exact delivery time wins and must not manufacture/reuse a window.
+          deliveryDate: "2026-08-20",
+          deliveryWindowStart: "16:00",
+          deliveryWindowEnd: "17:00",
+        },
+      },
+      "inq-1",
+      null
+    );
+
+    expect(body.event).toMatchObject({
+      event_date: "2026-08-20",
+      time_window_text: "18:00",
+      event_start_local: "18:00",
+      delivery_time_local: "16:30",
+    });
+    expect(body.event).not.toHaveProperty("delivery_date_local");
+    expect(body.event).not.toHaveProperty("delivery_window_start_local");
+    expect(body.event).not.toHaveProperty("delivery_window_end_local");
+  });
+
   it("omits canonical delivery fields when no explicit structured window exists", () => {
     const body = buildOfferSnapshotRequest(draft, "inq-1", null);
     expect(body.event).not.toHaveProperty("delivery_date_local");
