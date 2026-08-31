@@ -16,7 +16,9 @@ function exactEventStart(orderContext: OrderContextV1): string {
   const explicit = orderContext.eventStart?.trim() ?? "";
   if (canonicalLocalTimeRe.test(explicit)) return explicit;
   const legacy = orderContext.eventTime.trim();
-  return canonicalLocalTimeRe.test(legacy) ? legacy : "";
+  if (canonicalLocalTimeRe.test(legacy)) return legacy;
+  const legacyRangeStart = legacy.match(/^((?:[01]\d|2[0-3]):[0-5]\d)\s*[–-]/)?.[1];
+  return legacyRangeStart ?? "";
 }
 
 function exactDeliveryTime(orderContext: OrderContextV1): string {
