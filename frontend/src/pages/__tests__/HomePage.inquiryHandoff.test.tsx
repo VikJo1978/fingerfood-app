@@ -255,14 +255,19 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     expect(within(dialog).getByText("+49301234567")).toBeTruthy();
     // Event date (31.07.2026), not the document creation date line.
     expect(within(dialog).getByText("31.07.2026")).toBeTruthy();
-    // "12:25" appears twice (event intro sentence + Anlieferung line) — both
-    // are correct, so assert at least one and check the delivery line text.
-    expect(within(dialog).getAllByText("12:25", { exact: false }).length).toBeGreaterThan(0);
+    // The imported legacy event time becomes the event start when it is a
+    // canonical HH:MM value. It must not be duplicated as a made-up delivery time.
+    expect(within(dialog).getByText("12:25", { exact: false })).toBeTruthy();
     expect(
       within(dialog).getByText(
-        (_, element) => element?.textContent === "12:25, Musterstraße 1, 22549 Hamburg"
+        (_, element) => element?.textContent === "Musterstraße 1, 22549 Hamburg"
       )
     ).toBeTruthy();
+    expect(
+      within(dialog).queryByText(
+        (_, element) => element?.textContent === "12:25, Musterstraße 1, 22549 Hamburg"
+      )
+    ).toBeNull();
     // Document creation date ("Hamburg, <today>") stays a separate line,
     // distinct from the event date assertion above.
     expect(within(dialog).getByText(/^Hamburg, \d{2}\.\d{2}\.\d{4}$/)).toBeTruthy();
