@@ -79,6 +79,20 @@ function canonicalLocalTime(value: string | undefined): string {
   return normalized;
 }
 
+function canonicalEventStartTiming(context: OrderContextV1): Record<string, string> {
+  const explicit = context.eventStart?.trim() ?? "";
+  const legacyExact = context.eventTime.trim();
+  const value = explicit || (CANONICAL_LOCAL_TIME_RE.test(legacyExact) ? legacyExact : "");
+  if (!value) return {};
+  return { event_start_local: canonicalLocalTime(value) };
+}
+
+function canonicalExactDeliveryTiming(context: OrderContextV1): Record<string, string> {
+  const value = context.deliveryTime?.trim() ?? "";
+  if (!value) return {};
+  return { delivery_time_local: canonicalLocalTime(value) };
+}
+
 function canonicalDeliveryTiming(context: OrderContextV1): Record<string, string> {
   const serviceDate = context.deliveryDate?.trim() ?? "";
   const start = context.deliveryWindowStart?.trim() ?? "";
@@ -253,6 +267,8 @@ export interface OfferSnapshotRequestBody {
     location_text: string;
     guest_count: number;
     planning_mode: "caterer_suggestion" | "self_select";
+    event_start_local?: string;
+    delivery_time_local?: string;
     delivery_date_local?: string;
     delivery_window_start_local?: string;
     delivery_window_end_local?: string;
@@ -301,7 +317,11 @@ export function buildOfferSnapshotRequest(
   const remarks = ctx.remarks?.trim() ?? "";
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
-  const deliveryTiming = canonicalDeliveryTiming(ctx);
+  const eventStartTiming = canonicalEventStartTiming(ctx);
+  const deliveryTiming =
+    ctx.deliveryTime?.trim()
+      ? canonicalExactDeliveryTiming(ctx)
+      : canonicalDeliveryTiming(ctx);
   const paymentBlocker = paymentMethodBlocker(ctx.companyName, draft.paymentMethod);
   if (paymentBlocker !== null || draft.paymentMethod === undefined) {
     throw new Error("invalid_payment_method");
@@ -321,10 +341,11 @@ export function buildOfferSnapshotRequest(
     },
     event: {
       event_date: ctx.eventDate,
-      time_window_text: ctx.eventTime.trim() || "–",
+      time_window_text: ctx.eventStart?.trim() || ctx.eventTime.trim() || "–",
       location_text: location,
       guest_count: guestCount,
       planning_mode: "caterer_suggestion",
+      ...eventStartTiming,
       ...deliveryTiming,
     },
     customer_text: {
