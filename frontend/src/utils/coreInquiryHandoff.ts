@@ -63,6 +63,14 @@ function isFulfillmentPrefill(value: unknown): boolean {
   return isCustomerAddress(value.invoiceAddress) && isCustomerAddress(value.deliveryAddress);
 }
 
+function isOptionalExactLocalTime(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === "" ||
+    (typeof value === "string" && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value))
+  );
+}
+
 function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string") return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -103,6 +111,8 @@ function isTransfer(value: unknown): value is InquiryToConfiguratorTransferV1 {
     isText(prefill.phone) &&
     isIsoDate(prefill.eventDate) &&
     isText(prefill.eventTime) &&
+    isOptionalExactLocalTime(prefill.eventStart) &&
+    isOptionalExactLocalTime(prefill.deliveryTime) &&
     isText(prefill.location) &&
     isText(prefill.billingAddress) &&
     isText(prefill.remarks) &&

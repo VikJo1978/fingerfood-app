@@ -259,6 +259,8 @@ export function HomePage() {
         phone: pre.phone,
         eventDate: pre.eventDate,
         eventTime: pre.eventTime,
+        eventStart: pre.eventStart?.trim() || undefined,
+        deliveryTime: pre.deliveryTime?.trim() || undefined,
         location: pre.location,
         billingAddress: pre.billingAddress.trim() ? pre.billingAddress.trim() : undefined,
         remarks: remarksTrim ? remarksTrim : undefined,

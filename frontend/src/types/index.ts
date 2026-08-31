@@ -282,7 +282,12 @@ export interface ConfiguratorOrderContextPrefillV1 {
   email: string;
   phone: string;
   eventDate: string;
+  /** Legacy/free-text timing from older Core deployments. */
   eventTime: string;
+  /** Exact local event start from Core. Empty/undefined means not supplied. */
+  eventStart?: string;
+  /** Exact local delivery time on eventDate from Core. Empty/undefined means not supplied. */
+  deliveryTime?: string;
   location: string;
   /** "" when the intake's billing address was left blank / not marked abweichend. */
   billingAddress: string;
