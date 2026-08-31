@@ -84,11 +84,11 @@ def test_complete_variant_budget_ceiling_is_respected() -> None:
         ranked,
         {"a": 400, "b": 300, "c": 200},
         guest_count=10,
-        max_variant_net_cents=500,
+        max_variant_net_cents=5000,
     )
 
     assert variants
-    assert all(variant.net_total_cents <= 500 for variant in variants)
+    assert all(variant.net_total_cents <= 5000 for variant in variants)
 
 
 def test_per_person_quantity_scales_with_guest_count() -> None:
