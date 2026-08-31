@@ -663,7 +663,12 @@ export function HomePage() {
       setPrepareMessage("Bitte zuerst ein Eventdatum im Auftragskontext setzen.");
       return;
     }
-    if (!offerDraft.orderContext.deliveryTime?.trim()) {
+    const fulfillmentMode =
+      offerDraft.chargesDefinition.delivery.fulfillment?.fulfillmentMode ?? "UNKNOWN";
+    if (
+      fulfillmentMode === "DELIVERY" &&
+      !offerDraft.orderContext.deliveryTime?.trim()
+    ) {
       setPrepareStatus("error");
       setPrepareMessage("Bitte die Lieferzeit angeben.");
       return;
