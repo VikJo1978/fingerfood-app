@@ -722,13 +722,38 @@ describe("charges_definition in the Core snapshot payload", () => {
 });
 
 describe("canonical logistics timing in the Core snapshot payload", () => {
-  it("omits canonical delivery fields when no explicit structured window exists", () => {
+  it("omits canonical delivery fields when no explicit timing exists", () => {
     const body = buildOfferSnapshotRequest(draft, "inq-1", null);
     expect(body.event).not.toHaveProperty("delivery_date_local");
+    expect(body.event).not.toHaveProperty("delivery_time_local");
+    expect(body.event).not.toHaveProperty("event_start_local");
     expect(body.event.time_window_text).toBe("18:00");
   });
 
-  it("sends an explicit canonical delivery window without parsing eventTime", () => {
+  it("sends exact delivery and event-start times without inventing an end", () => {
+    const body = buildOfferSnapshotRequest(
+      {
+        ...draft,
+        orderContext: {
+          ...draft.orderContext,
+          eventTime: "legacy text",
+          deliveryTime: "17:30",
+          eventStartTime: "18:00",
+        },
+      },
+      "inq-1",
+      null
+    );
+    expect(body.event).toMatchObject({
+      time_window_text: "18:00",
+      delivery_time_local: "17:30",
+      event_start_local: "18:00",
+    });
+    expect(body.event).not.toHaveProperty("delivery_window_start_local");
+    expect(body.event).not.toHaveProperty("delivery_window_end_local");
+  });
+
+  it("keeps an explicit legacy canonical delivery window readable without parsing eventTime", () => {
     const body = buildOfferSnapshotRequest(
       {
         ...draft,
