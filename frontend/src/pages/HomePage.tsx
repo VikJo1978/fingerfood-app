@@ -404,11 +404,7 @@ export function HomePage() {
         handlePrepareOffer(exchanged.transfer);
         setImportedInquiryId(null);
         setPrepareContextId(exchanged.context_id);
-        writeCoreHandoffHistoryMarker(
-          exchanged.context_id,
-          window.location,
-          window.history
-        );
+        writeCoreHandoffHistoryMarker(exchanged.context_id, window.location, window.history);
         restoreScopedDraft({
           kind: "handoff",
           contextId: exchanged.context_id,
