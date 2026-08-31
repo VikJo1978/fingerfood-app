@@ -84,11 +84,11 @@ def test_complete_variant_budget_ceiling_is_respected() -> None:
         ranked,
         {"a": 400, "b": 300, "c": 200},
         guest_count=10,
-        max_variant_net_cents=500,
+        max_variant_net_cents=5000,
     )
 
     assert variants
-    assert all(variant.net_total_cents <= 500 for variant in variants)
+    assert all(variant.net_total_cents <= 5000 for variant in variants)
 
 
 def test_per_person_quantity_scales_with_guest_count() -> None:
@@ -107,7 +107,7 @@ def test_per_person_quantity_scales_with_guest_count() -> None:
     assert "quantity from guest count" in line.explanations
 
 
-def test_piece_quantity_without_demand_is_explicitly_a_minimum_fallback() -> None:
+def test_piece_quantity_without_demand_defaults_to_one_piece_per_guest() -> None:
     item = _item("canape", price_type="piece", min_order=12)
 
     variants = assemble_variants(
@@ -118,9 +118,24 @@ def test_piece_quantity_without_demand_is_explicitly_a_minimum_fallback() -> Non
     )
 
     line = variants[0].lines[0]
-    assert line.quantity == 12
-    assert line.net_total_cents == 3000
-    assert "quantity uses catalog minimum fallback" in line.explanations
+    assert line.quantity == 80
+    assert line.net_total_cents == 20000
+    assert "quantity defaults to one piece per guest" in line.explanations
+
+
+def test_piece_quantity_guest_default_still_respects_catalog_minimum() -> None:
+    item = _item("canape", price_type="piece", min_order=30)
+
+    variants = assemble_variants(
+        [item],
+        [_candidate("canape", 10)],
+        {"canape": 250},
+        guest_count=20,
+    )
+
+    line = variants[0].lines[0]
+    assert line.quantity == 30
+    assert "catalog minimum applied" in line.explanations
 
 
 def test_explicit_piece_demand_drives_quantity_and_budget() -> None:
