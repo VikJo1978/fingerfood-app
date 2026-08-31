@@ -94,8 +94,7 @@ function isOrderContext(value: unknown): value is OrderContextV1 {
     isOptionalString(value.eventStart, 5) &&
     (value.eventStart === undefined || /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value.eventStart)) &&
     isOptionalString(value.deliveryTime, 5) &&
-    (value.deliveryTime === undefined ||
-      /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value.deliveryTime)) &&
+    (value.deliveryTime === undefined || /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value.deliveryTime)) &&
     isOptionalString(value.deliveryDate, 10) &&
     isOptionalString(value.deliveryWindowStart, 5) &&
     isOptionalString(value.deliveryWindowEnd, 5) &&
