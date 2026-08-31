@@ -101,6 +101,17 @@ describe("RecommendationPanel variant apply", () => {
     expect(onApplyVariant).toHaveBeenCalledWith(variant);
   });
 
+  it("does not expose internal scoring or assembly explanations in Office UI", async () => {
+    render(<RecommendationPanel eventDate="2026-08-30" guestCount={40} catalog={catalog} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Vorschläge berechnen" }));
+
+    expect(await screen.findByText("Preisbewusste Auswahl mit reduziertem Umfang.")).toBeTruthy();
+    expect(screen.queryByText("deterministic economic assembly")).toBeNull();
+    expect(screen.queryByText("confirmed production overlap")).toBeNull();
+    expect(screen.queryByText(/Produktionssignale:/)).toBeNull();
+  });
+
   it("sends catering format and event type to deterministic scoring", async () => {
     render(<RecommendationPanel eventDate="2026-08-30" guestCount={40} catalog={catalog} />);
 
