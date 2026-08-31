@@ -98,12 +98,26 @@ export function OrderContextCard({
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className={fieldLabelClass}>Uhrzeit / Zeitfenster</span>
+          <span className={fieldLabelClass}>Lieferung</span>
           <input
-            type="text"
-            placeholder="z. B. 18:30–23:00 oder abends"
-            value={oc.eventTime}
-            onChange={(e) => onOrderContextChange({ eventTime: e.target.value })}
+            aria-label="Lieferung"
+            type="time"
+            value={oc.deliveryTime ?? ""}
+            onChange={(e) =>
+              onOrderContextChange({ deliveryTime: e.target.value || undefined })
+            }
+            className={inputClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className={fieldLabelClass}>Beginn Veranstaltung</span>
+          <input
+            aria-label="Beginn Veranstaltung"
+            type="time"
+            value={oc.eventStartTime ?? ""}
+            onChange={(e) =>
+              onOrderContextChange({ eventStartTime: e.target.value || undefined })
+            }
             className={inputClass}
           />
         </label>
@@ -137,60 +151,6 @@ export function OrderContextCard({
         </p>
       </div>
 
-      <div className="mt-3 rounded-control border border-line bg-canvas px-3 py-3">
-        <div className="mb-2">
-          <span className={fieldLabelClass}>Lieferfenster · Logistikplanung</span>
-          <p className="mt-1 text-xs text-muted">
-            Strukturierte Zeitangabe für die Kapazitätsplanung. Leer lassen, wenn noch nicht
-            festgelegt. Das freie Feld „Uhrzeit / Zeitfenster“ oben wird daraus nicht automatisch
-            abgeleitet.
-          </p>
-        </div>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          <label className="flex flex-col gap-1.5">
-            <span className={fieldLabelClass}>Lieferdatum</span>
-            <input
-              aria-label="Lieferdatum Logistik"
-              type="date"
-              value={oc.deliveryDate ?? ""}
-              onChange={(e) =>
-                onOrderContextChange({
-                  deliveryDate: e.target.value || undefined,
-                })
-              }
-              className={inputClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={fieldLabelClass}>Von</span>
-            <input
-              aria-label="Lieferfenster von"
-              type="time"
-              value={oc.deliveryWindowStart ?? ""}
-              onChange={(e) =>
-                onOrderContextChange({
-                  deliveryWindowStart: e.target.value || undefined,
-                })
-              }
-              className={inputClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={fieldLabelClass}>Bis</span>
-            <input
-              aria-label="Lieferfenster bis"
-              type="time"
-              value={oc.deliveryWindowEnd ?? ""}
-              onChange={(e) =>
-                onOrderContextChange({
-                  deliveryWindowEnd: e.target.value || undefined,
-                })
-              }
-              className={inputClass}
-            />
-          </label>
-        </div>
-      </div>
 
       {oc.billingAddress?.trim() ? (
         <div className="mt-3 rounded-control border border-warning-border bg-warning-soft px-4 py-3">
