@@ -318,10 +318,9 @@ export function buildOfferSnapshotRequest(
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
   const eventStartTiming = canonicalEventStartTiming(ctx);
-  const deliveryTiming =
-    ctx.deliveryTime?.trim()
-      ? canonicalExactDeliveryTiming(ctx)
-      : canonicalDeliveryTiming(ctx);
+  const deliveryTiming = ctx.deliveryTime?.trim()
+    ? canonicalExactDeliveryTiming(ctx)
+    : canonicalDeliveryTiming(ctx);
   const paymentBlocker = paymentMethodBlocker(ctx.companyName, draft.paymentMethod);
   if (paymentBlocker !== null || draft.paymentMethod === undefined) {
     throw new Error("invalid_payment_method");
