@@ -34,6 +34,12 @@ const fieldClass =
   "rounded-control border border-line bg-white px-3 py-2 text-sm text-ink transition focus:border-accent";
 const labelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
 
+const VARIANT_DESCRIPTIONS: Record<RecommendationVariant["kind"], string> = {
+  ECONOMIC: "Preisbewusste Auswahl mit reduziertem Umfang.",
+  RECOMMENDED: "Ausgewogene Auswahl als empfohlene Basis.",
+  PREMIUM: "Umfangreichere Auswahl mit höherwertiger Ausrichtung.",
+};
+
 export function RecommendationPanel({
   eventDate,
   guestCount,
@@ -309,15 +315,12 @@ export function RecommendationPanel({
                         </span>
                         <span className="whitespace-nowrap text-muted">× {line.quantity}</span>
                       </div>
-                      {line.explanations.length > 0 ? (
-                        <p className="mt-1 text-xs text-muted">{line.explanations.join(" · ")}</p>
-                      ) : null}
                     </li>
                   ))}
                 </ul>
-                {variant.explanations.length > 0 ? (
-                  <p className="mt-3 text-xs text-muted">{variant.explanations.join(" · ")}</p>
-                ) : null}
+                <p className="mt-3 text-xs text-muted">
+                  {VARIANT_DESCRIPTIONS[variant.kind]}
+                </p>
                 {onApplyVariant ? (
                   <button
                     type="button"
@@ -330,10 +333,6 @@ export function RecommendationPanel({
               </article>
             ))}
           </div>
-          <p className="text-xs text-muted">
-            Produktionssignale: {result.production_signal_count} · Historienhinweise:{" "}
-            {result.customer_history_signal_count} · Katalog: {result.catalog_revision}
-          </p>
         </div>
       ) : null}
     </section>
