@@ -19,6 +19,13 @@ describe("OrderContextCard", () => {
     );
     expect(screen.getByText("Basisdaten")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Auftragskontext" })).toBeTruthy();
+    expect(screen.getByText("Datum")).toBeTruthy();
+    expect(screen.getByLabelText("Lieferung")).toBeTruthy();
+    expect(screen.getByLabelText("Beginn Veranstaltung")).toBeTruthy();
+    expect(screen.queryByText("Lieferfenster · Logistikplanung")).toBeNull();
+    expect(screen.queryByLabelText("Lieferdatum Logistik")).toBeNull();
+    expect(screen.queryByLabelText("Lieferfenster von")).toBeNull();
+    expect(screen.queryByLabelText("Lieferfenster bis")).toBeNull();
   });
 
   it("shows imported free-text Anfrage-Kontext from the Inquiry handoff", () => {
