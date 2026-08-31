@@ -126,8 +126,12 @@ export interface OrderContextV1 {
   email?: string;
   phone?: string;
   eventDate: string;
+  /** Legacy free-text event time retained for old handoffs/drafts. */
   eventTime: string;
-  /** Explicit machine-usable delivery timing. Never inferred from eventTime. */
+  /** Exact operator-entered local times used by the simplified UI. */
+  deliveryTime?: string;
+  eventStartTime?: string;
+  /** Legacy canonical delivery window retained only for old saved drafts. */
   deliveryDate?: string;
   deliveryWindowStart?: string;
   deliveryWindowEnd?: string;
