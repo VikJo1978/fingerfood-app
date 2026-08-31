@@ -123,10 +123,10 @@ export function OfferPreview({
 
           <p className="leading-relaxed text-slate-800">
             Angebot für Ihre Veranstaltung am <strong>{formatDateDe(oc.eventDate)}</strong>
-            {oc.eventTime ? (
+            {oc.eventStartTime || oc.eventTime ? (
               <>
-                {", Zeitfenster "}
-                <strong>{oc.eventTime}</strong>
+                {", Beginn "}
+                <strong>{oc.eventStartTime || oc.eventTime}</strong>
               </>
             ) : null}{" "}
             mit <strong>{draft.persons} Personen</strong>.
@@ -136,7 +136,7 @@ export function OfferPreview({
             <p>
               <span className="text-slate-500">Anlieferung: </span>
               <span className="font-medium text-slate-900">
-                {oc.eventTime ? `${oc.eventTime}, ` : ""}
+                {oc.deliveryTime ? `${oc.deliveryTime}, ` : ""}
                 {dashIfEmpty(oc.location)}
               </span>
             </p>
