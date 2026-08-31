@@ -255,6 +255,9 @@ export function HomePage() {
         phone: pre.phone,
         eventDate: pre.eventDate,
         eventTime: pre.eventTime,
+        eventStartTime: /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(pre.eventTime.trim())
+          ? pre.eventTime.trim()
+          : undefined,
         location: pre.location,
         billingAddress: pre.billingAddress.trim() ? pre.billingAddress.trim() : undefined,
         remarks: remarksTrim ? remarksTrim : undefined,
@@ -660,22 +663,14 @@ export function HomePage() {
       setPrepareMessage("Bitte zuerst ein Eventdatum im Auftragskontext setzen.");
       return;
     }
-    const deliveryTiming = [
-      offerDraft.orderContext.deliveryDate?.trim() ?? "",
-      offerDraft.orderContext.deliveryWindowStart?.trim() ?? "",
-      offerDraft.orderContext.deliveryWindowEnd?.trim() ?? "",
-    ];
-    const deliveryTimingCount = deliveryTiming.filter(Boolean).length;
-    if (deliveryTimingCount !== 0 && deliveryTimingCount !== 3) {
+    if (!offerDraft.orderContext.deliveryTime?.trim()) {
       setPrepareStatus("error");
-      setPrepareMessage(
-        "Lieferfenster bitte vollständig mit Datum, Von und Bis angeben oder leer lassen."
-      );
+      setPrepareMessage("Bitte die Lieferzeit angeben.");
       return;
     }
-    if (deliveryTimingCount === 3 && deliveryTiming[1] >= deliveryTiming[2]) {
+    if (!offerDraft.orderContext.eventStartTime?.trim()) {
       setPrepareStatus("error");
-      setPrepareMessage("Beim Lieferfenster muss Von vor Bis liegen.");
+      setPrepareMessage("Bitte den Beginn der Veranstaltung angeben.");
       return;
     }
     const returnLogistics = offerDraft.chargesDefinition.returnLogistics;
