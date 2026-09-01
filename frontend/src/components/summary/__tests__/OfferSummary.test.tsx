@@ -49,6 +49,7 @@ function renderSummary(overrides: { draft?: OfferDraft; canPrepareInCore?: boole
       prepareStatus="idle"
       prepareMessage={null}
       canPrepareInCore={overrides.canPrepareInCore ?? false}
+      onPaymentMethodChange={noop}
       onPrepareInCore={noop}
     />
   );
@@ -69,6 +70,7 @@ describe("OfferSummary — primary action visibility", () => {
   it("enables the Core-prepare action once a line is added", () => {
     const draft: OfferDraft = {
       ...createInitialOfferDraft(),
+      paymentMethod: "VORKASSE",
       lines: [
         {
           lineId: "line-1",
@@ -89,6 +91,54 @@ describe("OfferSummary — primary action visibility", () => {
     renderSummary({ draft, canPrepareInCore: true });
     const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
     expect(btn.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("shows Zahlungsart beside the final Core prepare workflow", () => {
+    const draft: OfferDraft = {
+      ...createInitialOfferDraft(),
+      paymentMethod: "RECHNUNG",
+      orderContext: {
+        ...createInitialOfferDraft().orderContext,
+        companyName: "Musterfirma GmbH",
+      },
+    };
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const select = screen.getByLabelText("Zahlungsart") as HTMLSelectElement;
+    expect(select.value).toBe("RECHNUNG");
+    const values = Array.from(select.options).map((option) => option.value);
+    expect(values).toContain("VORKASSE");
+    expect(values).toContain("RECHNUNG");
+    expect(values).toContain("BAR_VOR_ORT");
+    expect(screen.getByRole("button", { name: "Angebot in Core vorbereiten" })).toBeTruthy();
+  });
+
+  it("makes a missing Zahlungsart visible and blocks prepare until selected", () => {
+    const draft = {
+      ...createInitialOfferDraft(),
+      lines: [
+        {
+          lineId: "line-1",
+          itemId: "item-1",
+          quantityMode: "total" as const,
+          quantity: 10,
+          snapshot: {
+            title: "Brötchen Mix 1",
+            source_type: "internal" as const,
+            pricing_mode: "per_piece" as const,
+            price_type: "piece" as const,
+            chosen_price: 2.3,
+            item_kind: "simple" as const,
+          },
+        },
+      ],
+    };
+    renderSummary({ draft, canPrepareInCore: true });
+
+    expect(screen.getByText(/Zahlungsart erforderlich/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
+    ).toBe(true);
   });
 
   it("opens the Angebotsvorschau modal from its secondary button", () => {
@@ -115,6 +165,7 @@ describe("OfferSummary — primary action visibility", () => {
   function draftWithOneLine(overrides: Partial<OfferDraft>): OfferDraft {
     return {
       ...createInitialOfferDraft(),
+      paymentMethod: "VORKASSE",
       lines: [
         {
           lineId: "line-1",
