@@ -254,7 +254,7 @@ describe("OfferSummary — primary action visibility", () => {
  * up far below the fold inside a single tall panel with no way to reach
  * them short of scrolling the whole page past a pinned sticky column.
  * jsdom doesn't evaluate real CSS/media queries, so these assert the
- * structural contract (DOM containment + the `lg:`-scoped class tokens
+ * structural contract (DOM containment + the `xl:`-scoped class tokens
  * that drive it) rather than pixel layout — the actual pixel behavior was
  * verified manually in a real browser at 1440x900 and at 768/390px. */
 describe("OfferSummary — scroll/fixed-footer structure", () => {
@@ -279,12 +279,12 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     };
   }
 
-  it("scopes the line-items scroll region to lg: only — no unprefixed overflow/height constraint for mobile", () => {
+  it("scopes the line-items scroll region to xl: only — no unprefixed overflow/height constraint for mobile", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const region = screen.getByTestId("offer-summary-scroll-region");
-    expect(region.className).toMatch(/lg:overflow-y-auto/);
-    expect(region.className).toMatch(/lg:min-h-0/);
-    expect(region.className).toMatch(/lg:flex-1/);
+    expect(region.className).toMatch(/xl:overflow-y-auto/);
+    expect(region.className).toMatch(/xl:min-h-0/);
+    expect(region.className).toMatch(/xl:flex-1/);
     // No bare (unprefixed) overflow-y-auto or max-h-* — those would force a
     // cramped fixed-height scroller on mobile/tablet too.
     expect(region.className).not.toMatch(/(?:^|\s)overflow-y-auto/);
@@ -322,21 +322,21 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     expect(region.contains(firstItem)).toBe(true);
   });
 
-  it("only applies the scroll-affordance shadow/divider at lg:, and fills its workspace column's full height desktop-only", () => {
+  it("only applies the scroll-affordance shadow/divider at xl:, and fills its workspace column's full height desktop-only", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const positionenLabel = screen.getByText(/^Positionen \(/);
     const footer = positionenLabel.closest(".shrink-0");
-    expect(footer?.className).toMatch(/lg:shadow-/);
+    expect(footer?.className).toMatch(/xl:shadow-/);
 
     const aside = footer?.closest("aside");
     // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: the aside itself no longer
     // guesses its own height (no more sticky/max-h) — it just fills
     // whatever real fixed-height ancestor HomePage's workspace column
-    // provides. `lg:min-h-0` is required so the flex-1 scroll region
+    // provides. `xl:min-h-0` is required so the flex-1 scroll region
     // below can actually shrink/scroll instead of forcing the aside
     // taller than that ancestor.
-    expect(aside?.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
-    expect(aside?.className).toMatch(/(?:^|\s)lg:min-h-0(?:\s|$)/);
+    expect(aside?.className).toMatch(/(?:^|\s)xl:h-full(?:\s|$)/);
+    expect(aside?.className).toMatch(/(?:^|\s)xl:min-h-0(?:\s|$)/);
     expect(aside?.className).not.toMatch(/(?:^|\s)max-h-\[/);
     expect(aside?.className).not.toMatch(/sticky/);
   });
