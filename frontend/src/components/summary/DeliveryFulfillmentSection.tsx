@@ -225,14 +225,16 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
             </select>
           </label>
 
-          <AddressFields
-            idPrefix="offer-invoice-address"
-            title="Rechnungsadresse"
-            address={current.invoiceAddress}
-            onChange={(invoiceAddress) =>
-              onChange(setFulfillment(charges, { ...current, invoiceAddress }))
-            }
-          />
+          {current.deliveryAddressMode !== "UNKNOWN" ? (
+            <AddressFields
+              idPrefix="offer-invoice-address"
+              title="Rechnungsadresse"
+              address={current.invoiceAddress}
+              onChange={(invoiceAddress) =>
+                onChange(setFulfillment(charges, { ...current, invoiceAddress }))
+              }
+            />
+          ) : null}
 
           {current.deliveryAddressMode === "SEPARATE" ? (
             <AddressFields
