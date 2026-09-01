@@ -230,23 +230,22 @@ describe("OfferSummary — primary action visibility", () => {
         ? overrides.paymentMethod
         : "VORKASSE",
       chargesDefinition,
-      lines:
-        overrides.lines ?? [
-          {
-            lineId: "line-1",
-            itemId: "item-1",
-            quantityMode: "total",
-            quantity: 10,
-            snapshot: {
-              title: "Brötchen Mix 1",
-              source_type: "internal",
-              pricing_mode: "per_piece",
-              price_type: "piece",
-              chosen_price: 2.3,
-              item_kind: "simple",
-            },
+      lines: overrides.lines ?? [
+        {
+          lineId: "line-1",
+          itemId: "item-1",
+          quantityMode: "total",
+          quantity: 10,
+          snapshot: {
+            title: "Brötchen Mix 1",
+            source_type: "internal",
+            pricing_mode: "per_piece",
+            price_type: "piece",
+            chosen_price: 2.3,
+            item_kind: "simple",
           },
-        ],
+        },
+      ],
     };
   }
 
