@@ -69,12 +69,9 @@ export function returnToCoreInquiry(
 ): boolean {
   const normalized = normalizeContextId(contextId);
   if (normalized === null) return false;
-  navigation.assign(
-    `/api/ui/handoff/open-inquiry/${encodeURIComponent(normalized)}`
-  );
+  navigation.assign(`/api/ui/handoff/open-inquiry/${encodeURIComponent(normalized)}`);
   return true;
 }
-
 
 export function readCoreHandoffHistoryMarker(
   history: Pick<History, "state">
