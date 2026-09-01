@@ -56,10 +56,13 @@ describe("active handoff reload marker", () => {
 
   it("rejects malformed stored markers", () => {
     const storage = memoryStorage();
-    storage.setItem("fingerfood.core-handoff-active-context.v1", JSON.stringify({
-      schema_version: "fingerfood.core-handoff-active-context.v1",
-      context_id: "../other",
-    }));
+    storage.setItem(
+      "fingerfood.core-handoff-active-context.v1",
+      JSON.stringify({
+        schema_version: "fingerfood.core-handoff-active-context.v1",
+        context_id: "../other",
+      })
+    );
 
     expect(readActiveCoreHandoffContext(storage)).toBeNull();
   });
