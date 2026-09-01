@@ -93,9 +93,11 @@ describe("HomePage — catalog/summary responsive layout", () => {
     const grid = rightColumn?.parentElement;
     expect(grid).not.toBeNull();
     expect(grid?.className).toContain("grid");
-    // No bare `grid-cols-*` at the base (mobile) breakpoint — only under `xl:`/`xl:`.
+    // No bare `grid-cols-*` at the base (mobile) breakpoint — only under `xl:`.
     expect(grid?.className).not.toMatch(/(?:^|\s)grid-cols-\d/);
     expect(grid?.className).toMatch(/xl:grid-cols-/);
+    expect(grid?.className).not.toMatch(/lg:grid-cols-/);
+    expect((rightColumn as HTMLElement).className).toMatch(/(?:^|\s)min-w-0(?:\s|$)/);
   });
 
   it("places the Offer summary's column after the catalog column in source order (so it stacks below on narrow screens)", async () => {
