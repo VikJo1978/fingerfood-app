@@ -180,24 +180,11 @@ export function getOfficeNextAction(draft: OfferDraft): OfficeNextAction {
 }
 
 export function officePrepareHardBlocked(draft: OfferDraft): boolean {
-  const next = getOfficeNextAction(draft);
-  if (next.hardBlocker) return true;
-
-  // Exact timing is intentionally advisory. Continue past advisory timing
-  // to see whether a later hard blocker (for example payment) still exists.
-  if (next.kind === "delivery_time" || next.kind === "event_start") {
-    const withAdvisoryTiming: OfferDraft = {
-      ...draft,
-      orderContext: {
-        ...draft.orderContext,
-        deliveryTime:
-          next.kind === "delivery_time" ? "00:00" : draft.orderContext.deliveryTime,
-        eventStart:
-          next.kind === "event_start" ? "00:00" : draft.orderContext.eventStart,
-      },
-    };
-    return getOfficeNextAction(withAdvisoryTiming).hardBlocker;
-  }
-
-  return false;
+  if (!(Number.isInteger(draft.persons) && draft.persons > 0)) return true;
+  if (draft.lines.length === 0) return true;
+  if (prepareFulfillmentBlocker(draft.chargesDefinition) !== null) return true;
+  if (!draft.orderContext.eventDate.trim()) return true;
+  if (invalidReturnLogistics(draft)) return true;
+  if (invalidDishwareLines(draft)) return true;
+  return paymentMethodBlocker(draft.orderContext.companyName, draft.paymentMethod) !== null;
 }
