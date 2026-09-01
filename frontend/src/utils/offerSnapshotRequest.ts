@@ -196,10 +196,7 @@ export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepar
   };
 }
 
-export type PrepareFulfillmentIssue =
-  | "fulfillment"
-  | "delivery_address"
-  | "invoice_address";
+export type PrepareFulfillmentIssue = "fulfillment" | "delivery_address" | "invoice_address";
 
 export function prepareFulfillmentIssue(
   charges: ChargesDefinition
