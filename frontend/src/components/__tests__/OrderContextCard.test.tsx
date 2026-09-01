@@ -37,6 +37,25 @@ describe("OrderContextCard", () => {
     expect(screen.getByDisplayValue("Musterfirma GmbH")).toBeTruthy();
   });
 
+  it("shows only the event venue here and does not duplicate the billing-address editor", () => {
+    render(
+      <OrderContextCard
+        orderContext={{
+          ...createInitialOrderContextV1(),
+          location: "Hamburg Messe",
+          billingAddress: "Legacy Rechnungsadresse 1",
+        }}
+        onOrderContextChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Veranstaltungsort")).toBeTruthy();
+    expect(screen.getByDisplayValue("Hamburg Messe")).toBeTruthy();
+    expect(screen.queryByText("Ort / Adresse")).toBeNull();
+    expect(screen.queryByText("Rechnungsadresse")).toBeNull();
+    expect(screen.queryByDisplayValue("Legacy Rechnungsadresse 1")).toBeNull();
+  });
+
   it("keeps Zahlungsart out of the context card so it is not duplicated", () => {
     render(
       <OrderContextCard

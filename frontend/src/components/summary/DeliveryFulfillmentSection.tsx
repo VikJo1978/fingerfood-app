@@ -77,10 +77,12 @@ function setAddress(
 }
 
 function AddressFields({
+  idPrefix,
   title,
   address,
   onChange,
 }: {
+  idPrefix: string;
   title: string;
   address: CustomerAddressInput;
   onChange: (address: CustomerAddressInput) => void;
@@ -91,6 +93,7 @@ function AddressFields({
       <label className="grid gap-1">
         <span className={labelClass}>Straße / Hausnummer</span>
         <input
+          id={`${idPrefix}-street`}
           className={fieldClass}
           value={address.street}
           onChange={(event) => onChange(setAddress(address, "street", event.target.value))}
@@ -100,6 +103,7 @@ function AddressFields({
         <label className="grid gap-1">
           <span className={labelClass}>PLZ</span>
           <input
+            id={`${idPrefix}-postal-code`}
             className={fieldClass}
             value={address.postalCode}
             onChange={(event) => onChange(setAddress(address, "postalCode", event.target.value))}
@@ -108,6 +112,7 @@ function AddressFields({
         <label className="grid gap-1">
           <span className={labelClass}>Ort</span>
           <input
+            id={`${idPrefix}-city`}
             className={fieldClass}
             value={address.city}
             onChange={(event) => onChange(setAddress(address, "city", event.target.value))}
@@ -117,6 +122,7 @@ function AddressFields({
       <label className="grid gap-1">
         <span className={labelClass}>Land</span>
         <select
+          id={`${idPrefix}-country`}
           className={selectClass}
           value={COUNTRY_CODES.has(address.country) ? address.country : OTHER_COUNTRY}
           onChange={(event) =>
@@ -220,6 +226,7 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
           </label>
 
           <AddressFields
+            idPrefix="offer-invoice-address"
             title="Rechnungsadresse"
             address={current.invoiceAddress}
             onChange={(invoiceAddress) =>
@@ -229,6 +236,7 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
 
           {current.deliveryAddressMode === "SEPARATE" ? (
             <AddressFields
+              idPrefix="offer-delivery-address"
               title="Lieferadresse"
               address={current.deliveryAddress}
               onChange={(deliveryAddress) =>

@@ -12,7 +12,13 @@ import { DeliveryFulfillmentSection } from "./DeliveryFulfillmentSection";
 
 const DESCRIPTION_MAX = 500;
 
-export type ChargeConfiguratorFocusTarget = "fulfillment" | "return_logistics" | "charges";
+export type ChargeConfiguratorFocusTarget =
+  | "fulfillment"
+  | "delivery_address_mode"
+  | "invoice_address"
+  | "delivery_address"
+  | "return_logistics"
+  | "charges";
 
 interface ChargeConfiguratorModalProps {
   open: boolean;
@@ -124,9 +130,15 @@ export function ChargeConfiguratorModal({
     const targetId =
       initialFocus === "fulfillment"
         ? "offer-fulfillment-mode"
-        : initialFocus === "return_logistics"
-          ? "offer-return-pickup-window"
-          : "offer-charge-configurator-content";
+        : initialFocus === "delivery_address_mode"
+          ? "offer-delivery-address-mode"
+          : initialFocus === "invoice_address"
+            ? "offer-invoice-address-street"
+            : initialFocus === "delivery_address"
+              ? "offer-delivery-address-street"
+              : initialFocus === "return_logistics"
+                ? "offer-return-pickup-window"
+                : "offer-charge-configurator-content";
     const target = document.getElementById(targetId);
     target?.scrollIntoView?.({ block: "center" });
     target?.focus();

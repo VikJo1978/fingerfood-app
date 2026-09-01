@@ -6,6 +6,9 @@ export type OfficeNextActionKind =
   | "persons"
   | "positions"
   | "fulfillment"
+  | "delivery_address_mode"
+  | "invoice_address"
+  | "delivery_address"
   | "event_date"
   | "delivery_time"
   | "event_start"
@@ -94,11 +97,45 @@ export function getOfficeNextAction(draft: OfferDraft): OfficeNextAction {
 
   const fulfillmentBlocker = prepareFulfillmentBlocker(draft.chargesDefinition);
   if (fulfillmentBlocker !== null) {
+    const fulfillment = draft.chargesDefinition.delivery.fulfillment;
+    const fulfillmentMode = fulfillment?.fulfillmentMode ?? "UNKNOWN";
+    const addressMode = fulfillment?.deliveryAddressMode ?? "UNKNOWN";
+
+    if (fulfillmentMode === "UNKNOWN") {
+      return {
+        kind: "fulfillment",
+        title: "Erfüllung festlegen",
+        description: fulfillmentBlocker,
+        actionLabel: "Lieferung oder Abholung wählen",
+        hardBlocker: true,
+      };
+    }
+
+    if (fulfillmentMode === "DELIVERY" && addressMode === "UNKNOWN") {
+      return {
+        kind: "delivery_address_mode",
+        title: "Lieferadresse festlegen",
+        description: fulfillmentBlocker,
+        actionLabel: "Lieferadresse wählen",
+        hardBlocker: true,
+      };
+    }
+
+    if (fulfillmentMode === "DELIVERY" && addressMode === "SAME_AS_INVOICE") {
+      return {
+        kind: "invoice_address",
+        title: "Rechnungsadresse vervollständigen",
+        description: fulfillmentBlocker,
+        actionLabel: "Rechnungsadresse ergänzen",
+        hardBlocker: true,
+      };
+    }
+
     return {
-      kind: "fulfillment",
-      title: "Erfüllung festlegen",
+      kind: "delivery_address",
+      title: "Lieferadresse vervollständigen",
       description: fulfillmentBlocker,
-      actionLabel: "Jetzt festlegen",
+      actionLabel: "Lieferadresse ergänzen",
       hardBlocker: true,
     };
   }

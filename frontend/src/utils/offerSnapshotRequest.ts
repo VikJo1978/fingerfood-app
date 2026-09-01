@@ -164,6 +164,20 @@ function addressIsComplete(address: CustomerAddressInput): boolean {
   );
 }
 
+function formatCustomerAddress(address: CustomerAddressInput): string {
+  const street = address.street.trim();
+  const postalCode = address.postalCode.trim();
+  const city = address.city.trim();
+  const country = address.country.trim();
+
+  // Country defaults to DE even for an otherwise untouched address, so it
+  // must not make an empty structured address override a meaningful legacy
+  // billingAddress during rolling compatibility.
+  if (!street && !postalCode && !city) return "";
+
+  return [street, [postalCode, city].filter(Boolean).join(" "), country].filter(Boolean).join(", ");
+}
+
 export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepareFulfillment {
   const current = normalizedFulfillment(charges);
   return {
@@ -313,7 +327,11 @@ export function buildOfferSnapshotRequest(
   const contact = ctx.contactPerson.trim() || company;
   const email = ctx.email?.trim() || "kunde@example.invalid";
   const location = ctx.location.trim() || "–";
-  const billing = ctx.billingAddress?.trim() || location;
+  const structuredInvoiceAddress = formatCustomerAddress(
+    draft.chargesDefinition.delivery.fulfillment?.invoiceAddress ??
+      createInitialDeliveryFulfillmentDefinition().invoiceAddress
+  );
+  const billing = structuredInvoiceAddress || ctx.billingAddress?.trim() || location;
   const remarks = ctx.remarks?.trim() ?? "";
   const budgetDefinition = buildBudgetDefinition(draft);
   const guestCount = Math.round(draft.persons) || 0;
