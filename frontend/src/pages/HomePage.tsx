@@ -54,6 +54,7 @@ import {
 import {
   consumeCoreHandoffCode,
   readCoreHandoffHistoryMarker,
+  returnToCoreInquiry,
   writeCoreHandoffHistoryMarker,
 } from "../utils/coreEmployeeHandoff";
 import {
@@ -831,6 +832,13 @@ export function HomePage() {
     `ca. ${offerDraft.persons} Gäste`,
   ].filter(Boolean);
 
+  const onBackFromConfigurator = () => {
+    if (prepareContextId !== null && returnToCoreInquiry(prepareContextId)) {
+      return;
+    }
+    setPageMode("inquiry");
+  };
+
   if (pageMode === "inquiry") {
     return (
       <AppShell>
@@ -849,7 +857,7 @@ export function HomePage() {
   }
 
   return (
-    <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
+    <ConfiguratorShell onBack={onBackFromConfigurator} crumb={heroTitle}>
       <div className="space-y-5">
         <div className="grid gap-[22px] xl:h-[calc(100dvh-110px)] xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] xl:overflow-hidden">
           <div className="grid min-w-0 content-start gap-[22px] xl:h-full xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
