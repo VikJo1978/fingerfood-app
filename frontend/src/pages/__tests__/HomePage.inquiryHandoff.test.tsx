@@ -215,9 +215,9 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
         }) as HTMLInputElement
       ).checked
     ).toBe(true);
-    expect((screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value).toBe(
-      "Festplatz 3"
-    );
+    expect(
+      (screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Festplatz 3");
     expect((screen.getByLabelText("Lieferadresse PLZ") as HTMLInputElement).value).toBe("22765");
     expect(
       (screen.getByLabelText("Rechnungsadresse Straße / Hausnummer") as HTMLInputElement).value
