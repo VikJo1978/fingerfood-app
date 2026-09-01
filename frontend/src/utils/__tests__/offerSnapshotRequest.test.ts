@@ -51,6 +51,53 @@ function encode(value: unknown): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+describe("recipient postal address source", () => {
+  it("prefers the structured invoice address over the legacy free-text billing address", () => {
+    const body = buildOfferSnapshotRequest(
+      {
+        ...draft,
+        chargesDefinition: {
+          ...draft.chargesDefinition,
+          delivery: {
+            ...draft.chargesDefinition.delivery,
+            fulfillment: {
+              ...draft.chargesDefinition.delivery.fulfillment!,
+              invoiceAddress: {
+                street: "Neue Straße 2",
+                postalCode: "22041",
+                city: "Hamburg",
+                country: "DE",
+              },
+            },
+          },
+        },
+      },
+      "inq-1",
+      null
+    );
+
+    expect(body.recipient.postal_address).toBe("Neue Straße 2, 22041 Hamburg, DE");
+  });
+
+  it("keeps legacy billingAddress as a rolling-compatibility fallback", () => {
+    const body = buildOfferSnapshotRequest(draft, "inq-1", null);
+    expect(body.recipient.postal_address).toBe("Street 1");
+  });
+
+  it("does not treat the default country alone as a structured address", () => {
+    const withLegacy: OfferDraft = {
+      ...draft,
+      orderContext: {
+        ...draft.orderContext,
+        billingAddress: "Legacy Straße 7",
+      },
+    };
+
+    const body = buildOfferSnapshotRequest(withLegacy, "inq-1", null);
+    expect(body.recipient.postal_address).toBe("Legacy Straße 7");
+  });
+});
+
 describe("prepareOfferInCore", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
