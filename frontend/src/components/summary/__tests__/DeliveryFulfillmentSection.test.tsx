@@ -27,19 +27,35 @@ function renderSection() {
 }
 
 describe("DeliveryFulfillmentSection", () => {
-  it("defaults country to Germany and allows an explicit dropdown override", () => {
-    const state = renderSection();
+  it("hides customer address fields until the delivery source is selected", () => {
+    renderSection();
 
     fireEvent.change(screen.getByLabelText("Erfüllung"), {
       target: { value: "DELIVERY" },
     });
 
+    expect(screen.getByLabelText("Lieferadresse verwenden")).toBeTruthy();
+    expect(screen.queryByText("Rechnungsadresse")).toBeNull();
+    expect(screen.queryByLabelText("Straße / Hausnummer")).toBeNull();
+  });
+
+  it("shows only Rechnungsadresse for Wie Rechnungsadresse", () => {
+    const state = renderSection();
+
+    fireEvent.change(screen.getByLabelText("Erfüllung"), {
+      target: { value: "DELIVERY" },
+    });
+    fireEvent.change(screen.getByLabelText("Lieferadresse verwenden"), {
+      target: { value: "SAME_AS_INVOICE" },
+    });
+
+    expect(screen.getByText("Rechnungsadresse")).toBeTruthy();
+    expect(screen.queryByText(/^Lieferadresse$/)).toBeTruthy();
+    expect(screen.getAllByLabelText("Straße / Hausnummer")).toHaveLength(1);
+
     const countrySelect = screen.getByLabelText("Land") as HTMLSelectElement;
     expect(countrySelect.value).toBe("DE");
-    expect(state.current().delivery.fulfillment?.invoiceAddress.country).toBe("DE");
-
     fireEvent.change(countrySelect, { target: { value: "AT" } });
-
     expect(state.current().delivery.fulfillment?.invoiceAddress.country).toBe("AT");
   });
 
@@ -71,7 +87,11 @@ describe("DeliveryFulfillmentSection", () => {
       target: { value: "SEPARATE" },
     });
 
+    expect(screen.getAllByText("Rechnungsadresse")).toHaveLength(1);
+    expect(screen.getAllByText("Lieferadresse")).toHaveLength(2);
+
     const streetFields = screen.getAllByLabelText("Straße / Hausnummer");
+    expect(streetFields).toHaveLength(2);
     fireEvent.change(streetFields[1], { target: { value: "Eventweg 2" } });
     const postalFields = screen.getAllByLabelText("PLZ");
     fireEvent.change(postalFields[1], { target: { value: "20354" } });
