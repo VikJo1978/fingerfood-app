@@ -28,10 +28,7 @@ interface OrderContextCardProps {
   onOrderContextChange: (patch: Partial<OrderContextV1>) => void;
 }
 
-export function OrderContextCard({
-  orderContext,
-  onOrderContextChange,
-}: OrderContextCardProps) {
+export function OrderContextCard({ orderContext, onOrderContextChange }: OrderContextCardProps) {
   const oc = orderContext;
 
   const remarksTrimmed = (oc.remarks ?? "").trim();
