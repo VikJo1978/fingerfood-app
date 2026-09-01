@@ -88,6 +88,7 @@ export function TopControls({
       <label className="flex flex-col gap-1.5">
         <span className={fieldLabelClass}>Anzahl Personen</span>
         <IntegerField
+          id="offer-persons-input"
           value={persons}
           onChange={onPersonsChange}
           min={0}
