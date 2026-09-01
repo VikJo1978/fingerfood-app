@@ -950,7 +950,7 @@ export function HomePage() {
               onBudgetScopeChange={(v) => setOfferDraft((d) => ({ ...d, budgetScope: v }))}
             />
 
-            <div className="space-y-0.5">
+            <div id="offer-catalog-section" tabIndex={-1} className="space-y-0.5">
               <p className="text-[11px] font-extrabold uppercase tracking-[.08em] text-accent">
                 Katalog
               </p>
