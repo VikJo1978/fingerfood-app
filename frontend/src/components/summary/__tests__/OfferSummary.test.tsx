@@ -248,6 +248,54 @@ describe("OfferSummary — primary action visibility", () => {
     expect(screen.getByText(/Büffet- oder Geschirrpauschale/)).toBeTruthy();
   });
 
+  it("explains and opens the editor when same-day return pickup is incomplete", () => {
+    const draft = draftWithOneLine({
+      chargesDefinition: {
+        ...createInitialOfferDraft().chargesDefinition,
+        returnLogistics: {
+          mode: "SAME_DAY",
+          pickupWindowText: null,
+          sameDayFeeCents: 3500,
+        },
+      },
+    });
+
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(prepareButton.hasAttribute("disabled")).toBe(true);
+    expect(
+      screen.getByText("Abholfenster für Rückholung am Veranstaltungstag erforderlich.")
+    ).toBeTruthy();
+    expect(screen.getByText(/Rückholung am Veranstaltungstag ist unvollständig/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Rückholung bearbeiten" }));
+    expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
+    expect(screen.getByLabelText("Abholfenster Rückholung")).toBeTruthy();
+  });
+
+  it("does not block prepare when same-day return pickup has a window", () => {
+    const draft = draftWithOneLine({
+      chargesDefinition: {
+        ...createInitialOfferDraft().chargesDefinition,
+        returnLogistics: {
+          mode: "SAME_DAY",
+          pickupWindowText: "22:00–23:00",
+          sameDayFeeCents: 3500,
+        },
+      },
+    });
+
+    renderSummary({ draft, canPrepareInCore: true });
+
+    expect(
+      screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
+    ).toBe(false);
+    expect(
+      screen.queryByText("Abholfenster für Rückholung am Veranstaltungstag erforderlich.")
+    ).toBeNull();
+  });
+
   it("does not block the Core-prepare action for a PER_PERSON budget with a valid positive guest count", () => {
     const draft = draftWithOneLine({
       persons: 30,
