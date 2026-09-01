@@ -7,9 +7,7 @@ describe("returnToCoreInquiry", () => {
     const assign = vi.fn();
 
     expect(returnToCoreInquiry("trusted-context_123", { assign })).toBe(true);
-    expect(assign).toHaveBeenCalledWith(
-      "/api/ui/handoff/open-inquiry/trusted-context_123"
-    );
+    expect(assign).toHaveBeenCalledWith("/api/ui/handoff/open-inquiry/trusted-context_123");
   });
 
   it("rejects malformed context ids without navigating", () => {
