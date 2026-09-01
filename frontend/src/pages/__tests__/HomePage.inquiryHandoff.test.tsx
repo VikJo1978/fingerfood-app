@@ -208,11 +208,21 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
 
     expect((screen.getByLabelText("Erfüllung") as HTMLSelectElement).value).toBe("DELIVERY");
-    expect((screen.getByLabelText("Lieferadresse") as HTMLSelectElement).value).toBe("SEPARATE");
-    expect(screen.getByDisplayValue("Rechnungsweg 7")).toBeTruthy();
-    expect(screen.getByDisplayValue("22549")).toBeTruthy();
-    expect(screen.getByDisplayValue("Festplatz 3")).toBeTruthy();
-    expect(screen.getByDisplayValue("22765")).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Rechnungsadresse weicht von Lieferadresse ab",
+        }) as HTMLInputElement
+      ).checked
+    ).toBe(true);
+    expect((screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value).toBe(
+      "Festplatz 3"
+    );
+    expect((screen.getByLabelText("Lieferadresse PLZ") as HTMLInputElement).value).toBe("22765");
+    expect(
+      (screen.getByLabelText("Rechnungsadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Rechnungsweg 7");
+    expect((screen.getByLabelText("Rechnungsadresse PLZ") as HTMLInputElement).value).toBe("22549");
   });
 
   it("defaults blank countries from a Core handoff to Germany", async () => {
@@ -237,10 +247,8 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
 
     fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
 
-    const countries = screen.getAllByLabelText("Land") as HTMLSelectElement[];
-    expect(countries).toHaveLength(2);
-    expect(countries[0].value).toBe("DE");
-    expect(countries[1].value).toBe("DE");
+    expect((screen.getByLabelText("Lieferadresse Land") as HTMLSelectElement).value).toBe("DE");
+    expect((screen.getByLabelText("Rechnungsadresse Land") as HTMLSelectElement).value).toBe("DE");
   });
 
   it("shows the same recipient, address, and event date/time in Angebotsvorschau", async () => {
