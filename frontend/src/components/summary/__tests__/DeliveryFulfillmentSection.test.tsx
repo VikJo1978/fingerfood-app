@@ -93,9 +93,9 @@ describe("DeliveryFulfillmentSection", () => {
 
     expect((differs as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText(/^Rechnungsadresse$/)).toBeTruthy();
-    expect((screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value).toBe(
-      "Festplatz 3"
-    );
+    expect(
+      (screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Festplatz 3");
 
     fireEvent.change(screen.getByLabelText("Rechnungsadresse Straße / Hausnummer"), {
       target: { value: "Rechnungsweg 7" },
