@@ -161,6 +161,18 @@ export function OfferSummary({
         setChargesFocus("fulfillment");
         setChargesOpen(true);
         return;
+      case "delivery_address_mode":
+        setChargesFocus("delivery_address_mode");
+        setChargesOpen(true);
+        return;
+      case "invoice_address":
+        setChargesFocus("invoice_address");
+        setChargesOpen(true);
+        return;
+      case "delivery_address":
+        setChargesFocus("delivery_address");
+        setChargesOpen(true);
+        return;
       case "event_date":
         focusControl("order-context-event-date");
         return;
