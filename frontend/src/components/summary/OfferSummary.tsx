@@ -7,6 +7,7 @@ import type {
   QuantityMode,
 } from "../../types";
 import { computeBudgetBreakdown } from "../../utils/budgetBreakdown";
+import { getOfficeNextAction, officePrepareHardBlocked } from "../../utils/officeNextAction";
 import {
   allowedPaymentMethods,
   isCompanyCustomer,
@@ -14,7 +15,10 @@ import {
 } from "../../utils/paymentMethod";
 import { formatCurrency, type PauschalenBreakdown, type VatBreakdown } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
-import { ChargeConfiguratorModal } from "./ChargeConfiguratorModal";
+import {
+  ChargeConfiguratorModal,
+  type ChargeConfiguratorFocusTarget,
+} from "./ChargeConfiguratorModal";
 import { OfferLineItem } from "./OfferLineItem";
 import { OfferPreview } from "./OfferPreview";
 
@@ -84,6 +88,7 @@ export function OfferSummary({
     draft;
   const [previewOpen, setPreviewOpen] = useState(false);
   const [chargesOpen, setChargesOpen] = useState(false);
+  const [chargesFocus, setChargesFocus] = useState<ChargeConfiguratorFocusTarget | null>(null);
 
   const budgetBreakdown = useMemo(
     () =>
@@ -135,6 +140,51 @@ export function OfferSummary({
   const paymentMethods = allowedPaymentMethods(draft.orderContext.companyName);
   const paymentMethodValid =
     draft.paymentMethod !== undefined && paymentMethods.includes(draft.paymentMethod);
+  const nextOfficeAction = getOfficeNextAction(draft);
+  const prepareHardBlocked = officePrepareHardBlocked(draft);
+
+  function focusControl(id: string) {
+    const target = document.getElementById(id);
+    target?.scrollIntoView?.({ block: "center" });
+    target?.focus();
+  }
+
+  function followNextOfficeAction() {
+    switch (nextOfficeAction.kind) {
+      case "persons":
+        focusControl("offer-persons-input");
+        return;
+      case "positions":
+        focusControl("offer-catalog-section");
+        return;
+      case "fulfillment":
+        setChargesFocus("fulfillment");
+        setChargesOpen(true);
+        return;
+      case "event_date":
+        focusControl("order-context-event-date");
+        return;
+      case "delivery_time":
+        focusControl("order-context-delivery-time");
+        return;
+      case "event_start":
+        focusControl("order-context-event-start");
+        return;
+      case "return_logistics":
+        setChargesFocus("return_logistics");
+        setChargesOpen(true);
+        return;
+      case "charges":
+        setChargesFocus("charges");
+        setChargesOpen(true);
+        return;
+      case "payment":
+        focusControl("offer-payment-method");
+        return;
+      case "ready":
+        return;
+    }
+  }
 
   return (
     // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: no more sticky/max-h guess.
@@ -345,6 +395,39 @@ export function OfferSummary({
           </details>
         </div>
 
+        {canPrepareInCore ? (
+          <div
+            data-testid="office-next-action"
+            className={`mt-2 rounded-control border px-3 py-2.5 ${
+              nextOfficeAction.kind === "ready"
+                ? "border-accent bg-accent-soft"
+                : "border-warning-border bg-warning-soft"
+            }`}
+          >
+            <p className="text-[10px] font-extrabold uppercase tracking-[.08em] text-muted">
+              Nächster Schritt
+            </p>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+              <strong className="text-sm text-ink">{nextOfficeAction.title}</strong>
+              {!nextOfficeAction.hardBlocker && nextOfficeAction.kind !== "ready" ? (
+                <span className="rounded-full border border-warning-border bg-white px-2 py-0.5 text-[10px] font-bold text-warning">
+                  Hinweis · blockiert nicht
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-muted">{nextOfficeAction.description}</p>
+            {nextOfficeAction.actionLabel ? (
+              <button
+                type="button"
+                onClick={followNextOfficeAction}
+                className="mt-2 inline-flex h-8 items-center justify-center rounded-control border border-accent bg-white px-3 text-xs font-bold text-accent-deep transition hover:bg-accent-soft"
+              >
+                {nextOfficeAction.actionLabel}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
         <button
           type="button"
           onClick={() => setPreviewOpen(true)}
@@ -367,6 +450,7 @@ export function OfferSummary({
                   Zahlungsart
                 </span>
                 <select
+                  id="offer-payment-method"
                   aria-label="Zahlungsart"
                   className="w-full min-w-0 rounded-control border border-line bg-white px-3 py-2 text-sm text-ink focus:border-accent"
                   value={paymentMethodValid ? draft.paymentMethod : ""}
@@ -399,11 +483,9 @@ export function OfferSummary({
               type="button"
               disabled={
                 prepareStatus === "preparing" ||
-                lines.length === 0 ||
-                personBlocksPrepare ||
                 budgetBlocksPrepare ||
                 chargeBlocksPrepare ||
-                !paymentMethodValid
+                prepareHardBlocked
               }
               onClick={() => void onPrepareInCore()}
               className="inline-flex h-10 w-full items-center justify-center rounded-control bg-accent px-3 text-sm font-bold text-white transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
@@ -469,7 +551,11 @@ export function OfferSummary({
       />
       <ChargeConfiguratorModal
         open={chargesOpen}
-        onClose={() => setChargesOpen(false)}
+        initialFocus={chargesFocus}
+        onClose={() => {
+          setChargesOpen(false);
+          setChargesFocus(null);
+        }}
         charges={draft.chargesDefinition}
         persons={persons}
         onChange={onChargesChange}
