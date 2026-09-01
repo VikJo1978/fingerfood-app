@@ -55,7 +55,7 @@ describe("getOfficeNextAction", () => {
     expect(getOfficeNextAction(draft)).toMatchObject({
       kind: "fulfillment",
       hardBlocker: true,
-      actionLabel: "Jetzt festlegen",
+      actionLabel: "Lieferung oder Abholung wählen",
     });
   });
 
