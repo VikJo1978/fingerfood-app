@@ -56,6 +56,7 @@ const exchangeCoreHandoffMock = vi.fn();
 const prepareAndNavigateToCoreOfferMock = vi.fn();
 const consumeCoreInquiryHandoffMock = vi.fn();
 const returnToCoreInquiryMock = vi.fn();
+const isBrowserReloadMock = vi.fn();
 
 const disabledSessionResult = {
   status: "disabled" as const,
@@ -115,6 +116,7 @@ vi.mock("../../utils/coreEmployeeHandoff", async () => {
   );
   return {
     ...actual,
+    isBrowserReload: (...args: unknown[]) => isBrowserReloadMock(...args),
     returnToCoreInquiry: (...args: unknown[]) => returnToCoreInquiryMock(...args),
   };
 });
@@ -158,6 +160,8 @@ describe("HomePage employee-session gating", () => {
     consumeCoreInquiryHandoffMock.mockReturnValue({ present: false, handoff: null });
     returnToCoreInquiryMock.mockReset();
     returnToCoreInquiryMock.mockReturnValue(true);
+    isBrowserReloadMock.mockReset();
+    isBrowserReloadMock.mockReturnValue(false);
     window.history.replaceState(null, "", "/");
     sessionStorage.clear();
   });
@@ -310,6 +314,42 @@ describe("HomePage employee-session gating", () => {
     const [body] = prepareAndNavigateToCoreOfferMock.mock.calls[0];
     expect(body).toMatchObject({ context_id: "trusted-context-1" });
     expect(body).not.toHaveProperty("inquiry_id");
+  });
+
+  it("restores the active employee handoff on reload even when history.state is missing", async () => {
+    fetchUiSessionMock.mockResolvedValue(authenticatedSessionResult);
+    exchangeCoreHandoffMock.mockResolvedValueOnce({
+      context_id: "trusted-context-1",
+      operation: "prepare_first_offer",
+      transfer: handoffTransfer,
+      expires_at: "2026-08-04T10:15:00+00:00",
+    });
+    window.history.replaceState(null, "", "/#core-handoff=opaqueCode123");
+
+    const first = render(<HomePage />);
+    await act(async () => {});
+    await screen.findByDisplayValue("Musterfirma GmbH");
+    await waitFor(() => {
+      expect(sessionStorage.length).toBeGreaterThanOrEqual(2);
+    });
+    first.unmount();
+
+    // Safari can lose the history entry state on a full refresh. The
+    // reload-only session marker must repair that without re-exchanging
+    // the one-shot handoff code.
+    window.history.replaceState(null, "", "/");
+    isBrowserReloadMock.mockReturnValue(true);
+
+    render(<HomePage />);
+    await act(async () => {});
+    await screen.findByDisplayValue("Musterfirma GmbH");
+
+    expect(exchangeCoreHandoffMock).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("heading", { name: "Neue Anfrage erfassen" })).toBeNull();
+    expect(window.history.state).toEqual({
+      schema_version: "fingerfood.core-handoff-history.v1",
+      context_id: "trusted-context-1",
+    });
   });
 
   it("does not restore an employee handoff on a fresh direct visit without its history marker", async () => {
