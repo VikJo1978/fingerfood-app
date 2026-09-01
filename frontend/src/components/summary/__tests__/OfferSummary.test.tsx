@@ -284,7 +284,7 @@ describe("OfferSummary — primary action visibility", () => {
     expect(document.activeElement).toBe(fulfillment);
   });
 
-  it("guides an already-selected delivery to the address choice, not back to fulfillment", () => {
+  it("guides an already-selected delivery directly to the primary Lieferadresse", () => {
     const base = draftWithOneLine({});
     const draft: OfferDraft = {
       ...base,
@@ -304,14 +304,14 @@ describe("OfferSummary — primary action visibility", () => {
     renderSummary({ draft, canPrepareInCore: true });
 
     const guidance = screen.getByTestId("office-next-action");
-    expect(within(guidance).getByText("Lieferadresse festlegen")).toBeTruthy();
+    expect(within(guidance).getByText("Lieferadresse vervollständigen")).toBeTruthy();
     expect(within(guidance).queryByText("Erfüllung festlegen")).toBeNull();
 
-    fireEvent.click(within(guidance).getByRole("button", { name: "Lieferadresse wählen" }));
+    fireEvent.click(within(guidance).getByRole("button", { name: "Lieferadresse ergänzen" }));
 
     expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
-    const addressMode = screen.getByLabelText("Lieferadresse verwenden");
-    expect(document.activeElement).toBe(addressMode);
+    const deliveryStreet = screen.getByLabelText("Lieferadresse Straße / Hausnummer");
+    expect(document.activeElement).toBe(deliveryStreet);
   });
 
   it("guides a missing payment method directly to the selector", () => {

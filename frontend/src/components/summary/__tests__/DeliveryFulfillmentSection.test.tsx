@@ -5,44 +5,18 @@ import { createInitialChargesDefinition } from "../../../types";
 import type { ChargesDefinition } from "../../../types";
 import { DeliveryFulfillmentSection } from "../DeliveryFulfillmentSection";
 
-function renderSection() {
-  let charges = createInitialChargesDefinition();
-  const { rerender } = render(
-    <DeliveryFulfillmentSection
-      charges={charges}
-      onChange={(next) => {
-        charges = next;
-        rerender(
-          <DeliveryFulfillmentSection
-            charges={charges}
-            onChange={(updated) => {
-              charges = updated;
-            }}
-          />
-        );
-      }}
-    />
-  );
-  return { current: () => charges };
+function renderSection(initial: ChargesDefinition = createInitialChargesDefinition()) {
+  let charges = initial;
+  let view: ReturnType<typeof render>;
+  const onChange = (next: ChargesDefinition) => {
+    charges = next;
+    view.rerender(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
+  };
+  view = render(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
+  return { current: () => charges, view };
 }
 
 describe("DeliveryFulfillmentSection", () => {
-  it("defaults country to Germany and allows an explicit dropdown override", () => {
-    const state = renderSection();
-
-    fireEvent.change(screen.getByLabelText("Erfüllung"), {
-      target: { value: "DELIVERY" },
-    });
-
-    const countrySelect = screen.getByLabelText("Land") as HTMLSelectElement;
-    expect(countrySelect.value).toBe("DE");
-    expect(state.current().delivery.fulfillment?.invoiceAddress.country).toBe("DE");
-
-    fireEvent.change(countrySelect, { target: { value: "AT" } });
-
-    expect(state.current().delivery.fulfillment?.invoiceAddress.country).toBe("AT");
-  });
-
   it("starts unresolved and lets the operator choose pickup", () => {
     const state = renderSection();
     expect((screen.getByLabelText("Erfüllung") as HTMLSelectElement).value).toBe("UNKNOWN");
@@ -56,36 +30,141 @@ describe("DeliveryFulfillmentSection", () => {
     expect(screen.getByText(/keine Lieferadresse erforderlich/i)).toBeTruthy();
   });
 
-  it("collects a separate delivery address for delivery", () => {
-    let charges: ChargesDefinition = createInitialChargesDefinition();
-    const onChange = (next: ChargesDefinition) => {
-      charges = next;
-      view.rerender(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
-    };
-    const view = render(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
+  it("shows Lieferadresse directly and defaults Rechnungsadresse to the same address", () => {
+    const state = renderSection();
 
     fireEvent.change(screen.getByLabelText("Erfüllung"), {
       target: { value: "DELIVERY" },
     });
-    fireEvent.change(screen.getByLabelText("Lieferadresse"), {
-      target: { value: "SEPARATE" },
+
+    expect(screen.getByText("Lieferadresse")).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Rechnungsadresse weicht von Lieferadresse ab",
+        }) as HTMLInputElement
+      ).checked
+    ).toBe(false);
+    expect(screen.queryByText(/^Rechnungsadresse$/)).toBeNull();
+    expect(screen.getByText("Rechnungsadresse entspricht der Lieferadresse.")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Lieferadresse Straße / Hausnummer"), {
+      target: { value: "Eventweg 2" },
+    });
+    fireEvent.change(screen.getByLabelText("Lieferadresse PLZ"), {
+      target: { value: "20354" },
+    });
+    fireEvent.change(screen.getByLabelText("Lieferadresse Ort"), {
+      target: { value: "Hamburg" },
     });
 
-    const streetFields = screen.getAllByLabelText("Straße / Hausnummer");
-    fireEvent.change(streetFields[1], { target: { value: "Eventweg 2" } });
-    const postalFields = screen.getAllByLabelText("PLZ");
-    fireEvent.change(postalFields[1], { target: { value: "20354" } });
-    const cityFields = screen.getAllByLabelText("Ort");
-    fireEvent.change(cityFields[1], { target: { value: "Hamburg" } });
-
-    expect(charges.delivery.fulfillment).toMatchObject({
+    expect(state.current().delivery.fulfillment).toMatchObject({
       fulfillmentMode: "DELIVERY",
-      deliveryAddressMode: "SEPARATE",
-      deliveryAddress: {
+      deliveryAddressMode: "SAME_AS_INVOICE",
+      invoiceAddress: {
         street: "Eventweg 2",
         postalCode: "20354",
         city: "Hamburg",
+        country: "DE",
       },
     });
+  });
+
+  it("reveals a separate Rechnungsadresse without losing the Lieferadresse", () => {
+    const state = renderSection();
+
+    fireEvent.change(screen.getByLabelText("Erfüllung"), {
+      target: { value: "DELIVERY" },
+    });
+    fireEvent.change(screen.getByLabelText("Lieferadresse Straße / Hausnummer"), {
+      target: { value: "Festplatz 3" },
+    });
+    fireEvent.change(screen.getByLabelText("Lieferadresse PLZ"), {
+      target: { value: "22765" },
+    });
+    fireEvent.change(screen.getByLabelText("Lieferadresse Ort"), {
+      target: { value: "Hamburg" },
+    });
+
+    const differs = screen.getByRole("checkbox", {
+      name: "Rechnungsadresse weicht von Lieferadresse ab",
+    });
+    fireEvent.click(differs);
+
+    expect((differs as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText(/^Rechnungsadresse$/)).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Festplatz 3");
+
+    fireEvent.change(screen.getByLabelText("Rechnungsadresse Straße / Hausnummer"), {
+      target: { value: "Rechnungsweg 7" },
+    });
+
+    expect(state.current().delivery.fulfillment).toMatchObject({
+      deliveryAddressMode: "SEPARATE",
+      deliveryAddress: {
+        street: "Festplatz 3",
+        postalCode: "22765",
+        city: "Hamburg",
+      },
+      invoiceAddress: {
+        street: "Rechnungsweg 7",
+      },
+    });
+
+    fireEvent.click(differs);
+
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Rechnungsadresse weicht von Lieferadresse ab",
+        checked: true,
+      })
+    ).toBeNull();
+    expect(screen.queryByText(/^Rechnungsadresse$/)).toBeNull();
+    expect(state.current().delivery.fulfillment).toMatchObject({
+      deliveryAddressMode: "SAME_AS_INVOICE",
+      invoiceAddress: {
+        street: "Festplatz 3",
+        postalCode: "22765",
+        city: "Hamburg",
+      },
+    });
+  });
+
+  it("renders an existing Core SEPARATE handoff in the same Office mental model", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+      invoiceAddress: {
+        street: "Rechnungsweg 7",
+        postalCode: "22549",
+        city: "Hamburg",
+        country: "DE",
+      },
+      deliveryAddress: {
+        street: "Festplatz 3",
+        postalCode: "22765",
+        city: "Hamburg",
+        country: "DE",
+      },
+    };
+
+    renderSection(charges);
+
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "Rechnungsadresse weicht von Lieferadresse ab",
+        }) as HTMLInputElement
+      ).checked
+    ).toBe(true);
+    expect(
+      (screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Festplatz 3");
+    expect(
+      (screen.getByLabelText("Rechnungsadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Rechnungsweg 7");
   });
 });
