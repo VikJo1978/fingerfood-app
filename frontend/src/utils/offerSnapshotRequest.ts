@@ -136,7 +136,11 @@ function canonicalReturnPickupTiming(
 }
 
 function normalizedFulfillment(charges: ChargesDefinition): DeliveryFulfillmentDefinition {
-  return charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
+  const current = charges.delivery.fulfillment ?? createInitialDeliveryFulfillmentDefinition();
+  if (current.fulfillmentMode === "DELIVERY" && current.deliveryAddressMode === "UNKNOWN") {
+    return { ...current, deliveryAddressMode: "SAME_AS_INVOICE" };
+  }
+  return current;
 }
 
 function addressToWire(address: CustomerAddressInput): OfferPrepareAddress | null {
@@ -192,27 +196,38 @@ export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepar
   };
 }
 
-export function prepareFulfillmentBlocker(charges: ChargesDefinition): string | null {
+export type PrepareFulfillmentIssue =
+  | "fulfillment"
+  | "delivery_address"
+  | "invoice_address";
+
+export function prepareFulfillmentIssue(
+  charges: ChargesDefinition
+): PrepareFulfillmentIssue | null {
   const current = normalizedFulfillment(charges);
-  if (current.fulfillmentMode === "UNKNOWN") {
-    return "Bitte zuerst Lieferung oder Selbstabholung wählen.";
-  }
-  if (current.fulfillmentMode === "PICKUP") {
+  if (current.fulfillmentMode === "UNKNOWN") return "fulfillment";
+  if (current.fulfillmentMode === "PICKUP") return null;
+
+  if (current.deliveryAddressMode === "SEPARATE") {
+    if (!addressIsComplete(current.deliveryAddress)) return "delivery_address";
+    if (!addressIsComplete(current.invoiceAddress)) return "invoice_address";
     return null;
   }
-  if (current.deliveryAddressMode === "UNKNOWN") {
-    return "Bitte zuerst auswählen, welche Lieferadresse verwendet wird.";
+
+  return addressIsComplete(current.invoiceAddress) ? null : "delivery_address";
+}
+
+export function prepareFulfillmentBlocker(charges: ChargesDefinition): string | null {
+  switch (prepareFulfillmentIssue(charges)) {
+    case "fulfillment":
+      return "Bitte zuerst Lieferung oder Selbstabholung wählen.";
+    case "delivery_address":
+      return "Bitte die Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
+    case "invoice_address":
+      return "Bitte die abweichende Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
+    case null:
+      return null;
   }
-  if (
-    current.deliveryAddressMode === "SAME_AS_INVOICE" &&
-    !addressIsComplete(current.invoiceAddress)
-  ) {
-    return "Bitte die Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
-  }
-  if (current.deliveryAddressMode === "SEPARATE" && !addressIsComplete(current.deliveryAddress)) {
-    return "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben.";
-  }
-  return null;
 }
 
 export function buildBudgetDefinition(
