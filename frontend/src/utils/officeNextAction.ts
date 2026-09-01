@@ -159,9 +159,7 @@ export function getOfficeNextAction(draft: OfferDraft): OfficeNextAction {
     };
   }
 
-  if (
-    paymentMethodBlocker(draft.orderContext.companyName, draft.paymentMethod) !== null
-  ) {
+  if (paymentMethodBlocker(draft.orderContext.companyName, draft.paymentMethod) !== null) {
     return {
       kind: "payment",
       title: "Zahlungsart wählen",
