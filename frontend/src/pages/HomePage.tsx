@@ -52,9 +52,13 @@ import {
   CORE_INQUIRY_FRAGMENT_PREFIX,
 } from "../utils/coreInquiryHandoff";
 import {
+  clearActiveCoreHandoffContext,
   consumeCoreHandoffCode,
+  isBrowserReload,
+  readActiveCoreHandoffContext,
   readCoreHandoffHistoryMarker,
   returnToCoreInquiry,
+  writeActiveCoreHandoffContext,
   writeCoreHandoffHistoryMarker,
 } from "../utils/coreEmployeeHandoff";
 import {
@@ -278,6 +282,7 @@ export function HomePage() {
   const onManualPrepareOffer = useCallback(
     (transfer: InquiryToConfiguratorTransferV1) => {
       clearStoredCoreInquiryHandoff();
+      clearActiveCoreHandoffContext();
       clearDraftFromSession({ kind: "manual" });
       setOfferDraft(createInitialOfferDraft());
       setCurrentDraftId(null);
@@ -375,9 +380,40 @@ export function HomePage() {
             setDraftScope(scope);
             setImportedInquiryId(null);
             setPrepareContextId(employeeMarker.context_id);
+            writeActiveCoreHandoffContext(employeeMarker.context_id);
             setPageMode("configurator");
           }
           return;
+        }
+
+        if (isBrowserReload()) {
+          const reloadContextId = readActiveCoreHandoffContext();
+          if (reloadContextId !== null) {
+            const scope: DraftPersistenceScope = {
+              kind: "handoff",
+              contextId: reloadContextId,
+            };
+            const restored = readDraftStateFromSession(scope);
+            if (restored !== null) {
+              setOfferDraft(restored.draft);
+              setCurrentDraftId(restored.backendDraftId);
+              setDraftScope(scope);
+              setImportedInquiryId(null);
+              setPrepareContextId(reloadContextId);
+              writeCoreHandoffHistoryMarker(
+                reloadContextId,
+                window.location,
+                window.history
+              );
+              setPageMode("configurator");
+              return;
+            }
+            clearActiveCoreHandoffContext();
+          }
+        } else {
+          // A direct navigation is a new entry, not a continuation of the
+          // previous customer's Configurator session.
+          clearActiveCoreHandoffContext();
         }
 
         const manualMarker = readManualDraftHistoryMarker(window.history);
@@ -407,6 +443,7 @@ export function HomePage() {
         handlePrepareOffer(exchanged.transfer);
         setImportedInquiryId(null);
         setPrepareContextId(exchanged.context_id);
+        writeActiveCoreHandoffContext(exchanged.context_id);
         writeCoreHandoffHistoryMarker(exchanged.context_id, window.location, window.history);
         restoreScopedDraft({
           kind: "handoff",
@@ -772,6 +809,7 @@ export function HomePage() {
       await prepareAndNavigateToCoreOffer(body, {
         onPrepared: (result) => {
           clearStoredCoreInquiryHandoff();
+          clearActiveCoreHandoffContext();
           clearDraftFromSession(draftScope);
           setPrepareContextId(null);
           setPrepareStatus("done");
