@@ -92,10 +92,7 @@ export function readActiveCoreHandoffContext(
     const raw = storage.getItem(CORE_HANDOFF_ACTIVE_CONTEXT_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    if (
-      !isRecord(parsed) ||
-      parsed.schema_version !== CORE_HANDOFF_ACTIVE_CONTEXT_SCHEMA
-    ) {
+    if (!isRecord(parsed) || parsed.schema_version !== CORE_HANDOFF_ACTIVE_CONTEXT_SCHEMA) {
       storage.removeItem(CORE_HANDOFF_ACTIVE_CONTEXT_KEY);
       return null;
     }
