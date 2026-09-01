@@ -287,7 +287,7 @@ describe("OfferSummary — primary action visibility", () => {
     renderSummary({ draft, canPrepareInCore: true });
 
     const guidance = screen.getByTestId("office-next-action");
-    expect(within(guidance).getByText("Zahlungsart wählen")).toBeTruthy();
+    expect(guidance.textContent).toContain("Zahlungsart wählen");
     fireEvent.click(within(guidance).getByRole("button", { name: "Zahlungsart wählen" }));
 
     expect(document.activeElement).toBe(screen.getByLabelText("Zahlungsart"));
@@ -368,7 +368,7 @@ describe("OfferSummary — primary action visibility", () => {
     ).toBeTruthy();
     expect(screen.getByText(/Rückholung am Veranstaltungstag ist unvollständig/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Rückholung bearbeiten" }));
+    fireEvent.click(\n      within(screen.getByTestId("office-next-action")).getByRole("button", {\n        name: "Rückholung bearbeiten",\n      })\n    );
     expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
     expect(screen.getByLabelText("Abholfenster Rückholung")).toBeTruthy();
   });
@@ -424,6 +424,21 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     return {
       ...base,
       paymentMethod: "VORKASSE",
+      orderContext: {
+        ...base.orderContext,
+        eventDate: "2026-09-20",
+        eventStart: "18:00",
+      },
+      chargesDefinition: {
+        ...base.chargesDefinition,
+        delivery: {
+          ...base.chargesDefinition.delivery,
+          fulfillment: {
+            ...base.chargesDefinition.delivery.fulfillment!,
+            fulfillmentMode: "PICKUP",
+          },
+        },
+      },
       lines: Array.from({ length: count }, (_, i) => ({
         lineId: `line-${i}`,
         itemId: `item-${i}`,
