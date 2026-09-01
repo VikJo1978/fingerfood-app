@@ -175,9 +175,7 @@ function formatCustomerAddress(address: CustomerAddressInput): string {
   // billingAddress during rolling compatibility.
   if (!street && !postalCode && !city) return "";
 
-  return [street, [postalCode, city].filter(Boolean).join(" "), country]
-    .filter(Boolean)
-    .join(", ");
+  return [street, [postalCode, city].filter(Boolean).join(" "), country].filter(Boolean).join(", ");
 }
 
 export function buildPrepareFulfillment(charges: ChargesDefinition): OfferPrepareFulfillment {
