@@ -368,7 +368,11 @@ describe("OfferSummary — primary action visibility", () => {
     ).toBeTruthy();
     expect(screen.getByText(/Rückholung am Veranstaltungstag ist unvollständig/)).toBeTruthy();
 
-    fireEvent.click(\n      within(screen.getByTestId("office-next-action")).getByRole("button", {\n        name: "Rückholung bearbeiten",\n      })\n    );
+    fireEvent.click(
+      within(screen.getByTestId("office-next-action")).getByRole("button", {
+        name: "Rückholung bearbeiten",
+      })
+    );
     expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
     expect(screen.getByLabelText("Abholfenster Rückholung")).toBeTruthy();
   });
