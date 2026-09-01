@@ -415,7 +415,9 @@ export function OfferSummary({
                 </span>
               ) : null}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-muted">\n              {nextOfficeAction.description}\n            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              {nextOfficeAction.description}
+            </p>
             {nextOfficeAction.actionLabel ? (
               <button
                 type="button"
