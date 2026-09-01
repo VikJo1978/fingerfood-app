@@ -94,6 +94,7 @@ function AddressFields({
         <span className={labelClass}>Straße / Hausnummer</span>
         <input
           id={`${idPrefix}-street`}
+          aria-label={`${title} Straße / Hausnummer`}
           className={fieldClass}
           value={address.street}
           onChange={(event) => onChange(setAddress(address, "street", event.target.value))}
@@ -104,6 +105,7 @@ function AddressFields({
           <span className={labelClass}>PLZ</span>
           <input
             id={`${idPrefix}-postal-code`}
+            aria-label={`${title} PLZ`}
             className={fieldClass}
             value={address.postalCode}
             onChange={(event) => onChange(setAddress(address, "postalCode", event.target.value))}
@@ -113,6 +115,7 @@ function AddressFields({
           <span className={labelClass}>Ort</span>
           <input
             id={`${idPrefix}-city`}
+            aria-label={`${title} Ort`}
             className={fieldClass}
             value={address.city}
             onChange={(event) => onChange(setAddress(address, "city", event.target.value))}
@@ -123,6 +126,7 @@ function AddressFields({
         <span className={labelClass}>Land</span>
         <select
           id={`${idPrefix}-country`}
+          aria-label={`${title} Land`}
           className={selectClass}
           value={COUNTRY_CODES.has(address.country) ? address.country : OTHER_COUNTRY}
           onChange={(event) =>
@@ -147,6 +151,7 @@ function AddressFields({
         <label className="grid gap-1">
           <span className={labelClass}>Anderes Land</span>
           <input
+            aria-label={`${title} anderes Land`}
             className={fieldClass}
             value={address.country}
             onChange={(event) => onChange(setAddress(address, "country", event.target.value))}
@@ -160,13 +165,62 @@ function AddressFields({
 
 export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfillmentSectionProps) {
   const current = fulfillment(charges);
+  const billingDiffers = current.deliveryAddressMode === "SEPARATE";
+  const primaryDeliveryAddress = billingDiffers ? current.deliveryAddress : current.invoiceAddress;
 
   function changeMode(mode: FulfillmentMode) {
     onChange(
       setFulfillment(charges, {
         ...current,
         fulfillmentMode: mode,
-        deliveryAddressMode: mode === "DELIVERY" ? current.deliveryAddressMode : "UNKNOWN",
+        deliveryAddressMode:
+          mode === "DELIVERY"
+            ? current.deliveryAddressMode === "UNKNOWN"
+              ? "SAME_AS_INVOICE"
+              : current.deliveryAddressMode
+            : "UNKNOWN",
+      })
+    );
+  }
+
+  function changeDeliveryAddress(deliveryAddress: CustomerAddressInput) {
+    if (billingDiffers) {
+      onChange(setFulfillment(charges, { ...current, deliveryAddress }));
+      return;
+    }
+
+    onChange(
+      setFulfillment(charges, {
+        ...current,
+        deliveryAddressMode: "SAME_AS_INVOICE",
+        invoiceAddress: deliveryAddress,
+      })
+    );
+  }
+
+  function changeBillingDiffers(nextDiffers: boolean) {
+    if (nextDiffers) {
+      const deliveryAddress =
+        current.deliveryAddressMode === "SEPARATE"
+          ? current.deliveryAddress
+          : current.invoiceAddress;
+      onChange(
+        setFulfillment(charges, {
+          ...current,
+          deliveryAddressMode: "SEPARATE",
+          deliveryAddress,
+        })
+      );
+      return;
+    }
+
+    const deliveryAddress =
+      current.deliveryAddressMode === "SEPARATE" ? current.deliveryAddress : current.invoiceAddress;
+    onChange(
+      setFulfillment(charges, {
+        ...current,
+        deliveryAddressMode: "SAME_AS_INVOICE",
+        invoiceAddress: deliveryAddress,
       })
     );
   }
@@ -202,30 +256,26 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
 
       {current.fulfillmentMode === "DELIVERY" ? (
         <>
-          <label className="grid gap-1.5">
-            <span className={labelClass}>Lieferadresse</span>
-            <select
-              id="offer-delivery-address-mode"
-              aria-label="Lieferadresse verwenden"
-              className={selectClass}
-              value={current.deliveryAddressMode}
-              onChange={(event) =>
-                onChange(
-                  setFulfillment(charges, {
-                    ...current,
-                    deliveryAddressMode: event.target
-                      .value as DeliveryFulfillmentDefinition["deliveryAddressMode"],
-                  })
-                )
-              }
-            >
-              <option value="UNKNOWN">Bitte wählen</option>
-              <option value="SAME_AS_INVOICE">Wie Rechnungsadresse</option>
-              <option value="SEPARATE">Abweichende Lieferadresse</option>
-            </select>
+          <AddressFields
+            idPrefix="offer-delivery-address"
+            title="Lieferadresse"
+            address={primaryDeliveryAddress}
+            onChange={changeDeliveryAddress}
+          />
+
+          <label className="flex items-center gap-2 rounded-control border border-line bg-white px-3 py-2.5 text-sm text-ink">
+            <input
+              id="offer-billing-address-differs"
+              type="checkbox"
+              checked={billingDiffers}
+              onChange={(event) => changeBillingDiffers(event.target.checked)}
+            />
+            <span>Rechnungsadresse weicht von Lieferadresse ab</span>
           </label>
 
-          {current.deliveryAddressMode !== "UNKNOWN" ? (
+          {!billingDiffers ? (
+            <p className="text-xs text-muted">Rechnungsadresse entspricht der Lieferadresse.</p>
+          ) : (
             <AddressFields
               idPrefix="offer-invoice-address"
               title="Rechnungsadresse"
@@ -234,18 +284,7 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
                 onChange(setFulfillment(charges, { ...current, invoiceAddress }))
               }
             />
-          ) : null}
-
-          {current.deliveryAddressMode === "SEPARATE" ? (
-            <AddressFields
-              idPrefix="offer-delivery-address"
-              title="Lieferadresse"
-              address={current.deliveryAddress}
-              onChange={(deliveryAddress) =>
-                onChange(setFulfillment(charges, { ...current, deliveryAddress }))
-              }
-            />
-          ) : null}
+          )}
         </>
       ) : null}
     </div>
