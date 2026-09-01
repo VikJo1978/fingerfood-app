@@ -139,11 +139,11 @@ export function OfferSummary({
   return (
     // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: no more sticky/max-h guess.
     // HomePage now renders this aside inside a real fixed-height
-    // (`lg:h-[calc(100dvh-110px)]`), `overflow-hidden` workspace column —
-    // `lg:h-full` here simply fills that already-correctly-sized ancestor,
+    // (`xl:h-[calc(100dvh-110px)]`), `overflow-hidden` workspace column —
+    // `xl:h-full` here simply fills that already-correctly-sized ancestor,
     // so this pane never moves when the *left* column's own independent
-    // `overflow-y-auto` scrolls. `lg:min-h-0` is required for the
-    // `lg:flex-1 lg:overflow-y-auto` middle region below to actually be
+    // `overflow-y-auto` scrolls. `xl:min-h-0` is required for the
+    // `xl:flex-1 xl:overflow-y-auto` middle region below to actually be
     // allowed to shrink/scroll inside a flex column — without it a flex
     // item's default `min-height:auto` would let this column's content
     // (specifically the position list) push the whole aside taller than
@@ -167,7 +167,7 @@ export function OfferSummary({
 
       {/* Scrollable region — only the selected-item rows live here. On
           mobile/tablet this has no height constraint and just flows
-          naturally with the rest of the card; the `lg:` classes are what
+          naturally with the rest of the card; the `xl:` classes are what
           turn it into the *only* internal scroller once the aside is a
           fixed-height workspace column (see HomePage's
           OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1 comment) — header and
@@ -468,13 +468,13 @@ function ChargeSummaryRow({
   onEdit: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-xs text-muted">
-      <span>{label}</span>
-      <span className="ml-auto font-semibold text-ink">{formatCurrency(amount)}</span>
+    <div className="flex min-w-0 items-center justify-between gap-2 text-xs text-muted">
+      <span className="min-w-0 truncate">{label}</span>
+      <span className="ml-auto shrink-0 font-semibold text-ink">{formatCurrency(amount)}</span>
       <button
         type="button"
         onClick={onEdit}
-        className="rounded-control border border-line bg-white px-2 py-1 text-[11px] font-bold text-accent-deep transition hover:border-accent hover:bg-accent-soft"
+        className="shrink-0 rounded-control border border-line bg-white px-2 py-1 text-[11px] font-bold text-accent-deep transition hover:border-accent hover:bg-accent-soft"
       >
         Bearbeiten
       </button>
