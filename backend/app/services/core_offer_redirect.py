@@ -22,6 +22,28 @@ def normalize_core_office_panel_url(raw: str | None) -> str:
     return urlunsplit((parsed.scheme, parsed.netloc, "", "", ""))
 
 
+def validate_inquiry_id(value: object) -> str:
+    if not isinstance(value, str):
+        raise ValueError("inquiry_id must be a canonical uuid4")
+    try:
+        parsed = uuid.UUID(value)
+    except ValueError as exc:
+        raise ValueError("inquiry_id must be a canonical uuid4") from exc
+    canonical = str(parsed)
+    if parsed.version != 4 or canonical != value:
+        raise ValueError("inquiry_id must be a canonical uuid4")
+    return canonical
+
+
+def build_core_inquiry_redirect_url(
+    panel_url: str | None,
+    inquiry_id: object,
+) -> str:
+    origin = normalize_core_office_panel_url(panel_url)
+    canonical_inquiry_id = validate_inquiry_id(inquiry_id)
+    return f"{origin}/inquiry/{quote(canonical_inquiry_id, safe='')}"
+
+
 def validate_offer_id(value: object) -> str:
     if not isinstance(value, str):
         raise ValueError("offer_id must be a canonical uuid4")
