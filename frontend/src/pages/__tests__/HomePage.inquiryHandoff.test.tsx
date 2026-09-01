@@ -199,6 +199,42 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     expect(screen.getByDisplayValue("Musterstraße 1, 22549 Hamburg")).toBeTruthy();
   });
 
+  it("reuses the legacy Inquiry location when structured delivery fields are empty", async () => {
+    const transfer: InquiryToConfiguratorTransferV1 = {
+      ...handoffTransfer,
+      fulfillmentPrefill: {
+        fulfillmentMode: "DELIVERY",
+        deliveryAddressMode: "SAME_AS_INVOICE",
+        invoiceAddress: {
+          street: "",
+          postalCode: "",
+          city: "",
+          country: "",
+        },
+        deliveryAddress: {
+          street: "",
+          postalCode: "",
+          city: "",
+          country: "",
+        },
+      },
+    };
+
+    window.location.hash = handoffFragment(INQUIRY_ID, transfer);
+    render(<HomePage />);
+    await act(async () => {});
+    await screen.findByText("Fingerfood Paket");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Bearbeiten" })[0]);
+
+    expect(
+      (screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value
+    ).toBe("Musterstraße 1");
+    expect((screen.getByLabelText("Lieferadresse PLZ") as HTMLInputElement).value).toBe("22549");
+    expect((screen.getByLabelText("Lieferadresse Ort") as HTMLInputElement).value).toBe("Hamburg");
+    expect((screen.getByLabelText("Lieferadresse Land") as HTMLSelectElement).value).toBe("DE");
+  });
+
   it("prefills fulfillment and both addresses from Core instead of asking twice", async () => {
     window.location.hash = handoffFragment(INQUIRY_ID, handoffTransferWithFulfillment);
     render(<HomePage />);
