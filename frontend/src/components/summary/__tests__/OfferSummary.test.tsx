@@ -113,6 +113,20 @@ describe("OfferSummary — primary action visibility", () => {
     expect(screen.getByRole("button", { name: "Angebot in Core vorbereiten" })).toBeTruthy();
   });
 
+  it("keeps Rechnung unavailable for private customers in the footer selector", () => {
+    const draft = {
+      ...createInitialOfferDraft(),
+      paymentMethod: "VORKASSE" as const,
+    };
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const select = screen.getByLabelText("Zahlungsart") as HTMLSelectElement;
+    const values = Array.from(select.options).map((option) => option.value);
+    expect(values).toContain("VORKASSE");
+    expect(values).toContain("BAR_VOR_ORT");
+    expect(values).not.toContain("RECHNUNG");
+  });
+
   it("makes a missing Zahlungsart visible and blocks prepare until selected", () => {
     const draft = {
       ...createInitialOfferDraft(),
@@ -262,6 +276,7 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     const base = createInitialOfferDraft();
     return {
       ...base,
+      paymentMethod: "VORKASSE",
       lines: Array.from({ length: count }, (_, i) => ({
         lineId: `line-${i}`,
         itemId: `item-${i}`,
@@ -429,6 +444,7 @@ describe("OfferSummary — multiple selected lines stay inside the scrollable re
     const base = createInitialOfferDraft();
     return {
       ...base,
+      paymentMethod: "VORKASSE",
       lines: Array.from({ length: count }, (_, i) => ({
         lineId: `line-${i}`,
         itemId: `item-${i}`,
