@@ -59,6 +59,52 @@ describe("getOfficeNextAction", () => {
     });
   });
 
+  it("names the delivery-address choice instead of repeating fulfillment", () => {
+    const draft = readyDraft();
+    draft.chargesDefinition.delivery.fulfillment = {
+      ...draft.chargesDefinition.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "UNKNOWN",
+    };
+
+    expect(getOfficeNextAction(draft)).toMatchObject({
+      kind: "delivery_address_mode",
+      title: "Lieferadresse festlegen",
+      actionLabel: "Lieferadresse wählen",
+      hardBlocker: true,
+    });
+  });
+
+  it("names an incomplete invoice address explicitly", () => {
+    const draft = readyDraft();
+    draft.chargesDefinition.delivery.fulfillment = {
+      ...draft.chargesDefinition.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SAME_AS_INVOICE",
+    };
+
+    expect(getOfficeNextAction(draft)).toMatchObject({
+      kind: "invoice_address",
+      title: "Rechnungsadresse vervollständigen",
+      hardBlocker: true,
+    });
+  });
+
+  it("names an incomplete separate delivery address explicitly", () => {
+    const draft = readyDraft();
+    draft.chargesDefinition.delivery.fulfillment = {
+      ...draft.chargesDefinition.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+    };
+
+    expect(getOfficeNextAction(draft)).toMatchObject({
+      kind: "delivery_address",
+      title: "Lieferadresse vervollständigen",
+      hardBlocker: true,
+    });
+  });
+
   it("guides DELIVERY to the exact delivery time without making it a hard blocker", () => {
     const draft = readyDraft();
     draft.chargesDefinition.delivery.fulfillment = {
