@@ -161,10 +161,6 @@ export function OfferSummary({
         setChargesFocus("fulfillment");
         setChargesOpen(true);
         return;
-      case "delivery_address_mode":
-        setChargesFocus("delivery_address_mode");
-        setChargesOpen(true);
-        return;
       case "invoice_address":
         setChargesFocus("invoice_address");
         setChargesOpen(true);
