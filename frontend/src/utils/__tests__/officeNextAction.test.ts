@@ -59,7 +59,7 @@ describe("getOfficeNextAction", () => {
     });
   });
 
-  it("names the delivery-address choice instead of repeating fulfillment", () => {
+  it("treats legacy DELIVERY + UNKNOWN as the default same-address workflow", () => {
     const draft = readyDraft();
     draft.chargesDefinition.delivery.fulfillment = {
       ...draft.chargesDefinition.delivery.fulfillment!,
@@ -68,14 +68,14 @@ describe("getOfficeNextAction", () => {
     };
 
     expect(getOfficeNextAction(draft)).toMatchObject({
-      kind: "delivery_address_mode",
-      title: "Lieferadresse festlegen",
-      actionLabel: "Lieferadresse wählen",
+      kind: "delivery_address",
+      title: "Lieferadresse vervollständigen",
+      actionLabel: "Lieferadresse ergänzen",
       hardBlocker: true,
     });
   });
 
-  it("names an incomplete invoice address explicitly", () => {
+  it("names the primary Lieferadresse when the same billing address is incomplete", () => {
     const draft = readyDraft();
     draft.chargesDefinition.delivery.fulfillment = {
       ...draft.chargesDefinition.delivery.fulfillment!,
@@ -84,8 +84,8 @@ describe("getOfficeNextAction", () => {
     };
 
     expect(getOfficeNextAction(draft)).toMatchObject({
-      kind: "invoice_address",
-      title: "Rechnungsadresse vervollständigen",
+      kind: "delivery_address",
+      title: "Lieferadresse vervollständigen",
       hardBlocker: true,
     });
   });
@@ -101,6 +101,27 @@ describe("getOfficeNextAction", () => {
     expect(getOfficeNextAction(draft)).toMatchObject({
       kind: "delivery_address",
       title: "Lieferadresse vervollständigen",
+      hardBlocker: true,
+    });
+  });
+
+  it("names the separate Rechnungsadresse only after the Lieferadresse is complete", () => {
+    const draft = readyDraft();
+    draft.chargesDefinition.delivery.fulfillment = {
+      ...draft.chargesDefinition.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+      deliveryAddress: {
+        street: "Festplatz 3",
+        postalCode: "22765",
+        city: "Hamburg",
+        country: "DE",
+      },
+    };
+
+    expect(getOfficeNextAction(draft)).toMatchObject({
+      kind: "invoice_address",
+      title: "Rechnungsadresse vervollständigen",
       hardBlocker: true,
     });
   });
