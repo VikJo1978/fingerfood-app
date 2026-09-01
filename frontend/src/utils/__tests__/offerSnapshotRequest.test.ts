@@ -3,6 +3,7 @@ import {
   buildBudgetDefinition,
   buildChargesDefinition,
   buildOfferSnapshotRequest,
+  buildPrepareFulfillment,
   navigateToPreparedCoreOffer,
   parseOfferPrepareResponse,
   prepareAndNavigateToCoreOffer,
@@ -501,42 +502,72 @@ describe("prepare fulfillment preflight", () => {
     expect(prepareFulfillmentBlocker(charges)).toBeNull();
   });
 
-  it("requires an address mode for delivery", () => {
+  it("treats DELIVERY + UNKNOWN address mode as the default same-address case", () => {
     const charges = createInitialChargesDefinition();
     charges.delivery.fulfillment = {
       ...charges.delivery.fulfillment!,
       fulfillmentMode: "DELIVERY",
       deliveryAddressMode: "UNKNOWN",
+      invoiceAddress: {
+        street: "Festplatz 3",
+        postalCode: "22765",
+        city: "Hamburg",
+        country: "DE",
+      },
     };
 
-    expect(prepareFulfillmentBlocker(charges)).toBe(
-      "Bitte zuerst auswählen, welche Lieferadresse verwendet wird."
-    );
+    expect(prepareFulfillmentBlocker(charges)).toBeNull();
+    expect(buildPrepareFulfillment(charges)).toMatchObject({
+      fulfillment_mode: "DELIVERY",
+      delivery_address_mode: "SAME_AS_INVOICE",
+      invoice_address: {
+        street: "Festplatz 3",
+        postal_code: "22765",
+        city: "Hamburg",
+        country: "DE",
+      },
+      delivery_address: null,
+    });
   });
 
-  it("requires the selected delivery address source to contain an address", () => {
-    const sameAsInvoice = createInitialChargesDefinition();
-    sameAsInvoice.delivery.fulfillment = {
-      ...sameAsInvoice.delivery.fulfillment!,
+  it("requires the primary Lieferadresse for the default same-address case", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      ...charges.delivery.fulfillment!,
       fulfillmentMode: "DELIVERY",
       deliveryAddressMode: "SAME_AS_INVOICE",
     };
-    expect(prepareFulfillmentBlocker(sameAsInvoice)).toBe(
-      "Bitte die Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben."
-    );
 
-    const separate = createInitialChargesDefinition();
-    separate.delivery.fulfillment = {
-      ...separate.delivery.fulfillment!,
-      fulfillmentMode: "DELIVERY",
-      deliveryAddressMode: "SEPARATE",
-    };
-    expect(prepareFulfillmentBlocker(separate)).toBe(
-      "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
+    expect(prepareFulfillmentBlocker(charges)).toBe(
+      "Bitte die Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
     );
   });
 
-  it("blocks a delivery address that is otherwise filled but has no country", () => {
+  it("requires Lieferadresse first and then the separate Rechnungsadresse", () => {
+    const charges = createInitialChargesDefinition();
+    charges.delivery.fulfillment = {
+      ...charges.delivery.fulfillment!,
+      fulfillmentMode: "DELIVERY",
+      deliveryAddressMode: "SEPARATE",
+    };
+
+    expect(prepareFulfillmentBlocker(charges)).toBe(
+      "Bitte die Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
+    );
+
+    charges.delivery.fulfillment.deliveryAddress = {
+      street: "Festplatz 3",
+      postalCode: "22765",
+      city: "Hamburg",
+      country: "DE",
+    };
+
+    expect(prepareFulfillmentBlocker(charges)).toBe(
+      "Bitte die abweichende Rechnungsadresse vollständig mit Straße, PLZ, Ort und Land angeben."
+    );
+  });
+
+  it("blocks a Lieferadresse that is otherwise filled but has no country", () => {
     const charges = createInitialChargesDefinition();
     charges.delivery.fulfillment = {
       ...charges.delivery.fulfillment!,
@@ -551,16 +582,22 @@ describe("prepare fulfillment preflight", () => {
     };
 
     expect(prepareFulfillmentBlocker(charges)).toBe(
-      "Bitte die abweichende Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
+      "Bitte die Lieferadresse vollständig mit Straße, PLZ, Ort und Land angeben."
     );
   });
 
-  it("allows a complete separate delivery address", () => {
+  it("allows complete separate Liefer- und Rechnungsadressen", () => {
     const charges = createInitialChargesDefinition();
     charges.delivery.fulfillment = {
       ...charges.delivery.fulfillment!,
       fulfillmentMode: "DELIVERY",
       deliveryAddressMode: "SEPARATE",
+      invoiceAddress: {
+        street: "Rechnungsweg 7",
+        postalCode: "22549",
+        city: "Hamburg",
+        country: "DE",
+      },
       deliveryAddress: {
         street: "Auf dem Königslande 4",
         postalCode: "22041",
