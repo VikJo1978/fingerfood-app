@@ -154,10 +154,12 @@ describe("DeliveryFulfillmentSection", () => {
     renderSection(charges);
 
     expect(
-      screen.getByRole("checkbox", {
-        name: "Rechnungsadresse weicht von Lieferadresse ab",
-      })
-    ).toBeChecked();
+      (
+        screen.getByRole("checkbox", {
+          name: "Rechnungsadresse weicht von Lieferadresse ab",
+        }) as HTMLInputElement
+      ).checked
+    ).toBe(true);
     expect((screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value).toBe(
       "Festplatz 3"
     );
