@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import type { BudgetBasis, BudgetScope, BudgetType } from "../types";
+import { normalizeIntegerText } from "../utils/integerInput";
 import { formatCurrency } from "../utils/pricing";
 import { IntegerField } from "./ui/IntegerField";
 
@@ -20,6 +22,46 @@ interface TopControlsProps {
 const selectClass =
   "rounded-control border border-line bg-white px-2.5 py-2 text-sm text-ink transition focus:border-accent";
 const fieldLabelClass = "text-[11px] font-extrabold uppercase tracking-[.05em] text-muted";
+
+function BudgetAmountInput({
+  value,
+  onChange,
+  label,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  label: string;
+}) {
+  const [text, setText] = useState(String(Math.max(0, Math.round(value))));
+
+  useEffect(() => {
+    setText(String(Math.max(0, Math.round(value))));
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      aria-label={label}
+      value={text}
+      onFocus={(event) => event.currentTarget.select()}
+      onChange={(event) => {
+        const normalized = normalizeIntegerText(event.target.value);
+        setText(normalized);
+        if (normalized !== "") {
+          onChange(Math.max(0, Number(normalized)));
+        }
+      }}
+      onBlur={() => {
+        const committed = text === "" ? 0 : Math.max(0, Number(text));
+        setText(String(committed));
+        onChange(committed);
+      }}
+      className="w-full min-w-[9rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-36"
+    />
+  );
+}
 
 export function TopControls({
   persons,
@@ -89,13 +131,10 @@ export function TopControls({
             <span className={fieldLabelClass}>
               {budgetType === "per_person" ? "Budget pro Person" : "Gesamtbudget"}
             </span>
-            <input
-              type="number"
-              min={0}
-              step={10}
+            <BudgetAmountInput
               value={totalBudget}
-              onChange={(e) => onTotalBudgetChange(Number(e.target.value))}
-              className="w-full min-w-[9rem] rounded-control border border-line bg-canvas/60 px-3 py-2.5 text-ink transition focus:border-accent focus:bg-white sm:w-36"
+              onChange={onTotalBudgetChange}
+              label={budgetType === "per_person" ? "Budget pro Person" : "Gesamtbudget"}
             />
           </label>
 
