@@ -228,11 +228,28 @@ export function OfferSummary({
             onEdit={() => setChargesOpen(true)}
           />
           {returnLogistics?.mode === "SAME_DAY" ? (
-            <ChargeSummaryRow
-              label="Rückholung am Veranstaltungstag"
-              amount={pauschalen.returnPickup ?? 0}
-              onEdit={() => setChargesOpen(true)}
-            />
+            <>
+              <ChargeSummaryRow
+                label="Rückholung am Veranstaltungstag"
+                amount={pauschalen.returnPickup ?? 0}
+                onEdit={() => setChargesOpen(true)}
+              />
+              {invalidReturnLogistics ? (
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-danger-border bg-danger-soft px-2.5 py-2 text-xs text-danger"
+                  role="alert"
+                >
+                  <span>Abholfenster für Rückholung am Veranstaltungstag erforderlich.</span>
+                  <button
+                    type="button"
+                    onClick={() => setChargesOpen(true)}
+                    className="shrink-0 rounded-control border border-danger-border bg-white px-2 py-1 font-bold text-danger"
+                  >
+                    Rückholung bearbeiten
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : null}
           <div className="flex items-baseline justify-between gap-4 border-t border-line pt-1.5">
             <span
@@ -415,6 +432,12 @@ export function OfferSummary({
               <p className="text-center text-xs font-semibold text-danger" role="alert">
                 Zusätzliche Geschirrpositionen brauchen Beschreibung, positive Anzahl und gültigen
                 Netto-Einzelpreis.
+              </p>
+            ) : null}
+            {invalidReturnLogistics ? (
+              <p className="text-center text-xs font-semibold text-danger" role="alert">
+                Rückholung am Veranstaltungstag ist unvollständig: Bitte unter „Rückholung
+                bearbeiten“ ein Abholfenster eintragen.
               </p>
             ) : null}
             {prepareMessage ? (
