@@ -73,6 +73,7 @@ import {
 import { formatDateDe } from "../utils/formatDate";
 import { reconcileDraftCatalogLines } from "../utils/draftCatalogReconciliation";
 import { paymentMethodBlocker } from "../utils/paymentMethod";
+import { applyLegacyLocationAddressFallback } from "../utils/legacyLocationAddress";
 import { WarningBanner } from "../components/ui/WarningBanner";
 import type { DietType } from "../constants/classification";
 
@@ -230,6 +231,17 @@ export function HomePage() {
   const handlePrepareOffer = useCallback((transfer: InquiryToConfiguratorTransferV1) => {
     const { planning, orderContextPrefill: pre, fulfillmentPrefill } = transfer;
     const remarksTrim = pre.remarks.trim();
+    const normalizedFulfillmentPrefill =
+      fulfillmentPrefill === undefined
+        ? undefined
+        : applyLegacyLocationAddressFallback(
+            {
+              ...fulfillmentPrefill,
+              invoiceAddress: normalizeCustomerAddressCountry(fulfillmentPrefill.invoiceAddress),
+              deliveryAddress: normalizeCustomerAddressCountry(fulfillmentPrefill.deliveryAddress),
+            },
+            pre.location
+          );
     setOfferDraft((d) => ({
       ...d,
       persons: planning.persons === null ? d.persons : clampPersons(planning.persons),
@@ -239,21 +251,13 @@ export function HomePage() {
           ? Math.max(0, planning.budget)
           : d.totalBudget,
       chargesDefinition:
-        fulfillmentPrefill === undefined
+        normalizedFulfillmentPrefill === undefined
           ? d.chargesDefinition
           : {
               ...d.chargesDefinition,
               delivery: {
                 ...d.chargesDefinition.delivery,
-                fulfillment: {
-                  ...fulfillmentPrefill,
-                  invoiceAddress: normalizeCustomerAddressCountry(
-                    fulfillmentPrefill.invoiceAddress
-                  ),
-                  deliveryAddress: normalizeCustomerAddressCountry(
-                    fulfillmentPrefill.deliveryAddress
-                  ),
-                },
+                fulfillment: normalizedFulfillmentPrefill,
               },
             },
       orderContext: {
