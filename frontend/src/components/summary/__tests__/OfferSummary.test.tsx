@@ -67,10 +67,26 @@ describe("OfferSummary — primary action visibility", () => {
     expect(btn.hasAttribute("disabled")).toBe(true);
   });
 
-  it("enables the Core-prepare action once a line is added", () => {
+  it("enables the Core-prepare action once required hard blockers are resolved", () => {
+    const initial = createInitialOfferDraft();
     const draft: OfferDraft = {
-      ...createInitialOfferDraft(),
+      ...initial,
       paymentMethod: "VORKASSE",
+      orderContext: {
+        ...initial.orderContext,
+        eventDate: "2026-09-20",
+        eventStart: "18:00",
+      },
+      chargesDefinition: {
+        ...initial.chargesDefinition,
+        delivery: {
+          ...initial.chargesDefinition.delivery,
+          fulfillment: {
+            ...initial.chargesDefinition.delivery.fulfillment!,
+            fulfillmentMode: "PICKUP",
+          },
+        },
+      },
       lines: [
         {
           lineId: "line-1",
@@ -177,28 +193,112 @@ describe("OfferSummary — primary action visibility", () => {
   });
 
   function draftWithOneLine(overrides: Partial<OfferDraft>): OfferDraft {
-    return {
-      ...createInitialOfferDraft(),
-      paymentMethod: "VORKASSE",
-      lines: [
-        {
-          lineId: "line-1",
-          itemId: "item-1",
-          quantityMode: "total",
-          quantity: 10,
-          snapshot: {
-            title: "Brötchen Mix 1",
-            source_type: "internal",
-            pricing_mode: "per_piece",
-            price_type: "piece",
-            chosen_price: 2.3,
-            item_kind: "simple",
-          },
+    const initial = createInitialOfferDraft();
+    const overrideCharges = overrides.chargesDefinition;
+    const overrideFulfillment = overrideCharges?.delivery.fulfillment;
+    const chargesDefinition = {
+      ...initial.chargesDefinition,
+      ...overrideCharges,
+      buffet: { ...initial.chargesDefinition.buffet, ...overrideCharges?.buffet },
+      delivery: {
+        ...initial.chargesDefinition.delivery,
+        ...overrideCharges?.delivery,
+        fulfillment: {
+          ...initial.chargesDefinition.delivery.fulfillment!,
+          ...overrideFulfillment,
+          fulfillmentMode:
+            overrideFulfillment?.fulfillmentMode &&
+            overrideFulfillment.fulfillmentMode !== "UNKNOWN"
+              ? overrideFulfillment.fulfillmentMode
+              : "PICKUP",
         },
-      ],
+      },
+      dishware: { ...initial.chargesDefinition.dishware, ...overrideCharges?.dishware },
+      returnLogistics:
+        overrideCharges?.returnLogistics ?? initial.chargesDefinition.returnLogistics,
+    };
+    return {
+      ...initial,
       ...overrides,
+      orderContext: {
+        ...initial.orderContext,
+        eventDate: "2026-09-20",
+        eventStart: "18:00",
+        ...overrides.orderContext,
+      },
+      paymentMethod: Object.prototype.hasOwnProperty.call(overrides, "paymentMethod")
+        ? overrides.paymentMethod
+        : "VORKASSE",
+      chargesDefinition,
+      lines:
+        overrides.lines ?? [
+          {
+            lineId: "line-1",
+            itemId: "item-1",
+            quantityMode: "total",
+            quantity: 10,
+            snapshot: {
+              title: "Brötchen Mix 1",
+              source_type: "internal",
+              pricing_mode: "per_piece",
+              price_type: "piece",
+              chosen_price: 2.3,
+              item_kind: "simple",
+            },
+          },
+        ],
     };
   }
+
+  it("guides unresolved fulfillment and opens the editor on Erfüllung", () => {
+    const base = draftWithOneLine({});
+    const draft: OfferDraft = {
+      ...base,
+      chargesDefinition: {
+        ...base.chargesDefinition,
+        delivery: {
+          ...base.chargesDefinition.delivery,
+          fulfillment: {
+            ...base.chargesDefinition.delivery.fulfillment!,
+            fulfillmentMode: "UNKNOWN",
+            deliveryAddressMode: "UNKNOWN",
+          },
+        },
+      },
+    };
+
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const guidance = screen.getByTestId("office-next-action");
+    expect(within(guidance).getByText("Erfüllung festlegen")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
+    ).toBe(true);
+
+    fireEvent.click(within(guidance).getByRole("button", { name: "Jetzt festlegen" }));
+
+    expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
+    const fulfillment = screen.getByLabelText("Erfüllung");
+    expect(fulfillment).toBeTruthy();
+    expect(document.activeElement).toBe(fulfillment);
+  });
+
+  it("guides a missing payment method directly to the selector", () => {
+    const draft = draftWithOneLine({ paymentMethod: undefined });
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const guidance = screen.getByTestId("office-next-action");
+    expect(within(guidance).getByText("Zahlungsart wählen")).toBeTruthy();
+    fireEvent.click(within(guidance).getByRole("button", { name: "Zahlungsart wählen" }));
+
+    expect(document.activeElement).toBe(screen.getByLabelText("Zahlungsart"));
+  });
+
+  it("reports ready once the guided hard requirements are complete", () => {
+    renderSummary({ draft: draftWithOneLine({}), canPrepareInCore: true });
+    const guidance = screen.getByTestId("office-next-action");
+    expect(within(guidance).getByText("Bereit für Core")).toBeTruthy();
+  });
 
   it("blocks the Core-prepare action for a PER_PERSON budget with guest_count=0, with a validation reason", () => {
     const draft = draftWithOneLine({
