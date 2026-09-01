@@ -2,7 +2,7 @@
  * layout after the visual alignment pass. jsdom doesn't compute real CSS
  * layout, so this checks the mobile-first contract at the class-token and
  * DOM-order level instead of pixel positions: the grid must default to a
- * single column and only switch to two columns from the `lg:` breakpoint up
+ * single column and only switch to two columns from the `xl:` breakpoint up
  * (so on narrow screens the Offer summary naturally stacks below the
  * catalog, per the task's responsive requirement), and the summary
  * `<aside>` must follow the catalog in source order. */
@@ -79,7 +79,7 @@ vi.mock("../../services/api", async () => {
 });
 
 describe("HomePage — catalog/summary responsive layout", () => {
-  it("uses a mobile-first single-column grid that only splits into two columns from lg: up", async () => {
+  it("uses a mobile-first single-column grid that only splits into two columns from xl: up", async () => {
     render(<HomePage />);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Zum Konfigurator (Test)" }));
@@ -93,9 +93,9 @@ describe("HomePage — catalog/summary responsive layout", () => {
     const grid = rightColumn?.parentElement;
     expect(grid).not.toBeNull();
     expect(grid?.className).toContain("grid");
-    // No bare `grid-cols-*` at the base (mobile) breakpoint — only under `lg:`/`xl:`.
+    // No bare `grid-cols-*` at the base (mobile) breakpoint — only under `xl:`/`xl:`.
     expect(grid?.className).not.toMatch(/(?:^|\s)grid-cols-\d/);
-    expect(grid?.className).toMatch(/lg:grid-cols-/);
+    expect(grid?.className).toMatch(/xl:grid-cols-/);
   });
 
   it("places the Offer summary's column after the catalog column in source order (so it stacks below on narrow screens)", async () => {
@@ -177,18 +177,18 @@ describe("HomePage — catalog/summary responsive layout", () => {
 
     // The workspace itself: a real fixed height on desktop (not a sticky
     // guess), and never itself a scroll container.
-    expect(grid.className).toMatch(/lg:h-\[calc\(100dvh-110px\)\]/);
-    expect(grid.className).toMatch(/(?:^|\s)lg:overflow-hidden(?:\s|$)/);
+    expect(grid.className).toMatch(/xl:h-\[calc\(100dvh-110px\)\]/);
+    expect(grid.className).toMatch(/(?:^|\s)xl:overflow-hidden(?:\s|$)/);
     expect(grid.className).not.toMatch(/sticky/);
 
     // Left column (catalog/context) scrolls independently of the page.
-    expect(leftColumn.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
-    expect(leftColumn.className).toMatch(/(?:^|\s)lg:overflow-y-auto(?:\s|$)/);
+    expect(leftColumn.className).toMatch(/(?:^|\s)xl:h-full(?:\s|$)/);
+    expect(leftColumn.className).toMatch(/(?:^|\s)xl:overflow-y-auto(?:\s|$)/);
 
     // Right column wrapper feeds a real height down to the aside, rather
     // than the aside computing its own via sticky/max-height.
-    expect(rightColumn.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
-    expect(aside.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
+    expect(rightColumn.className).toMatch(/(?:^|\s)xl:h-full(?:\s|$)/);
+    expect(aside.className).toMatch(/(?:^|\s)xl:h-full(?:\s|$)/);
     expect(aside.className).not.toMatch(/sticky/);
     expect(aside.className).not.toMatch(/max-h-\[/);
 
@@ -196,7 +196,7 @@ describe("HomePage — catalog/summary responsive layout", () => {
     // the right: the selected-position list. Header and footer must not
     // carry their own overflow/scroll declarations.
     const scrollRegion = screen.getByTestId("offer-summary-scroll-region");
-    expect(scrollRegion.className).toMatch(/(?:^|\s)lg:overflow-y-auto(?:\s|$)/);
-    expect(aside.className).not.toMatch(/(?:^|\s)lg:overflow-y-auto(?:\s|$)/);
+    expect(scrollRegion.className).toMatch(/(?:^|\s)xl:overflow-y-auto(?:\s|$)/);
+    expect(aside.className).not.toMatch(/(?:^|\s)xl:overflow-y-auto(?:\s|$)/);
   });
 });
