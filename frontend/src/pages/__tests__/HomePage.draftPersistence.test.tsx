@@ -120,9 +120,7 @@ function enableBudgetAndSet(basis: string, scope: string, type: string, amount: 
   fireEvent.change(screen.getByLabelText("Budget-Typ"), { target: { value: type } });
   fireEvent.change(screen.getByLabelText("Basis"), { target: { value: basis } });
   fireEvent.change(screen.getByLabelText("Umfang"), { target: { value: scope } });
-  const input = screen.getByLabelText(
-    type === "per_person" ? "Budget pro Person" : "Gesamtbudget"
-  );
+  const input = screen.getByLabelText(type === "per_person" ? "Budget pro Person" : "Gesamtbudget");
   fireEvent.change(input, { target: { value: amount } });
 }
 
