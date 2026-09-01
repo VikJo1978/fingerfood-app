@@ -95,6 +95,7 @@ export function OrderContextCard({ orderContext, onOrderContextChange }: OrderCo
           <label className="flex flex-col gap-1.5">
             <span className={fieldLabelClass}>Datum</span>
             <input
+              id="order-context-event-date"
               type="date"
               value={oc.eventDate}
               onChange={(e) => onOrderContextChange({ eventDate: e.target.value })}
@@ -104,6 +105,7 @@ export function OrderContextCard({ orderContext, onOrderContextChange }: OrderCo
           <label className="flex flex-col gap-1.5">
             <span className={fieldLabelClass}>Lieferung</span>
             <input
+              id="order-context-delivery-time"
               aria-label="Lieferung"
               type="time"
               value={exactDeliveryTime(oc)}
@@ -118,6 +120,7 @@ export function OrderContextCard({ orderContext, onOrderContextChange }: OrderCo
           <label className="flex flex-col gap-1.5">
             <span className={fieldLabelClass}>Beginn Veranstaltung</span>
             <input
+              id="order-context-event-start"
               aria-label="Beginn Veranstaltung"
               type="time"
               value={exactEventStart(oc)}

@@ -12,8 +12,11 @@ import { DeliveryFulfillmentSection } from "./DeliveryFulfillmentSection";
 
 const DESCRIPTION_MAX = 500;
 
+export type ChargeConfiguratorFocusTarget = "fulfillment" | "return_logistics" | "charges";
+
 interface ChargeConfiguratorModalProps {
   open: boolean;
+  initialFocus?: ChargeConfiguratorFocusTarget | null;
   charges: ChargesDefinition;
   persons: number;
   onClose: () => void;
@@ -109,12 +112,26 @@ function MoneyField({
 
 export function ChargeConfiguratorModal({
   open,
+  initialFocus = null,
   charges,
   persons,
   onClose,
   onChange,
   createLineId,
 }: ChargeConfiguratorModalProps) {
+  useEffect(() => {
+    if (!open || initialFocus === null) return;
+    const targetId =
+      initialFocus === "fulfillment"
+        ? "offer-fulfillment-mode"
+        : initialFocus === "return_logistics"
+          ? "offer-return-pickup-window"
+          : "offer-charge-configurator-content";
+    const target = document.getElementById(targetId);
+    target?.scrollIntoView?.({ block: "center" });
+    target?.focus();
+  }, [initialFocus, open]);
+
   if (!open) return null;
 
   const hasPersons = validPersons(persons);
@@ -152,7 +169,12 @@ export function ChargeConfiguratorModal({
           </button>
         </div>
 
-        <div data-testid="charge-configurator-content" className="space-y-5 px-5 py-4">
+        <div
+          id="offer-charge-configurator-content"
+          data-testid="charge-configurator-content"
+          tabIndex={-1}
+          className="space-y-5 px-5 py-4"
+        >
           <section className="grid gap-3 border-b border-line pb-5">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <label className="grid gap-1.5">
@@ -249,6 +271,7 @@ export function ChargeConfiguratorModal({
                 <label className="grid gap-1.5">
                   <span className={labelClass}>Abholfenster</span>
                   <input
+                    id="offer-return-pickup-window"
                     aria-label="Abholfenster Rückholung"
                     type="text"
                     maxLength={DESCRIPTION_MAX}

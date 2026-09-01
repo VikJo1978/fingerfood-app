@@ -170,6 +170,8 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
       <label className="grid gap-1.5">
         <span className={labelClass}>Erfüllung</span>
         <select
+          id="offer-fulfillment-mode"
+          aria-label="Erfüllung"
           className={selectClass}
           value={current.fulfillmentMode}
           onChange={(event) => changeMode(event.target.value as FulfillmentMode)}
@@ -197,6 +199,8 @@ export function DeliveryFulfillmentSection({ charges, onChange }: DeliveryFulfil
           <label className="grid gap-1.5">
             <span className={labelClass}>Lieferadresse</span>
             <select
+              id="offer-delivery-address-mode"
+              aria-label="Lieferadresse verwenden"
               className={selectClass}
               value={current.deliveryAddressMode}
               onChange={(event) =>
