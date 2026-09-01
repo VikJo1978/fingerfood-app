@@ -55,6 +55,7 @@ const fetchUiSessionMock = vi.fn();
 const exchangeCoreHandoffMock = vi.fn();
 const prepareAndNavigateToCoreOfferMock = vi.fn();
 const consumeCoreInquiryHandoffMock = vi.fn();
+const returnToCoreInquiryMock = vi.fn();
 
 const disabledSessionResult = {
   status: "disabled" as const,
@@ -108,6 +109,16 @@ vi.mock("../../utils/coreInquiryHandoff", async () => {
   };
 });
 
+vi.mock("../../utils/coreEmployeeHandoff", async () => {
+  const actual = await vi.importActual<typeof import("../../utils/coreEmployeeHandoff")>(
+    "../../utils/coreEmployeeHandoff"
+  );
+  return {
+    ...actual,
+    returnToCoreInquiry: (...args: unknown[]) => returnToCoreInquiryMock(...args),
+  };
+});
+
 vi.mock("../../utils/offerSnapshotRequest", async () => {
   const actual = await vi.importActual<typeof import("../../utils/offerSnapshotRequest")>(
     "../../utils/offerSnapshotRequest"
@@ -145,6 +156,8 @@ describe("HomePage employee-session gating", () => {
     prepareAndNavigateToCoreOfferMock.mockReset();
     consumeCoreInquiryHandoffMock.mockReset();
     consumeCoreInquiryHandoffMock.mockReturnValue({ present: false, handoff: null });
+    returnToCoreInquiryMock.mockReset();
+    returnToCoreInquiryMock.mockReturnValue(true);
     window.history.replaceState(null, "", "/");
     sessionStorage.clear();
   });
@@ -231,6 +244,25 @@ describe("HomePage employee-session gating", () => {
     expect(body.event).not.toHaveProperty("delivery_window_start_local");
     expect(body.event).not.toHaveProperty("delivery_window_end_local");
     expect(body).not.toHaveProperty("inquiry_id");
+  });
+
+  it("returns to the originating Core inquiry instead of opening standalone intake", async () => {
+    fetchUiSessionMock.mockResolvedValueOnce(authenticatedSessionResult);
+    exchangeCoreHandoffMock.mockResolvedValueOnce({
+      context_id: "trusted-context-1",
+      operation: "prepare_first_offer",
+      transfer: handoffTransfer,
+      expires_at: "2026-08-04T10:15:00+00:00",
+    });
+    window.history.replaceState(null, "", "/#core-handoff=opaqueCode123");
+
+    await renderHomePage();
+    await screen.findByDisplayValue("Musterfirma GmbH");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Zurück zur Anfrage" })[0]);
+
+    expect(returnToCoreInquiryMock).toHaveBeenCalledWith("trusted-context-1");
+    expect(screen.queryByRole("heading", { name: "Neue Anfrage erfassen" })).toBeNull();
   });
 
   it("restores the same trusted employee handoff after a history-entry remount", async () => {

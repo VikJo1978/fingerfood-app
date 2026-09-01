@@ -186,6 +186,31 @@ def test_invalid_or_replayed_core_code_rejected(
     assert response.json()["detail"] == {"code": expected_code}
 
 
+def test_open_inquiry_redirect_uses_context_bound_inquiry(
+    employee_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _patch_introspection(
+        monkeypatch,
+        _introspection_payload(permissions=["inquiries.view", "offers.prepare"]),
+    )
+    csrf = generate_csrf_token()
+    context = _context_store().create(
+        account_id=_ACCOUNT_ID,
+        operation="prepare_first_offer",
+        inquiry_id=_INQUIRY_ID,
+        trusted_transfer=_trusted_transfer(),
+    )
+
+    response = employee_client.get(
+        f"/api/ui/handoff/open-inquiry/{context.context_id}",
+        cookies=_authenticated_cookies(csrf),
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["location"] == f"https://office.example.test/inquiry/{_INQUIRY_ID}"
+
+
 def test_different_employee_cannot_use_context(
     employee_client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
