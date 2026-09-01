@@ -274,7 +274,9 @@ describe("OfferSummary — primary action visibility", () => {
       screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
     ).toBe(true);
 
-    fireEvent.click(\n      within(guidance).getByRole("button", { name: "Lieferung oder Abholung wählen" })\n    );
+    fireEvent.click(
+      within(guidance).getByRole("button", { name: "Lieferung oder Abholung wählen" })
+    );
 
     expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
     const fulfillment = screen.getByLabelText("Erfüllung");
