@@ -1,12 +1,11 @@
 import type { OfferDraft } from "../types";
 import { paymentMethodBlocker } from "./paymentMethod";
-import { prepareFulfillmentBlocker } from "./offerSnapshotRequest";
+import { prepareFulfillmentBlocker, prepareFulfillmentIssue } from "./offerSnapshotRequest";
 
 export type OfficeNextActionKind =
   | "persons"
   | "positions"
   | "fulfillment"
-  | "delivery_address_mode"
   | "invoice_address"
   | "delivery_address"
   | "event_date"
@@ -96,12 +95,9 @@ export function getOfficeNextAction(draft: OfferDraft): OfficeNextAction {
   }
 
   const fulfillmentBlocker = prepareFulfillmentBlocker(draft.chargesDefinition);
-  if (fulfillmentBlocker !== null) {
-    const fulfillment = draft.chargesDefinition.delivery.fulfillment;
-    const fulfillmentMode = fulfillment?.fulfillmentMode ?? "UNKNOWN";
-    const addressMode = fulfillment?.deliveryAddressMode ?? "UNKNOWN";
-
-    if (fulfillmentMode === "UNKNOWN") {
+  const fulfillmentIssue = prepareFulfillmentIssue(draft.chargesDefinition);
+  if (fulfillmentBlocker !== null && fulfillmentIssue !== null) {
+    if (fulfillmentIssue === "fulfillment") {
       return {
         kind: "fulfillment",
         title: "Erfüllung festlegen",
@@ -111,17 +107,7 @@ export function getOfficeNextAction(draft: OfferDraft): OfficeNextAction {
       };
     }
 
-    if (fulfillmentMode === "DELIVERY" && addressMode === "UNKNOWN") {
-      return {
-        kind: "delivery_address_mode",
-        title: "Lieferadresse festlegen",
-        description: fulfillmentBlocker,
-        actionLabel: "Lieferadresse wählen",
-        hardBlocker: true,
-      };
-    }
-
-    if (fulfillmentMode === "DELIVERY" && addressMode === "SAME_AS_INVOICE") {
+    if (fulfillmentIssue === "invoice_address") {
       return {
         kind: "invoice_address",
         title: "Rechnungsadresse vervollständigen",
