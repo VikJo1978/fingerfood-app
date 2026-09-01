@@ -274,12 +274,42 @@ describe("OfferSummary — primary action visibility", () => {
       screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
     ).toBe(true);
 
-    fireEvent.click(within(guidance).getByRole("button", { name: "Jetzt festlegen" }));
+    fireEvent.click(\n      within(guidance).getByRole("button", { name: "Lieferung oder Abholung wählen" })\n    );
 
     expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
     const fulfillment = screen.getByLabelText("Erfüllung");
     expect(fulfillment).toBeTruthy();
     expect(document.activeElement).toBe(fulfillment);
+  });
+
+  it("guides an already-selected delivery to the address choice, not back to fulfillment", () => {
+    const base = draftWithOneLine({});
+    const draft: OfferDraft = {
+      ...base,
+      chargesDefinition: {
+        ...base.chargesDefinition,
+        delivery: {
+          ...base.chargesDefinition.delivery,
+          fulfillment: {
+            ...base.chargesDefinition.delivery.fulfillment!,
+            fulfillmentMode: "DELIVERY",
+            deliveryAddressMode: "UNKNOWN",
+          },
+        },
+      },
+    };
+
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const guidance = screen.getByTestId("office-next-action");
+    expect(within(guidance).getByText("Lieferadresse festlegen")).toBeTruthy();
+    expect(within(guidance).queryByText("Erfüllung festlegen")).toBeNull();
+
+    fireEvent.click(within(guidance).getByRole("button", { name: "Lieferadresse wählen" }));
+
+    expect(screen.getByRole("dialog", { name: "Pauschalen & Lieferung" })).toBeTruthy();
+    const addressMode = screen.getByLabelText("Lieferadresse verwenden");
+    expect(document.activeElement).toBe(addressMode);
   });
 
   it("guides a missing payment method directly to the selector", () => {
