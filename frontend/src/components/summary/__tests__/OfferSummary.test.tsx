@@ -49,6 +49,7 @@ function renderSummary(overrides: { draft?: OfferDraft; canPrepareInCore?: boole
       prepareStatus="idle"
       prepareMessage={null}
       canPrepareInCore={overrides.canPrepareInCore ?? false}
+      onPaymentMethodChange={noop}
       onPrepareInCore={noop}
     />
   );
@@ -69,6 +70,7 @@ describe("OfferSummary — primary action visibility", () => {
   it("enables the Core-prepare action once a line is added", () => {
     const draft: OfferDraft = {
       ...createInitialOfferDraft(),
+      paymentMethod: "VORKASSE",
       lines: [
         {
           lineId: "line-1",
@@ -89,6 +91,68 @@ describe("OfferSummary — primary action visibility", () => {
     renderSummary({ draft, canPrepareInCore: true });
     const btn = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
     expect(btn.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("shows Zahlungsart beside the final Core prepare workflow", () => {
+    const draft: OfferDraft = {
+      ...createInitialOfferDraft(),
+      paymentMethod: "RECHNUNG",
+      orderContext: {
+        ...createInitialOfferDraft().orderContext,
+        companyName: "Musterfirma GmbH",
+      },
+    };
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const select = screen.getByLabelText("Zahlungsart") as HTMLSelectElement;
+    expect(select.value).toBe("RECHNUNG");
+    const values = Array.from(select.options).map((option) => option.value);
+    expect(values).toContain("VORKASSE");
+    expect(values).toContain("RECHNUNG");
+    expect(values).toContain("BAR_VOR_ORT");
+    expect(screen.getByRole("button", { name: "Angebot in Core vorbereiten" })).toBeTruthy();
+  });
+
+  it("keeps Rechnung unavailable for private customers in the footer selector", () => {
+    const draft = {
+      ...createInitialOfferDraft(),
+      paymentMethod: "VORKASSE" as const,
+    };
+    renderSummary({ draft, canPrepareInCore: true });
+
+    const select = screen.getByLabelText("Zahlungsart") as HTMLSelectElement;
+    const values = Array.from(select.options).map((option) => option.value);
+    expect(values).toContain("VORKASSE");
+    expect(values).toContain("BAR_VOR_ORT");
+    expect(values).not.toContain("RECHNUNG");
+  });
+
+  it("makes a missing Zahlungsart visible and blocks prepare until selected", () => {
+    const draft = {
+      ...createInitialOfferDraft(),
+      lines: [
+        {
+          lineId: "line-1",
+          itemId: "item-1",
+          quantityMode: "total" as const,
+          quantity: 10,
+          snapshot: {
+            title: "Brötchen Mix 1",
+            source_type: "internal" as const,
+            pricing_mode: "per_piece" as const,
+            price_type: "piece" as const,
+            chosen_price: 2.3,
+            item_kind: "simple" as const,
+          },
+        },
+      ],
+    };
+    renderSummary({ draft, canPrepareInCore: true });
+
+    expect(screen.getByText(/Zahlungsart erforderlich/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Angebot in Core vorbereiten" }).hasAttribute("disabled")
+    ).toBe(true);
   });
 
   it("opens the Angebotsvorschau modal from its secondary button", () => {
@@ -115,6 +179,7 @@ describe("OfferSummary — primary action visibility", () => {
   function draftWithOneLine(overrides: Partial<OfferDraft>): OfferDraft {
     return {
       ...createInitialOfferDraft(),
+      paymentMethod: "VORKASSE",
       lines: [
         {
           lineId: "line-1",
@@ -203,7 +268,7 @@ describe("OfferSummary — primary action visibility", () => {
  * up far below the fold inside a single tall panel with no way to reach
  * them short of scrolling the whole page past a pinned sticky column.
  * jsdom doesn't evaluate real CSS/media queries, so these assert the
- * structural contract (DOM containment + the `lg:`-scoped class tokens
+ * structural contract (DOM containment + the `xl:`-scoped class tokens
  * that drive it) rather than pixel layout — the actual pixel behavior was
  * verified manually in a real browser at 1440x900 and at 768/390px. */
 describe("OfferSummary — scroll/fixed-footer structure", () => {
@@ -211,6 +276,7 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     const base = createInitialOfferDraft();
     return {
       ...base,
+      paymentMethod: "VORKASSE",
       lines: Array.from({ length: count }, (_, i) => ({
         lineId: `line-${i}`,
         itemId: `item-${i}`,
@@ -228,12 +294,12 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     };
   }
 
-  it("scopes the line-items scroll region to lg: only — no unprefixed overflow/height constraint for mobile", () => {
+  it("scopes the line-items scroll region to xl: only — no unprefixed overflow/height constraint for mobile", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const region = screen.getByTestId("offer-summary-scroll-region");
-    expect(region.className).toMatch(/lg:overflow-y-auto/);
-    expect(region.className).toMatch(/lg:min-h-0/);
-    expect(region.className).toMatch(/lg:flex-1/);
+    expect(region.className).toMatch(/xl:overflow-y-auto/);
+    expect(region.className).toMatch(/xl:min-h-0/);
+    expect(region.className).toMatch(/xl:flex-1/);
     // No bare (unprefixed) overflow-y-auto or max-h-* — those would force a
     // cramped fixed-height scroller on mobile/tablet too.
     expect(region.className).not.toMatch(/(?:^|\s)overflow-y-auto/);
@@ -271,21 +337,21 @@ describe("OfferSummary — scroll/fixed-footer structure", () => {
     expect(region.contains(firstItem)).toBe(true);
   });
 
-  it("only applies the scroll-affordance shadow/divider at lg:, and fills its workspace column's full height desktop-only", () => {
+  it("only applies the scroll-affordance shadow/divider at xl:, and fills its workspace column's full height desktop-only", () => {
     renderSummary({ draft: draftWithLines(3), canPrepareInCore: true });
     const positionenLabel = screen.getByText(/^Positionen \(/);
     const footer = positionenLabel.closest(".shrink-0");
-    expect(footer?.className).toMatch(/lg:shadow-/);
+    expect(footer?.className).toMatch(/xl:shadow-/);
 
     const aside = footer?.closest("aside");
     // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: the aside itself no longer
     // guesses its own height (no more sticky/max-h) — it just fills
     // whatever real fixed-height ancestor HomePage's workspace column
-    // provides. `lg:min-h-0` is required so the flex-1 scroll region
+    // provides. `xl:min-h-0` is required so the flex-1 scroll region
     // below can actually shrink/scroll instead of forcing the aside
     // taller than that ancestor.
-    expect(aside?.className).toMatch(/(?:^|\s)lg:h-full(?:\s|$)/);
-    expect(aside?.className).toMatch(/(?:^|\s)lg:min-h-0(?:\s|$)/);
+    expect(aside?.className).toMatch(/(?:^|\s)xl:h-full(?:\s|$)/);
+    expect(aside?.className).toMatch(/(?:^|\s)xl:min-h-0(?:\s|$)/);
     expect(aside?.className).not.toMatch(/(?:^|\s)max-h-\[/);
     expect(aside?.className).not.toMatch(/sticky/);
   });
@@ -378,6 +444,7 @@ describe("OfferSummary — multiple selected lines stay inside the scrollable re
     const base = createInitialOfferDraft();
     return {
       ...base,
+      paymentMethod: "VORKASSE",
       lines: Array.from({ length: count }, (_, i) => ({
         lineId: `line-${i}`,
         itemId: `item-${i}`,

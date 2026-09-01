@@ -851,8 +851,8 @@ export function HomePage() {
   return (
     <ConfiguratorShell onBack={() => setPageMode("inquiry")} crumb={heroTitle}>
       <div className="space-y-5">
-        <div className="grid gap-[22px] lg:h-[calc(100dvh-110px)] lg:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] lg:overflow-hidden">
-          <div className="grid content-start gap-[22px] lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+        <div className="grid gap-[22px] xl:h-[calc(100dvh-110px)] xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)] xl:overflow-hidden">
+          <div className="grid min-w-0 content-start gap-[22px] xl:h-full xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
             {importedInquiryId || prepareContextId ? (
               <WarningBanner
                 message={
@@ -883,15 +883,11 @@ export function HomePage() {
 
             <OrderContextCard
               orderContext={offerDraft.orderContext}
-              paymentMethod={offerDraft.paymentMethod}
               onOrderContextChange={(patch) =>
                 setOfferDraft((d) => ({
                   ...d,
                   orderContext: { ...d.orderContext, ...patch },
                 }))
-              }
-              onPaymentMethodChange={(paymentMethod) =>
-                setOfferDraft((d) => ({ ...d, paymentMethod }))
               }
             />
 
@@ -958,7 +954,7 @@ export function HomePage() {
             )}
           </div>
 
-          <div className="grid content-start gap-[22px] lg:h-full lg:min-h-0">
+          <div className="grid min-w-0 content-start gap-[22px] xl:h-full xl:min-h-0">
             <OfferSummary
               draft={offerDraft}
               itemsById={itemsById}
@@ -980,6 +976,9 @@ export function HomePage() {
               prepareStatus={prepareStatus}
               prepareMessage={prepareMessage}
               canPrepareInCore={canPrepareInCore}
+              onPaymentMethodChange={(paymentMethod) =>
+                setOfferDraft((d) => ({ ...d, paymentMethod }))
+              }
               onPrepareInCore={onPrepareInCore}
             />
           </div>

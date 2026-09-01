@@ -301,12 +301,10 @@ describe("Inquiry handoff context — visible form, Angebotsvorschau, OfferSnaps
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Angebot in Core vorbereiten" }));
-    });
-
+    const prepareButton = screen.getByRole("button", { name: "Angebot in Core vorbereiten" });
+    expect(prepareButton.hasAttribute("disabled")).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.getByText("Bitte zuerst eine Zahlungsart auswählen.")).toBeTruthy();
+    expect(screen.getByText(/Zahlungsart erforderlich/)).toBeTruthy();
   });
 
   it("carries recipient, address, and event date/time into the generated OfferSnapshot", async () => {

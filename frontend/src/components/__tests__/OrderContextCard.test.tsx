@@ -14,7 +14,6 @@ describe("OrderContextCard", () => {
       <OrderContextCard
         orderContext={createInitialOrderContextV1()}
         onOrderContextChange={vi.fn()}
-        onPaymentMethodChange={vi.fn()}
       />
     );
     expect(screen.getByText("Basisdaten")).toBeTruthy();
@@ -30,7 +29,6 @@ describe("OrderContextCard", () => {
           remarks: "Betreff: Firmenjubiläum\n\nWunsch: 40 Personen, Buffet",
         }}
         onOrderContextChange={vi.fn()}
-        onPaymentMethodChange={vi.fn()}
       />
     );
     expect(screen.getByText("Anfrage-Kontext")).toBeTruthy();
@@ -39,23 +37,7 @@ describe("OrderContextCard", () => {
     expect(screen.getByDisplayValue("Musterfirma GmbH")).toBeTruthy();
   });
 
-  it("shows private customers only Vorkasse and Bar vor Ort", () => {
-    render(
-      <OrderContextCard
-        orderContext={createInitialOrderContextV1()}
-        onOrderContextChange={vi.fn()}
-        onPaymentMethodChange={vi.fn()}
-      />
-    );
-
-    const select = screen.getByLabelText("Zahlungsart") as HTMLSelectElement;
-    const values = Array.from(select.options).map((option) => option.value);
-    expect(values).toContain("VORKASSE");
-    expect(values).toContain("BAR_VOR_ORT");
-    expect(values).not.toContain("RECHNUNG");
-  });
-
-  it("shows company customers all three payment methods", () => {
+  it("keeps Zahlungsart out of the context card so it is not duplicated", () => {
     render(
       <OrderContextCard
         orderContext={{
@@ -63,15 +45,9 @@ describe("OrderContextCard", () => {
           companyName: "Musterfirma GmbH",
         }}
         onOrderContextChange={vi.fn()}
-        onPaymentMethodChange={vi.fn()}
       />
     );
-
-    const select = screen.getByLabelText("Zahlungsart") as HTMLSelectElement;
-    const values = Array.from(select.options).map((option) => option.value);
-    expect(values).toContain("VORKASSE");
-    expect(values).toContain("RECHNUNG");
-    expect(values).toContain("BAR_VOR_ORT");
+    expect(screen.queryByLabelText("Zahlungsart")).toBeNull();
   });
 
   it("shows only Datum, Lieferung and Beginn Veranstaltung for timing", () => {
@@ -85,7 +61,6 @@ describe("OrderContextCard", () => {
           deliveryWindowStart: "16:30",
         }}
         onOrderContextChange={onOrderContextChange}
-        onPaymentMethodChange={vi.fn()}
       />
     );
 
@@ -114,7 +89,6 @@ describe("OrderContextCard", () => {
       <OrderContextCard
         orderContext={createInitialOrderContextV1()}
         onOrderContextChange={vi.fn()}
-        onPaymentMethodChange={vi.fn()}
       />
     );
     expect(screen.queryByText("Anfrage-Kontext")).toBeNull();

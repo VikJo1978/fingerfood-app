@@ -1,6 +1,17 @@
 import { useMemo, useState } from "react";
-import type { CatalogItem, ChargesDefinition, OfferDraft, QuantityMode } from "../../types";
+import type {
+  CatalogItem,
+  ChargesDefinition,
+  OfferDraft,
+  PaymentMethod,
+  QuantityMode,
+} from "../../types";
 import { computeBudgetBreakdown } from "../../utils/budgetBreakdown";
+import {
+  allowedPaymentMethods,
+  isCompanyCustomer,
+  PAYMENT_METHOD_LABELS,
+} from "../../utils/paymentMethod";
 import { formatCurrency, type PauschalenBreakdown, type VatBreakdown } from "../../utils/pricing";
 import { BudgetStatus } from "./BudgetStatus";
 import { ChargeConfiguratorModal } from "./ChargeConfiguratorModal";
@@ -31,6 +42,7 @@ interface OfferSummaryProps {
   prepareStatus: PrepareStatus;
   prepareMessage: string | null;
   canPrepareInCore: boolean;
+  onPaymentMethodChange: (paymentMethod: PaymentMethod | undefined) => void;
   onPrepareInCore: () => void | Promise<void>;
 }
 
@@ -65,6 +77,7 @@ export function OfferSummary({
   prepareStatus,
   prepareMessage,
   canPrepareInCore,
+  onPaymentMethodChange,
   onPrepareInCore,
 }: OfferSummaryProps) {
   const { lines, persons, budgetEnabled, totalBudget, budgetType, budgetBasis, budgetScope } =
@@ -118,20 +131,25 @@ export function OfferSummary({
   const chargeBlocksPrepare =
     pauschaleNeedsPersons || invalidDishwareLines || invalidReturnLogistics;
 
+  const companyCustomer = isCompanyCustomer(draft.orderContext.companyName);
+  const paymentMethods = allowedPaymentMethods(draft.orderContext.companyName);
+  const paymentMethodValid =
+    draft.paymentMethod !== undefined && paymentMethods.includes(draft.paymentMethod);
+
   return (
     // OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1: no more sticky/max-h guess.
     // HomePage now renders this aside inside a real fixed-height
-    // (`lg:h-[calc(100dvh-110px)]`), `overflow-hidden` workspace column —
-    // `lg:h-full` here simply fills that already-correctly-sized ancestor,
+    // (`xl:h-[calc(100dvh-110px)]`), `overflow-hidden` workspace column —
+    // `xl:h-full` here simply fills that already-correctly-sized ancestor,
     // so this pane never moves when the *left* column's own independent
-    // `overflow-y-auto` scrolls. `lg:min-h-0` is required for the
-    // `lg:flex-1 lg:overflow-y-auto` middle region below to actually be
+    // `overflow-y-auto` scrolls. `xl:min-h-0` is required for the
+    // `xl:flex-1 xl:overflow-y-auto` middle region below to actually be
     // allowed to shrink/scroll inside a flex column — without it a flex
     // item's default `min-height:auto` would let this column's content
     // (specifically the position list) push the whole aside taller than
     // its `h-full`, defeating the fixed layout the same way `overflow:
     // visible` would.
-    <aside className="flex flex-col rounded-card border border-line bg-white shadow-card lg:h-full lg:min-h-0">
+    <aside className="flex min-w-0 flex-col rounded-card border border-line bg-white shadow-card xl:h-full xl:min-h-0">
       {/* Fixed header — never scrolls: title/count, then the Budget stat
           card (only rendered when budget tracking is enabled). */}
       <div className="shrink-0 space-y-2 rounded-t-[18px] border-b border-line p-3 pb-2.5">
@@ -149,14 +167,14 @@ export function OfferSummary({
 
       {/* Scrollable region — only the selected-item rows live here. On
           mobile/tablet this has no height constraint and just flows
-          naturally with the rest of the card; the `lg:` classes are what
+          naturally with the rest of the card; the `xl:` classes are what
           turn it into the *only* internal scroller once the aside is a
           fixed-height workspace column (see HomePage's
           OFFER_PANE_FIXED_VIEWPORT_WORKSPACE_V1 comment) — header and
           footer stay put, this is the one region that moves. */}
       <div
         data-testid="offer-summary-scroll-region"
-        className="p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain"
+        className="p-2.5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain"
       >
         {lines.length === 0 ? (
           <p className="rounded-card border border-dashed border-line bg-canvas/60 px-4 py-8 text-center text-sm text-muted">
@@ -184,7 +202,7 @@ export function OfferSummary({
           permanently visible; only the region above scrolls. The shadow is
           a scroll-affordance and only means anything once there's an
           actual internal scroller, so it's desktop-only. */}
-      <div className="shrink-0 rounded-b-[18px] border-t border-line p-3 pt-2.5 lg:shadow-[0_-8px_16px_-12px_rgba(41,54,47,0.18)]">
+      <div className="min-w-0 shrink-0 rounded-b-[18px] border-t border-line p-3 pt-2.5 xl:shadow-[0_-8px_16px_-12px_rgba(41,54,47,0.18)]">
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between gap-4">
             <span className="text-sm text-muted">Positionen ({lines.length})</span>
@@ -319,7 +337,47 @@ export function OfferSummary({
         </button>
 
         {canPrepareInCore ? (
-          <div className="mt-1.5 space-y-1.5 border-t border-line pt-1.5">
+          <div className="mt-1.5 space-y-2 border-t border-line pt-2">
+            <div
+              className={`rounded-control border px-3 py-2.5 ${
+                paymentMethodValid
+                  ? "border-line bg-canvas/40"
+                  : "border-danger-border bg-danger-soft"
+              }`}
+            >
+              <label className="grid gap-1.5">
+                <span className="text-[11px] font-extrabold uppercase tracking-[.05em] text-muted">
+                  Zahlungsart
+                </span>
+                <select
+                  aria-label="Zahlungsart"
+                  className="w-full min-w-0 rounded-control border border-line bg-white px-3 py-2 text-sm text-ink focus:border-accent"
+                  value={paymentMethodValid ? draft.paymentMethod : ""}
+                  onChange={(event) =>
+                    onPaymentMethodChange(
+                      event.target.value === "" ? undefined : (event.target.value as PaymentMethod)
+                    )
+                  }
+                >
+                  <option value="">Bitte wählen</option>
+                  {paymentMethods.map((method) => (
+                    <option key={method} value={method}>
+                      {PAYMENT_METHOD_LABELS[method]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="mt-1.5 text-xs text-muted">
+                {companyCustomer
+                  ? "Firmenkunde: Vorkasse, Rechnung oder Bar vor Ort."
+                  : "Privatkunde: Vorkasse oder Bar vor Ort. Rechnung ist nicht verfügbar."}
+              </p>
+              {!paymentMethodValid ? (
+                <p className="mt-1 text-xs font-semibold text-danger" role="alert">
+                  Zahlungsart erforderlich, bevor das Angebot in Core vorbereitet werden kann.
+                </p>
+              ) : null}
+            </div>
             <button
               type="button"
               disabled={
@@ -327,7 +385,8 @@ export function OfferSummary({
                 lines.length === 0 ||
                 personBlocksPrepare ||
                 budgetBlocksPrepare ||
-                chargeBlocksPrepare
+                chargeBlocksPrepare ||
+                !paymentMethodValid
               }
               onClick={() => void onPrepareInCore()}
               className="inline-flex h-10 w-full items-center justify-center rounded-control bg-accent px-3 text-sm font-bold text-white transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60"
@@ -407,13 +466,13 @@ function ChargeSummaryRow({
   onEdit: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-xs text-muted">
-      <span>{label}</span>
-      <span className="ml-auto font-semibold text-ink">{formatCurrency(amount)}</span>
+    <div className="flex min-w-0 items-center justify-between gap-2 text-xs text-muted">
+      <span className="min-w-0 truncate">{label}</span>
+      <span className="ml-auto shrink-0 font-semibold text-ink">{formatCurrency(amount)}</span>
       <button
         type="button"
         onClick={onEdit}
-        className="rounded-control border border-line bg-white px-2 py-1 text-[11px] font-bold text-accent-deep transition hover:border-accent hover:bg-accent-soft"
+        className="shrink-0 rounded-control border border-line bg-white px-2 py-1 text-[11px] font-bold text-accent-deep transition hover:border-accent hover:bg-accent-soft"
       >
         Bearbeiten
       </button>

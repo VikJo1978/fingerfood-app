@@ -1,9 +1,4 @@
-import type { OrderContextV1, PaymentMethod } from "../types";
-import {
-  allowedPaymentMethods,
-  isCompanyCustomer,
-  PAYMENT_METHOD_LABELS,
-} from "../utils/paymentMethod";
+import type { OrderContextV1 } from "../types";
 import { Card } from "./ui/Card";
 
 const inputClass =
@@ -30,20 +25,11 @@ function exactDeliveryTime(orderContext: OrderContextV1): string {
 
 interface OrderContextCardProps {
   orderContext: OrderContextV1;
-  paymentMethod?: PaymentMethod;
   onOrderContextChange: (patch: Partial<OrderContextV1>) => void;
-  onPaymentMethodChange: (paymentMethod: PaymentMethod | undefined) => void;
 }
 
-export function OrderContextCard({
-  orderContext,
-  paymentMethod,
-  onOrderContextChange,
-  onPaymentMethodChange,
-}: OrderContextCardProps) {
+export function OrderContextCard({ orderContext, onOrderContextChange }: OrderContextCardProps) {
   const oc = orderContext;
-  const companyCustomer = isCompanyCustomer(oc.companyName);
-  const paymentMethods = allowedPaymentMethods(oc.companyName);
 
   const remarksTrimmed = (oc.remarks ?? "").trim();
   const inquiryContextBlocks = remarksTrimmed
@@ -145,34 +131,6 @@ export function OrderContextCard({
             />
           </label>
         </div>
-      </div>
-
-      <div className="mt-3 rounded-control border border-line bg-canvas px-3 py-3">
-        <label className="flex flex-col gap-1.5">
-          <span className={fieldLabelClass}>Zahlungsart</span>
-          <select
-            aria-label="Zahlungsart"
-            className={inputClass}
-            value={paymentMethods.includes(paymentMethod as PaymentMethod) ? paymentMethod : ""}
-            onChange={(e) =>
-              onPaymentMethodChange(
-                e.target.value === "" ? undefined : (e.target.value as PaymentMethod)
-              )
-            }
-          >
-            <option value="">Bitte wählen</option>
-            {paymentMethods.map((method) => (
-              <option key={method} value={method}>
-                {PAYMENT_METHOD_LABELS[method]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="mt-1.5 text-xs text-muted">
-          {companyCustomer
-            ? "Firmenkunde: Vorkasse, Rechnung oder Bar vor Ort."
-            : "Privatkunde: Vorkasse oder Bar vor Ort. Rechnung ist nicht verfügbar."}
-        </p>
       </div>
 
       {oc.billingAddress?.trim() ? (

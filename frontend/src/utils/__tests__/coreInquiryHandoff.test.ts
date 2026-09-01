@@ -89,7 +89,6 @@ describe("Core Inquiry handoff", () => {
       createElement(OrderContextCard, {
         orderContext: parsed!.transfer.orderContextPrefill,
         onOrderContextChange: () => undefined,
-        onPaymentMethodChange: () => undefined,
       })
     );
     expect(visibleForm).toContain('value="Möbel &amp; Mehr GmbH"');
