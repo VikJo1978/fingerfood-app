@@ -400,11 +400,7 @@ export function HomePage() {
               setDraftScope(scope);
               setImportedInquiryId(null);
               setPrepareContextId(reloadContextId);
-              writeCoreHandoffHistoryMarker(
-                reloadContextId,
-                window.location,
-                window.history
-              );
+              writeCoreHandoffHistoryMarker(reloadContextId, window.location, window.history);
               setPageMode("configurator");
               return;
             }
