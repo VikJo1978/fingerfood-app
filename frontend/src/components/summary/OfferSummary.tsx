@@ -355,9 +355,7 @@ export function OfferSummary({
                   value={paymentMethodValid ? draft.paymentMethod : ""}
                   onChange={(event) =>
                     onPaymentMethodChange(
-                      event.target.value === ""
-                        ? undefined
-                        : (event.target.value as PaymentMethod)
+                      event.target.value === "" ? undefined : (event.target.value as PaymentMethod)
                     )
                   }
                 >
