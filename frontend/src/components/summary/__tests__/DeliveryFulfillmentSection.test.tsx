@@ -7,25 +7,12 @@ import { DeliveryFulfillmentSection } from "../DeliveryFulfillmentSection";
 
 function renderSection(initial: ChargesDefinition = createInitialChargesDefinition()) {
   let charges = initial;
-  const view = render(
-    <DeliveryFulfillmentSection
-      charges={charges}
-      onChange={(next) => {
-        charges = next;
-        view.rerender(
-          <DeliveryFulfillmentSection
-            charges={charges}
-            onChange={(updated) => {
-              charges = updated;
-              view.rerender(
-                <DeliveryFulfillmentSection charges={charges} onChange={() => undefined} />
-              );
-            }}
-          />
-        );
-      }}
-    />
-  );
+  let view: ReturnType<typeof render>;
+  const onChange = (next: ChargesDefinition) => {
+    charges = next;
+    view.rerender(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
+  };
+  view = render(<DeliveryFulfillmentSection charges={charges} onChange={onChange} />);
   return { current: () => charges, view };
 }
 
@@ -52,10 +39,12 @@ describe("DeliveryFulfillmentSection", () => {
 
     expect(screen.getByText("Lieferadresse")).toBeTruthy();
     expect(
-      screen.getByRole("checkbox", {
-        name: "Rechnungsadresse weicht von Lieferadresse ab",
-      })
-    ).not.toBeChecked();
+      (
+        screen.getByRole("checkbox", {
+          name: "Rechnungsadresse weicht von Lieferadresse ab",
+        }) as HTMLInputElement
+      ).checked
+    ).toBe(false);
     expect(screen.queryByText(/^Rechnungsadresse$/)).toBeNull();
     expect(screen.getByText("Rechnungsadresse entspricht der Lieferadresse.")).toBeTruthy();
 
@@ -102,7 +91,7 @@ describe("DeliveryFulfillmentSection", () => {
     });
     fireEvent.click(differs);
 
-    expect(differs).toBeChecked();
+    expect((differs as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText(/^Rechnungsadresse$/)).toBeTruthy();
     expect((screen.getByLabelText("Lieferadresse Straße / Hausnummer") as HTMLInputElement).value).toBe(
       "Festplatz 3"
