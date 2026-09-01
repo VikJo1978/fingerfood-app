@@ -83,7 +83,7 @@ export function OrderContextCard({ orderContext, onOrderContextChange }: OrderCo
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className={fieldLabelClass}>Ort / Adresse</span>
+          <span className={fieldLabelClass}>Veranstaltungsort</span>
           <input
             type="text"
             value={oc.location}
@@ -135,37 +135,6 @@ export function OrderContextCard({ orderContext, onOrderContextChange }: OrderCo
           </label>
         </div>
       </div>
-
-      {oc.billingAddress?.trim() ? (
-        <div className="mt-3 rounded-control border border-warning-border bg-warning-soft px-4 py-3">
-          <p className="text-sm font-bold text-warning">
-            ⚠ Achtung: abweichender Lieferort — Rechnungsadresse ≠ Lieferadresse!
-          </p>
-          <p className="mt-1 text-xs text-warning">
-            Lieferung geht an „Ort / Adresse&quot; oben, NICHT an die Rechnungsadresse unten. Bitte
-            beim Fahrer/Küche gesondert hervorheben.
-          </p>
-        </div>
-      ) : null}
-
-      <label className="mt-3 flex flex-col gap-1.5">
-        <span className={fieldLabelClass}>
-          Rechnungsadresse{" "}
-          <span className="font-normal normal-case text-muted">
-            (nur ausfüllen, falls abweichend von Ort / Adresse)
-          </span>
-        </span>
-        <input
-          type="text"
-          value={oc.billingAddress ?? ""}
-          onChange={(e) =>
-            onOrderContextChange({
-              billingAddress: e.target.value === "" ? undefined : e.target.value,
-            })
-          }
-          className={inputClass}
-        />
-      </label>
 
       {inquiryContextBlocks.length > 0 ? (
         <div className="mt-3 flex flex-col gap-1.5">
